@@ -969,7 +969,7 @@ end;
 //Parm: 车辆;通道
 //Desc: 授权nTruck在nTunnel车道放灰
 procedure TruckStartFH(const nTruck: PTruckItem; const nTunnel: string);
-var nStr,nTmp,nCard,nCardUse: string;
+var nStr,nTmp,nCardUse: string;
    nField: TField;
    nWorker: PDBWorker;
 begin

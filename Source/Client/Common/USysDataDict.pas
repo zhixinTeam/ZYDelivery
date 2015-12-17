@@ -9,7 +9,7 @@ interface
 uses
   Windows, Classes, Controls, DB, SysUtils, StdCtrls, ULibFun, cxGridTableView,
   cxGridDBTableView, cxCustomData, cxImageComboBox, UMgrDataDict, UDataModule,
-  USysConst, USysDB, UFormCtrl;
+  USysConst, USysDB, UFormCtrl, cxCheckBox;
 
 type
   TSysEntityManager = class(TBaseEntityManager)
@@ -144,9 +144,23 @@ var nStr: string;
     nList: TStrings;
     nPrefix,nTemp: string;
     i,nCount,nPos: integer;
+    nCheckBox: TcxCheckBoxProperties;
     nComboBox: TcxImageComboBoxProperties;
 begin
+  if nItem.FFormat.FStyle = fsCheckBox then
+  begin
+    nColumn.PropertiesClass := TcxCheckBoxProperties;
+    nCheckBox := TcxCheckBoxProperties(nColumn.Properties);
+    nCheckBox.OnEditValueChanged  := nil;
+    nCheckBox.ValueChecked := sFlag_Yes;
+    nCheckBox.ValueUnchecked := sFlag_No;
+    nCheckBox.ValueGrayed  := '';
+    nColumn.Options.Editing := True;
+
+    Exit;
+  end else
   if (nItem.FFormat.FStyle = fsNone) or (nItem.FFormat.FData = '') then Exit;
+
   nList := TStringList.Create;
   try
     if nItem.FFormat.FStyle = fsSQL then

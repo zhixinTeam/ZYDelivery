@@ -11,7 +11,7 @@ interface
 
 uses
   Windows, Forms, Classes, SysUtils, ULibFun, UBusinessWorker, UBusinessPacker,
-  UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker,
+  UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker, UMemDataPool,
   {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF} UWorkerBusiness,
   {$IFDEF MicroMsg}UMgrRemoteWXMsg,{$ENDIF}
   UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser, USAPConnection;
@@ -145,6 +145,9 @@ begin
   //日志管理器
   gTaskMonitor := TTaskMonitor.Create;
   //任务监控器
+
+  gMemDataManager := TMemDataManager.Create;
+  //内存管理器
 
   gParamManager := TParamManager.Create(gPath + 'Parameters.xml');
   if gSysParam.FParam <> '' then

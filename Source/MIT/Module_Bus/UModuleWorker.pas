@@ -67,7 +67,7 @@ type
     function GetCustomerValidMoney(var nData: string): Boolean;
     //获取客户可用金
     function GetZhiKaValidMoney(var nData: string): Boolean;
-    //获取纸卡可用金
+    //获取订单可用金
     function CustomerHasMoney(var nData: string): Boolean;
     //验证客户是否有钱
     function GetTruckPoundData(var nData: string): Boolean;
@@ -534,7 +534,7 @@ begin
 end;
 
 //Date: 2014-09-05
-//Desc: 获取指定纸卡的可用金额
+//Desc: 获取指定订单的可用金额
 function TWorkerBusinessCommander.GetZhiKaValidMoney(var nData: string): Boolean;
 var nStr: string;
     nVal,nMoney: Double;
@@ -549,7 +549,7 @@ begin
   begin
     if RecordCount < 1 then
     begin
-      nData := '编号为[ %s ]的纸卡不存在,或客户账户无效.';
+      nData := '编号为[ %s ]的订单不存在,或客户账户无效.';
       nData := Format(nData, [FIn.FData]);
 
       Result := False;
@@ -1022,38 +1022,31 @@ begin
           MI('$Cus', sTable_Customer),
           MI('$SM', sTable_Salesman),
           MI('$ZID', FListA.Values['ZhiKa'])]);
-  //纸卡信息
+  //订单信息
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr),FListA do
   begin
     if RecordCount < 1 then
     begin
-      nData := Format('纸卡[ %s ]已丢失.', [Values['ZhiKa']]);
+      nData := Format('订单[ %s ]已丢失.', [Values['ZhiKa']]);
       Exit;
     end;
 
     if FieldByName('Z_Freeze').AsString = sFlag_Yes then
     begin
-      nData := Format('纸卡[ %s ]已被管理员冻结.', [Values['ZhiKa']]);
+      nData := Format('订单[ %s ]已被管理员冻结.', [Values['ZhiKa']]);
       Exit;
     end;
 
     if FieldByName('Z_InValid').AsString = sFlag_Yes then
     begin
-      nData := Format('纸卡[ %s ]已被管理员作废.', [Values['ZhiKa']]);
+      nData := Format('订单[ %s ]已被管理员作废.', [Values['ZhiKa']]);
       Exit;
     end;
 
     if FieldByName('Z_TJStatus').AsString <> '' then
     begin
-      nData := Format('纸卡[ %s ]价格已变动,请重新开单.', [Values['ZhiKa']]);
-      Exit;
-    end;
-
-    if FieldByName('Z_ValidDays').AsDateTime <= Date() then
-    begin
-      nData := Format('纸卡[ %s ]已在[ %s ]过期.', [Values['ZhiKa'],
-               Date2Str(FieldByName('Z_ValidDays').AsDateTime)]);
+      nData := Format('订单[ %s ]价格已变动,请重新开单.', [Values['ZhiKa']]);
       Exit;
     end;
 
@@ -1111,7 +1104,7 @@ begin
 
   if FloatRelation(nVal, nMoney, rtGreater) then
   begin
-    nData := '纸卡[ %s ]上没有足够的金额,详情如下:' + #13#10#13#10 +
+    nData := '订单[ %s ]上没有足够的金额,详情如下:' + #13#10#13#10 +
              '可用金额: %.2f' + #13#10 +
              '开单金额: %.2f' + #13#10#13#10 +
              '请减小提货量后再开单.';
@@ -2014,7 +2007,7 @@ begin
 
       m := StrToFloat(nOut.FData);
       m := m + Float2Float(FPrice * FValue, cPrecision, False);
-      //纸卡可用金
+      //订单可用金
 
       nVal := FValue;
       FValue := nBills[nInt].FMData.FValue - FPData.FValue;
@@ -2047,7 +2040,7 @@ begin
         nSQL := 'Update %s Set Z_FixedMoney=Z_FixedMoney-(%.2f) ' +
                 'Where Z_ID=''%s''';
         nSQL := Format(nSQL, [sTable_ZhiKa, m, FZhiKa]);
-        FListA.Add(nSQL); //更新纸卡限提金额
+        FListA.Add(nSQL); //更新订单限提金额
       end;
     end;
 

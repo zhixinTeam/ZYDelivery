@@ -29,12 +29,15 @@ const
   cBC_UserLogOut              = $0006;   //用户注销
 
   cBC_GetCustomerMoney        = $0010;   //获取客户可用金
-  cBC_GetZhiKaMoney           = $0011;   //获取纸卡可用金
+  cBC_GetZhiKaMoney           = $0011;   //获取纸卡(订单)可用金
+  cBC_GetFLMoney              = $0018;   //获取提货IC卡可用金
   cBC_CustomerHasMoney        = $0012;   //客户是否有余额
+  cBC_AdjustCustomerMoney     = $0013;   //矫正客户余额
+  cBC_GetTransportMoney       = $0014;   //获取运费可用金
 
-  cBC_SaveTruckInfo           = $0013;   //保存车辆信息
-  cBC_GetTruckPoundData       = $0015;   //获取车辆称重数据
-  cBC_SaveTruckPoundData      = $0016;   //保存车辆称重数据
+  cBC_SaveTruckInfo           = $0015;   //保存车辆信息
+  cBC_GetTruckPoundData       = $0016;   //获取车辆称重数据
+  cBC_SaveTruckPoundData      = $0017;   //保存车辆称重数据
 
   cBC_SaveBills               = $0020;   //保存交货单列表
   cBC_DeleteBill              = $0021;   //删除交货单
@@ -42,6 +45,10 @@ const
   cBC_SaleAdjust              = $0023;   //销售调拨
   cBC_SaveBillCard            = $0024;   //绑定交货单磁卡
   cBC_LogoffCard              = $0025;   //注销磁卡
+  cBC_SaveZhiKa               = $0026;   //保存纸卡(订单)
+  cBC_DeleteZhiKa             = $0027;   //删除纸卡(订单)
+  cBC_SaveICCInfo             = $0028;   //保存IC卡信息
+  cBC_DeleteICCInfo           = $0029;   //删除纸卡(订单)
 
   cBC_SaveOrder               = $0040;
   cBC_DeleteOrder             = $0041;
@@ -49,6 +56,19 @@ const
   cBC_LogOffOrderCard         = $0043;
   cBC_GetPostOrders           = $0044;   //获取岗位采购单
   cBC_SavePostOrders          = $0045;   //保存岗位采购单
+  cBC_SaveOrderBase           = $0046;   //保存采购申请单
+  cBC_DeleteOrderBase         = $0047;   //删除采购申请单
+  cBC_GetGYOrderValue         = $0048;   //获取已收货量
+  {
+  cBC_SaveOrder               = $0040;
+  cBC_DeleteOrder             = $0041;
+  cBC_SaveOrderCard           = $0042;
+  cBC_LogOffOrderCard         = $0043;
+  cBC_GetPostOrders           = $0044;   //获取岗位采购单
+  cBC_SavePostOrders          = $0045;   //保存岗位采购单
+  cBC_SaveOrderBase           = $0046;   //保存采购申请单
+  cBC_DeleteOrderBase         = $0047;   //删除采购申请单
+  cBC_GetGYOrderValue         = $0048;   //获取已收货量    }
 
   cBC_GetPostBills            = $0030;   //获取岗位交货单
   cBC_SavePostBills           = $0031;   //保存岗位交货单
@@ -59,6 +79,9 @@ const
   cBC_PrintCode               = $0056;
   cBC_PrintFixCode            = $0057;   //喷码
   cBC_PrinterEnable           = $0058;   //喷码机启停
+  cBC_GetStockBatcode         = $0059;   //获取可用批次号
+  cBC_SaveStockBatcode        = $0052;   //保存物料批次
+  cBC_GetStockBatValue        = $0051;   //获取可用批次号
 
   cBC_JSStart                 = $0060;
   cBC_JSStop                  = $0061;
@@ -77,6 +100,7 @@ const
   cBC_SyncStockOrder          = $0084;   //同步采购单据到远程
   cBC_SyncProvider            = $0085;   //远程同步供应商
   cBC_SyncMaterails           = $0086;   //远程同步原材料
+  cBC_StatisticsTrucks        = $0087;   //将所有出厂车辆统计
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
@@ -104,7 +128,9 @@ type
   PLadingBillItem = ^TLadingBillItem;
   TLadingBillItem = record
     FID         : string;          //交货单号
-    FZhiKa      : string;          //纸卡编号
+    FSeal       : string;
+    FZhiKa      : string;          //纸卡(订单)编号
+    FZKType     : string;          //订单类型
     FCusID      : string;          //客户编号
     FCusName    : string;          //客户名称
     FTruck      : string;          //车牌号码
@@ -128,6 +154,7 @@ type
     FPoundID    : string;          //称重记录
     FSelected   : Boolean;         //选中状态
 
+    FYSValid    : string;          //验收结果，Y验收成功；N拒收；
     FKZValue    : Double;          //供应扣除
     FMemo       : string;          //动作备注
   end;
@@ -198,6 +225,7 @@ begin
       begin
         FID         := Values['ID'];
         FZhiKa      := Values['ZhiKa'];
+        FZKType     := Values['ZKType'];
         FCusID      := Values['CusID'];
         FCusName    := Values['CusName'];
         FTruck      := Values['Truck'];
@@ -251,11 +279,14 @@ begin
              FPrice := StrToFloat(nStr)
         else FPrice := 0;
 
+        FSeal   := Values['Seal'];
+
         nStr := Trim(Values['KZValue']);
         if (nStr <> '') and IsNumber(nStr, True) then
              FKZValue := StrToFloat(nStr)
         else FKZValue := 0;
 
+        FYSValid:= Values['YSValid'];
         FMemo := Values['Memo'];
       end;
 
@@ -291,9 +322,12 @@ begin
       begin
         Values['ID']         := FID;
         Values['ZhiKa']      := FZhiKa;
+        Values['ZKType']     := FZKType;
         Values['CusID']      := FCusID;
         Values['CusName']    := FCusName;
         Values['Truck']      := FTruck;
+
+        Values['Seal']       := FSeal;
 
         Values['Type']       := FType;
         Values['StockNo']    := FStockNo;
@@ -332,6 +366,7 @@ begin
         else Values['Selected'] := sFlag_No;
 
         Values['KZValue']    := FloatToStr(FKZValue);
+        Values['YSValid']    := FYSValid;
         Values['Memo']       := FMemo;
       end;
 

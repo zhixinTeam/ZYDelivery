@@ -23,7 +23,7 @@
 {.$DEFINE ClientMon}
 //进程守护客户端
 
-{.$DEFINE HardMon}
+{$DEFINE HardMon}
 //编译硬件守护
 
 {.$DEFINE GenRODL}
@@ -50,8 +50,14 @@
 {.$DEFINE COMMON}
 //通用版本
 
-{$DEFINE RDHX}
+{$DEFINE SHXZY}
 //特定系统
+
+//山西卓越
+{$IFDEF SHXZY}
+  {$DEFINE COMMON}
+  //
+{$ENDIF}
 
 //如东海鑫
 {$IFDEF RDHX}

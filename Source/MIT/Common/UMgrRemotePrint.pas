@@ -38,6 +38,7 @@ type
     FName      : string;
     FHost      : string;
     FPort      : Integer;
+    FEnable    : Boolean;
   end;
 
   TPrinterHelper = class;
@@ -181,7 +182,7 @@ end;
 //Desc: ‘ÿ»ÎnFile≈‰÷√Œƒº˛
 procedure TPrinterHelper.LoadConfig(const nFile: string);
 var nXML: TNativeXml;
-    nNode: TXmlNode;
+    nNode,nTmp: TXmlNode;
 begin
   nXML := TNativeXml.Create;
   try
@@ -194,6 +195,11 @@ begin
       FName  := nNode.NodeByName('name').ValueAsString;
       FHost  := nNode.NodeByName('ip').ValueAsString;
       FPort  := nNode.NodeByName('port').ValueAsInteger;
+
+      nTmp  := nNode.FindNode('enable');
+      if Assigned(nTmp) then
+           FEnable := nTmp.ValueAsString = 'Y'
+      else FEnable := False;
     end;
   finally
     nXML.Free;
@@ -247,6 +253,8 @@ var nIdx: Integer;
 begin
   while not Terminated do
   try
+    if not FOwner.FHost.FEnable then Exit;
+
     FWaiter.EnterWait;
     if Terminated then Exit;
 
