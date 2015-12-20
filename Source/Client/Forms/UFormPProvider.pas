@@ -11,7 +11,7 @@ uses
   UDataModule, UFormBase, cxGraphics, dxLayoutControl, StdCtrls,
   cxMaskEdit, cxDropDownEdit, cxMCListBox, cxMemo, cxContainer, cxEdit,
   cxTextEdit, cxControls, cxLookAndFeels, cxLookAndFeelPainters,
-  dxSkinsCore, dxSkinsDefaultPainters, cxButtonEdit;
+  dxSkinsCore, dxSkinsDefaultPainters, cxButtonEdit, cxCheckBox;
 
 type
   TfFormProvider = class(TBaseForm)
@@ -46,6 +46,8 @@ type
     dxLayoutControl1Group3: TdxLayoutGroup;
     EditID: TcxButtonEdit;
     dxLayoutControl1Item1: TdxLayoutItem;
+    cxCheckBox1: TcxCheckBox;
+    dxLayoutControl1Item3: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnAddClick(Sender: TObject);
@@ -66,6 +68,9 @@ type
     //前缀长度
     procedure InitFormData(const nID: string);
     //载入数据
+    procedure GetData(Sender: TObject; var nData: string);
+    function SetData(Sender: TObject; const nData: string): Boolean;
+    //数据相关
   public
     { Public declarations }
     class function CreateForm(const nPopedom: string = '';
@@ -230,7 +235,7 @@ begin
   begin
     nStr := 'Select * From %s Where P_ID=''%s''';
     nStr := Format(nStr, [sTable_Provider, nID]);
-    LoadDataToCtrl(FDM.QueryTemp(nStr), Self, '');
+    LoadDataToCtrl(FDM.QueryTemp(nStr), Self, '', SetData);
 
     InfoList1.Clear;
     nStr := MacroValue(sQuery_ExtInfo, [MI('$Table', sTable_ExtInfo),
@@ -291,6 +296,28 @@ begin
   ShowMsg('信息项已删除', sHint);
 end;
 
+//Desc: 设置数据
+function TfFormProvider.SetData(Sender: TObject; const nData: string): Boolean;
+begin
+  Result := False;
+  if Sender = cxCheckBox1 then
+  begin
+    Result := True;
+    cxCheckBox1.Checked := nData = sFlag_CusZYF;
+  end;
+end;
+
+//Desc: 获取数据
+procedure TfFormProvider.GetData(Sender: TObject; var nData: string);
+begin
+  if Sender = cxCheckBox1 then
+  begin
+    if cxCheckBox1.Checked then
+         nData := sFlag_CusZYF
+    else nData := sFlag_CusZY;
+  end;
+end;
+
 //Desc: 保存数据
 procedure TfFormProvider.BtnOKClick(Sender: TObject);
 var nList: TStrings;
@@ -319,11 +346,11 @@ begin
 
     if FRecordID = '' then
     begin
-      nSQL := MakeSQLByForm(Self, sTable_Provider, '', True, nil, nList);
+      nSQL := MakeSQLByForm(Self, sTable_Provider, '', True, GetData, nList);
     end else
     begin
       nStr := 'P_ID=''' + FRecordID + '''';
-      nSQL := MakeSQLByForm(Self, sTable_Provider, nStr, False, nil, nList);
+      nSQL := MakeSQLByForm(Self, sTable_Provider, nStr, False, GetData, nList);
     end;
 
     FreeAndNil(nList);

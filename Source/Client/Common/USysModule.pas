@@ -16,20 +16,18 @@ uses
   UFormPassword, UFormBaseInfo, UFrameAuthorize, UFormAuthorize,
   UFrameCustomer, UFormCustomer, UFormGetCustom, UFrameCustAddr, UFormCusAddr,
   UFrameSalesMan, UFormSalesMan,
-  UFrameShouJu, UFormShouJu, UFramePayment, UFormPayment,
-  UFrameCustomerCredit, UFormCustomerCredit, UFrameCusAccount,
-  UFrameCusInOutMoney,
+  UFrameShouJu, UFormShouJu, UFramePayment, UFormPayment, UFormCustomerCredit,
+  UFrameCustomerCredit, UFrameCusAccount, UFrameCusInOutMoney,
+  UFrameTransContract, UFormTransContract, UFrameTransPayment,UFrameTransCredit,
+  UFrameTransAccount, UFrameTransInOutMoney, UFrameTransTrucks, UFrameTruckLogs,
   UFrameSaleContract, UFormSaleContract, UFormGetContract,
+  UFormFXZhiKa, UFrameFXZhiKa, UFormGetFXZhiKa, UFormReadICCard,
+  UFormGetFactZhiKa, UFormFactZhiKaBind,
   UFrameZhiKa, UFormZhiKa, UFormGetZhiKa, UFrameZhiKaDetail, UFormZhiKaFreeze,
   UFormZhiKaPrice, UFormZhiKaAdjust, UFormZhiKaFixMoney,
-  UFrameZhiKaVerify, UFormZhiKaVerify,
+  UFrameZhiKaVerify, UFormZhiKaVerify, UFormBillAdditional,
   UFrameBill, UFormBill, UFrameBillCard, UFormGetBill,
   UFormGetTruck, UFrameTrucks, UFormTruck, UFrameTruckQuery,
-  UFormFXZhiKa, UFrameFXZhiKa, UFormGetFXZhiKa, UFormReadICCard,
-  UFrameTransContract, UFormTransContract, UFrameTransPayment,
-  UFrameTransTrucks, UFormTruckTrans, UFrameTruckLogs,
-  UFrameTransCredit, UFrameTransAccount, UFrameTransInOutMoney,
-  UFrameBatcodeQuery,UFormBatcodeEdit,UFrameBatcode, UFormBatcode,
   UFormCard, UFormTruckIn, UFormTruckOut, UFormLadingDai, UFormLadingSan,
   UFramePoundManual, UFramePoundAuto, UFramePMaterails, UFormPMaterails,
   UFramePProvider, UFormPProvider, UFramePoundQuery, UFrameQuerySaleDetail,
@@ -42,6 +40,7 @@ uses
   UFormHYStock, UFormHYData, UFormHYRecord, UFormGetStockNo,
   UFrameHYStock, UFrameHYData, UFrameHYRecord
   {$ELSE},
+  UFormTruckTrans,UFrameBatcodeQuery,UFormBatcodeEdit,UFrameBatcode,UFormBatcode,
   UFrameInvoiceWeek, UFormInvoiceWeek, UFormInvoiceGetWeek,
   UFrameInvoice, UFormInvoice, UFormInvoiceAdjust,UFrameInvoiceK, UFormInvoiceK,
   UFrameInvoiceDtl, UFrameInvoiceZZ, UFormInvoiceZZAll, UFormInvoiceZZCus,
@@ -177,6 +176,25 @@ begin
   if RecordCount > 0 then
   begin
     gSysParam.FHardMonURL := Fields[0].AsString;
+  end;
+
+  //----------------------------------------------------------------------------
+  nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam, sFlag_Customer]);
+
+  gSysParam.FCustomer := '';
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    First;
+
+    while not Eof do
+    try
+      if Fields[0].AsString = '' then Continue;
+      gSysParam.FCustomer := gSysParam.FCustomer + Fields[0].AsString + ',';
+    finally
+      Next;
+    end;  
   end;
 end;
 

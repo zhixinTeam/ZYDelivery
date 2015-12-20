@@ -81,16 +81,17 @@ function TfFrameHYRecord.InitFormDataSQL(const nWhere: string): string;
 begin
   EditDate.Text := Format('%s жа %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
-  Result := 'Select sr.*,P_Stock,P_Type,P_Name From $SR sr' +
-            ' Left Join $SP sp On sp.P_ID=sr.R_PID ';
+  Result := 'Select sr.*,se.*,P_Stock,P_Type,P_Name From $SR sr' +
+            ' Left Join $SP sp On sp.P_ID=sr.R_PID ' +
+            ' Left Join $SE se On sr.R_ExtID=se.E_ID ';
 
   if nWhere = '' then
        Result := Result + 'Where (R_Date>=''$Start'' and R_Date<''$End'')'
   else Result := Result + 'Where (' + nWhere + ')';
 
   Result := MacroValue(Result, [MI('$SR', sTable_StockRecord),
-            MI('$SP', sTable_StockParam), MI('$Start', DateTime2Str(FStart)),
-            MI('$End', DateTime2Str(FEnd + 1))]);
+            MI('$SP', sTable_StockParam), MI('$SE', sTable_StockRecordExt),
+            MI('$Start', DateTime2Str(FStart)),MI('$End', DateTime2Str(FEnd + 1))]);
   //xxxxx
 end;
 

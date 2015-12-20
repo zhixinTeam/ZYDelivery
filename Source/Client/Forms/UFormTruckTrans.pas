@@ -136,6 +136,7 @@ begin
     nStr := Format(nStr, [sTable_Truck, sFlag_Other, nTruckTrans]);
     FDM.ExecuteSQL(nStr);
 
+		FDM.ADOConn.CommitTrans;
     ModalResult := mrOk;
     ShowMsg('车辆信息保存成功', sHint);
   except

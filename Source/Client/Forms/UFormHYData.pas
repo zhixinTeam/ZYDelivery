@@ -257,7 +257,7 @@ begin
 end;
 
 function TfFormHYData.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
-var nVal,nMax: Double;
+//var nVal,nMax: Double;
 begin
   Result := True;
 

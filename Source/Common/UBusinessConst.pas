@@ -30,7 +30,6 @@ const
 
   cBC_GetCustomerMoney        = $0010;   //获取客户可用金
   cBC_GetZhiKaMoney           = $0011;   //获取纸卡(订单)可用金
-  cBC_GetFLMoney              = $0018;   //获取提货IC卡可用金
   cBC_CustomerHasMoney        = $0012;   //客户是否有余额
   cBC_AdjustCustomerMoney     = $0013;   //矫正客户余额
   cBC_GetTransportMoney       = $0014;   //获取运费可用金
@@ -38,6 +37,7 @@ const
   cBC_SaveTruckInfo           = $0015;   //保存车辆信息
   cBC_GetTruckPoundData       = $0016;   //获取车辆称重数据
   cBC_SaveTruckPoundData      = $0017;   //保存车辆称重数据
+  cBC_GetFLMoney              = $0018;   //获取提货IC卡可用金
 
   cBC_SaveBills               = $0020;   //保存交货单列表
   cBC_DeleteBill              = $0021;   //删除交货单
@@ -59,19 +59,10 @@ const
   cBC_SaveOrderBase           = $0046;   //保存采购申请单
   cBC_DeleteOrderBase         = $0047;   //删除采购申请单
   cBC_GetGYOrderValue         = $0048;   //获取已收货量
-  {
-  cBC_SaveOrder               = $0040;
-  cBC_DeleteOrder             = $0041;
-  cBC_SaveOrderCard           = $0042;
-  cBC_LogOffOrderCard         = $0043;
-  cBC_GetPostOrders           = $0044;   //获取岗位采购单
-  cBC_SavePostOrders          = $0045;   //保存岗位采购单
-  cBC_SaveOrderBase           = $0046;   //保存采购申请单
-  cBC_DeleteOrderBase         = $0047;   //删除采购申请单
-  cBC_GetGYOrderValue         = $0048;   //获取已收货量    }
 
   cBC_GetPostBills            = $0030;   //获取岗位交货单
   cBC_SavePostBills           = $0031;   //保存岗位交货单
+  cBC_SaveFactZhiKa           = $0032;   //保存工厂订单
 
   cBC_ChangeDispatchMode      = $0053;   //切换调度模式
   cBC_GetPoundCard            = $0054;   //获取磅站卡号
@@ -80,8 +71,8 @@ const
   cBC_PrintFixCode            = $0057;   //喷码
   cBC_PrinterEnable           = $0058;   //喷码机启停
   cBC_GetStockBatcode         = $0059;   //获取可用批次号
-  cBC_SaveStockBatcode        = $0052;   //保存物料批次
   cBC_GetStockBatValue        = $0051;   //获取可用批次号
+  cBC_SaveStockBatcode        = $0052;   //保存物料批次
 
   cBC_JSStart                 = $0060;
   cBC_JSStop                  = $0061;
@@ -161,6 +152,8 @@ type
 
   TLadingBillItems = array of TLadingBillItem;
   //交货单列表
+
+
 
 procedure AnalyseBillItems(const nData: string; var nItems: TLadingBillItems);
 //解析由业务对象返回的交货单数据

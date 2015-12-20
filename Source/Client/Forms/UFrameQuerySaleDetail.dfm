@@ -49,6 +49,7 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
     inherited cxView1: TcxGridDBTableView
       PopupMenu = pmPMenu1
       DataController.Summary.Options = [soNullIgnore]
+      OptionsSelection.MultiSelect = True
     end
   end
   inherited dxLayout1: TdxLayoutControl
@@ -59,11 +60,11 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
       Top = 93
       Hint = 'T.L_CusName'
       ParentFont = False
-      TabOrder = 7
+      TabOrder = 9
       Width = 105
     end
     object EditDate: TcxButtonEdit [1]
-      Left = 615
+      Left = 861
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -73,11 +74,49 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
         end>
       Properties.ReadOnly = True
       Properties.OnButtonClick = EditDatePropertiesButtonClick
-      TabOrder = 3
+      TabOrder = 5
       Width = 185
     end
     object EditCustomer: TcxButtonEdit [2]
-      Left = 437
+      Left = 683
+      Top = 36
+      ParentFont = False
+      Properties.Buttons = <
+        item
+          Default = True
+          Kind = bkEllipsis
+        end>
+      Properties.OnButtonClick = EditTruckPropertiesButtonClick
+      TabOrder = 4
+      OnKeyPress = OnCtrlKeyPress
+      Width = 115
+    end
+    object cxtxtdt2: TcxTextEdit [3]
+      Left = 449
+      Top = 93
+      Hint = 'T.L_Value'
+      ParentFont = False
+      TabOrder = 8
+      Width = 115
+    end
+    object cxtxtdt3: TcxTextEdit [4]
+      Left = 81
+      Top = 93
+      Hint = 'T.L_ID'
+      ParentFont = False
+      TabOrder = 6
+      Width = 115
+    end
+    object cxtxtdt4: TcxTextEdit [5]
+      Left = 259
+      Top = 93
+      Hint = 'T.L_StockName'
+      ParentFont = False
+      TabOrder = 7
+      Width = 115
+    end
+    object EditTruck: TcxButtonEdit [6]
+      Left = 381
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -88,45 +127,7 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
       Properties.OnButtonClick = EditTruckPropertiesButtonClick
       TabOrder = 2
       OnKeyPress = OnCtrlKeyPress
-      Width = 115
-    end
-    object cxtxtdt2: TcxTextEdit [3]
-      Left = 449
-      Top = 93
-      Hint = 'T.L_Value'
-      ParentFont = False
-      TabOrder = 6
-      Width = 115
-    end
-    object cxtxtdt3: TcxTextEdit [4]
-      Left = 81
-      Top = 93
-      Hint = 'T.L_ID'
-      ParentFont = False
-      TabOrder = 4
-      Width = 115
-    end
-    object cxtxtdt4: TcxTextEdit [5]
-      Left = 259
-      Top = 93
-      Hint = 'T.L_StockName'
-      ParentFont = False
-      TabOrder = 5
-      Width = 115
-    end
-    object EditTruck: TcxButtonEdit [6]
-      Left = 259
-      Top = 36
-      ParentFont = False
-      Properties.Buttons = <
-        item
-          Default = True
-          Kind = bkEllipsis
-        end>
-      Properties.OnButtonClick = EditTruckPropertiesButtonClick
-      TabOrder = 1
-      OnKeyPress = OnCtrlKeyPress
-      Width = 115
+      Width = 97
     end
     object EditBill: TcxButtonEdit [7]
       Left = 81
@@ -140,7 +141,35 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
       Properties.OnButtonClick = EditTruckPropertiesButtonClick
       TabOrder = 0
       OnKeyPress = OnCtrlKeyPress
-      Width = 115
+      Width = 88
+    end
+    object EditCard: TcxButtonEdit [8]
+      Left = 220
+      Top = 36
+      ParentFont = False
+      Properties.Buttons = <
+        item
+          Default = True
+          Kind = bkEllipsis
+        end>
+      Properties.OnButtonClick = EditTruckPropertiesButtonClick
+      TabOrder = 1
+      OnKeyPress = OnCtrlKeyPress
+      Width = 98
+    end
+    object EditSaleMan: TcxButtonEdit [9]
+      Left = 529
+      Top = 36
+      ParentFont = False
+      Properties.Buttons = <
+        item
+          Default = True
+          Kind = bkEllipsis
+        end>
+      Properties.OnButtonClick = EditTruckPropertiesButtonClick
+      TabOrder = 3
+      OnKeyPress = OnCtrlKeyPress
+      Width = 91
     end
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
@@ -149,9 +178,19 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
           Control = EditBill
           ControlOptions.ShowBorder = False
         end
+        object dxLayout1Item9: TdxLayoutItem
+          Caption = 'IC'#21345#21495':'
+          Control = EditCard
+          ControlOptions.ShowBorder = False
+        end
         object dxLayout1Item4: TdxLayoutItem
           Caption = #36710#29260#21495#30721':'
           Control = EditTruck
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item10: TdxLayoutItem
+          Caption = #19994#21153#21592':'
+          Control = EditSaleMan
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item8: TdxLayoutItem
@@ -220,6 +259,10 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
     object mniN1: TMenuItem
       Caption = #26102#38388#27573#26597#35810
       OnClick = mniN1Click
+    end
+    object N1: TMenuItem
+      Caption = #25552#36135#21333#35843#20215
+      OnClick = N1Click
     end
   end
 end

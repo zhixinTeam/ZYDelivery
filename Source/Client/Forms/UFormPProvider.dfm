@@ -1,6 +1,6 @@
 inherited fFormProvider: TfFormProvider
   Left = 605
-  Top = 319
+  Top = 262
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   ClientHeight = 400
@@ -105,7 +105,7 @@ inherited fFormProvider: TfFormProvider
       Width = 69
       Height = 23
       Caption = #20445#23384
-      TabOrder = 9
+      TabOrder = 10
       OnClick = BtnOKClick
     end
     object BtnExit: TButton
@@ -114,7 +114,7 @@ inherited fFormProvider: TfFormProvider
       Width = 70
       Height = 23
       Caption = #21462#28040
-      TabOrder = 10
+      TabOrder = 11
       OnClick = BtnExitClick
     end
     object cxTextEdit3: TcxTextEdit
@@ -131,6 +131,7 @@ inherited fFormProvider: TfFormProvider
       Left = 81
       Top = 36
       Hint = 'T.P_ID'
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True
@@ -138,6 +139,16 @@ inherited fFormProvider: TfFormProvider
         end>
       Properties.OnButtonClick = EditIDPropertiesButtonClick
       TabOrder = 0
+      Width = 121
+    end
+    object cxCheckBox1: TcxCheckBox
+      Left = 11
+      Top = 366
+      Hint = 'T.P_Type'
+      Caption = #38750#36164#28304#31867#23458#25143
+      ParentFont = False
+      TabOrder = 9
+      Transparent = True
       Width = 121
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
@@ -241,6 +252,12 @@ inherited fFormProvider: TfFormProvider
         Hidden = True
         LayoutDirection = ldHorizontal
         ShowBorder = False
+        object dxLayoutControl1Item3: TdxLayoutItem
+          Caption = 'cxCheckBox1'
+          ShowCaption = False
+          Control = cxCheckBox1
+          ControlOptions.ShowBorder = False
+        end
         object dxLayoutControl1Item10: TdxLayoutItem
           AutoAligns = [aaVertical]
           AlignHorz = ahRight

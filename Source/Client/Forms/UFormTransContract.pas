@@ -112,6 +112,7 @@ type
     procedure EditAreaPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditAIDPropertiesChange(Sender: TObject);
+    procedure EditTruckPropertiesEditValueChanged(Sender: TObject);
   private
     { Private declarations }
     FRID: string;
@@ -122,6 +123,7 @@ type
     //前缀长度
     procedure InitFormData(const nID: string);
     //载入数据
+    procedure LoadCusAddrInfo(const nCusID: string);
   public
     { Public declarations }
     class function CreateForm(const nPopedom: string = '';
@@ -284,7 +286,80 @@ begin
     EditCPrice.Text := Format('%.2f', [FieldByName('T_CPrice').AsFloat]);
     EditDistance.Text:=Format('%.2f', [FieldByName('T_DisValue').AsFloat]);
   end;
+
+  LoadCusAddrInfo(FInfo.FCusID);
 end;
+
+procedure TfFormTransContract.LoadCusAddrInfo(const nCusID: string);
+var nIdx: Integer;
+    nSQL: string;
+begin
+  if FInfo.FCusID = '' then Exit;
+
+  if FInfo.FCusID <> '' then
+  begin
+    SetLength(gAddrs, 0);
+
+    nSQL := 'Select * From %s Where A_CID=''%s''';
+    nSQL := Format(nSQL, [sTable_CusAddr, FInfo.FCusID]);
+
+    with FDM.QueryTemp(nSQL) do
+    if RecordCount>0 then
+    begin
+      SetLength(gAddrs, RecordCount);
+
+      First;
+      nIdx := 0;
+
+      while not Eof do
+      try
+        with gAddrs[nIdx] do
+        begin
+          FCusID := FieldByName('A_CID').AsString;
+          FAddrID:= FieldByName('A_ID').AsString;
+
+          FRecvPhone:= FieldByName('A_RecvPhone').AsString;
+          FDelivery := FieldByName('A_Delivery').AsString;
+          FRecvMan  := FieldByName('A_RecvMan').AsString;
+
+          FDistance := FieldByName('A_Distance').AsFloat;
+          FCusPrice := FieldByName('A_CPrice').AsFloat;
+          FDrvPrice := FieldByName('A_DPrice').AsFloat;
+
+          EditAID.Properties.Items.AddObject(FAddrID + '.' + FDelivery,
+            Pointer(nIdx));
+        end;
+
+        Inc(nIdx); 
+      finally
+        Next;
+      end;
+    end;  
+
+    if EditPayment.Properties.Items.Count<1 then
+    begin
+      nSQL := MacroValue(sQuery_SysDict, [MI('$Table', sTable_SysDict),
+                         MI('$Name', sFlag_PaymentItem3)]);
+      //xxxxx
+      with FDM.QueryTemp(nSQL) do
+      if RecordCount>0 then
+      begin
+        First;
+
+        while not Eof do
+        try
+          EditPayment.Properties.Items.Add(FieldByName('D_Value').AsString);
+        finally
+          Next;
+        end;
+      end;
+    end;
+
+    if EditAID.Properties.Items.Count>0 then EditAID.ItemIndex := 0;
+    if EditPayment.Properties.Items.Count>0 then EditPayment.ItemIndex := 0;
+  end;
+
+end;  
 
 //Desc: 保存数据
 procedure TfFormTransContract.BtnOKClick(Sender: TObject);
@@ -411,49 +486,53 @@ begin
 
   FDM.ADOConn.BeginTrans;
   try
-    nSQLTmp := 'Select * From %s Where A_CID=''%s''';
-    nSQLTmp := Format(nSQLTmp, [sTable_TransAccount, FInfo.FCusID]);
-
-    with FDM.QuerySQL(nSQLTmp) do
-    begin
-      if RecordCount < 1 then
-      begin
-        nStr := '编号为[ %s ]的客户账户不存在.';
-        nStr := Format(nStr, [FInfo.FCusID]);
-        raise Exception.Create(nStr);
-      end;
-
-      nMoney := FieldByName('A_InMoney').AsFloat +
-                FieldByName('A_CreditLimit').AsFloat-
-                FieldByName('A_OutMoney').AsFloat -
-                FieldByName('A_CardUseMoney').AsFloat -
-                FieldByName('A_Compensation').AsFloat - //返利金额不参与正常发货
-                FieldByName('A_FreezeMoney').AsFloat;
-      //xxxxx
-
-      nMoney := Float2Float(nMoney + FInfo.FCusMoney, cPrecision, False);
-
-      if FloatRelation(nCusMoney, nMoney, rtGreater, cPrecision) then
-      begin
-        nStr := '客户[ %s ]上没有足够的运费金额,详情如下:' + #13#10#13#10 +
-               '可用金额: %.2f' + #13#10 +
-               '本次运费: %.2f' + #13#10#13#10 +
-               '请续交运费.';
-        nStr := Format(nStr, [EditCusName.Text, nMoney, nCusMoney]);
-        raise Exception.Create(nStr);
-      end;
-    end;
-
     FDM.ExecuteSQL(nSQL);
     //xxxxx
 
-    nCusMoney := nCusMoney - FInfo.FCusMoney;
+    if Pos('回', EditPayment.Text)>0 then
+    begin
+      nSQLTmp := 'Select * From %s Where A_CID=''%s''';
+      nSQLTmp := Format(nSQLTmp, [sTable_TransAccount, FInfo.FCusID]);
 
-    nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) Where A_CID=''%s''';
-    nSQL := Format(nSQL, [sTable_TransAccount, FloatToStr(nCusMoney),
-            FInfo.FCusID]);
-    FDM.ExecuteSQL(nSQL);
-    //冻结运费
+      with FDM.QuerySQL(nSQLTmp) do
+      begin
+        if RecordCount < 1 then
+        begin
+          nStr := '编号为[ %s ]的客户账户不存在.';
+          nStr := Format(nStr, [FInfo.FCusID]);
+          raise Exception.Create(nStr);
+        end;
+
+        nMoney := FieldByName('A_InMoney').AsFloat +
+                  FieldByName('A_CreditLimit').AsFloat-
+                  FieldByName('A_OutMoney').AsFloat -
+                  FieldByName('A_CardUseMoney').AsFloat -
+                  FieldByName('A_Compensation').AsFloat - //返利金额不参与正常发货
+                  FieldByName('A_FreezeMoney').AsFloat;
+        //xxxxx
+
+        nMoney := Float2Float(nMoney + FInfo.FCusMoney, cPrecision, False);
+
+        if FloatRelation(nCusMoney, nMoney, rtGreater, cPrecision) then
+        begin
+          nStr := '客户[ %s ]上没有足够的运费金额,详情如下:' + #13#10#13#10 +
+                 '可用金额: %.2f' + #13#10 +
+                 '本次运费: %.2f' + #13#10#13#10 +
+                 '请续交运费.';
+          nStr := Format(nStr, [EditCusName.Text, nMoney, nCusMoney]);
+          raise Exception.Create(nStr);
+        end;
+      end;
+
+      nCusMoney := nCusMoney - FInfo.FCusMoney;
+
+      nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) Where A_CID=''%s''';
+      nSQL := Format(nSQL, [sTable_TransAccount, FloatToStr(nCusMoney),
+              FInfo.FCusID]);
+      FDM.ExecuteSQL(nSQL);
+      //冻结运费
+    end;
+    //回厂付运费校验运费
 
     FDM.ADOConn.CommitTrans;
     ModalResult := mrOk;
@@ -485,7 +564,6 @@ procedure TfFormTransContract.EditLIDPropertiesButtonClick(Sender: TObject;
   AButtonIndex: Integer);
 var nSQL, nStr, nID: string;
     nP: TFormCommandParam;
-    nIdx: Integer;
 begin
   inherited;
   if FRID <> '' then Exit;
@@ -526,68 +604,7 @@ begin
     EditValue.Text   := FloatToStr(FieldByName('L_Value').AsFloat);
   end;
 
-  if FInfo.FCusID <> '' then
-  begin
-    SetLength(gAddrs, 0);
-
-    nSQL := 'Select * From %s Where A_CID=''%s''';
-    nSQL := Format(nSQL, [sTable_CusAddr, FInfo.FCusID]);
-
-    with FDM.QueryTemp(nSQL) do
-    if RecordCount>0 then
-    begin
-      SetLength(gAddrs, RecordCount);
-
-      First;
-      nIdx := 0;
-
-      while not Eof do
-      try
-        with gAddrs[nIdx] do
-        begin
-          FCusID := FieldByName('A_CID').AsString;
-          FAddrID:= FieldByName('A_ID').AsString;
-
-          FRecvPhone:= FieldByName('A_RecvPhone').AsString;
-          FDelivery := FieldByName('A_Delivery').AsString;
-          FRecvMan  := FieldByName('A_RecvMan').AsString;
-
-          FDistance := FieldByName('A_Distance').AsFloat;
-          FCusPrice := FieldByName('A_CPrice').AsFloat;
-          FDrvPrice := FieldByName('A_DPrice').AsFloat;
-
-          EditAID.Properties.Items.AddObject(FAddrID + '.' + FDelivery,
-            Pointer(nIdx));
-        end;
-
-        Inc(nIdx); 
-      finally
-        Next;
-      end;
-    end;  
-
-    if EditPayment.Properties.Items.Count<1 then
-    begin
-      nSQL := MacroValue(sQuery_SysDict, [MI('$Table', sTable_SysDict),
-                         MI('$Name', sFlag_PaymentItem3)]);
-      //xxxxx
-      with FDM.QueryTemp(nSQL) do
-      if RecordCount>0 then
-      begin
-        First;
-
-        while not Eof do
-        try
-          EditPayment.Properties.Items.Add(FieldByName('D_Value').AsString);
-        finally
-          Next;
-        end;
-      end;
-    end;
-
-    if EditAID.Properties.Items.Count>0 then EditAID.ItemIndex := 0;
-    if EditPayment.Properties.Items.Count>0 then EditPayment.ItemIndex := 0;
-  end;  
+  LoadCusAddrInfo(FInfo.FCusID);
 end;
 
 procedure TfFormTransContract.EditAreaPropertiesButtonClick(
@@ -606,7 +623,7 @@ end;
 procedure TfFormTransContract.EditAIDPropertiesChange(Sender: TObject);
 var nIdx: Integer;
 begin
-  if (not EditAID.Focused) or (EditAID.ItemIndex < 0) then Exit;
+  if EditAID.ItemIndex < 0 then Exit;
   nIdx := Integer(EditAID.Properties.Items.Objects[EditAID.ItemIndex]);
 
   EditDestAddr.Text := gAddrs[nIdx].FDelivery;
@@ -615,6 +632,25 @@ begin
   EditDPrice.Text := Format('%.2f', [gAddrs[nIdx].FDrvPrice]);
   EditCPrice.Text := Format('%.2f', [gAddrs[nIdx].FCusPrice]);
   EditDistance.Text:=Format('%.2f', [gAddrs[nIdx].FDistance]);
+end;
+
+procedure TfFormTransContract.EditTruckPropertiesEditValueChanged(
+  Sender: TObject);
+var nStr: string;
+begin
+  inherited;
+  EditTruck.Text := Trim(EditTruck.Text);
+  if Length(EditTruck.Text)<=3 then Exit;
+  if FRID <> '' then Exit;
+
+  nStr := 'Select T_Owner, T_Phone From %s Where T_Truck=''%s''';
+  nStr := Format(nStr, [sTable_Truck, EditTruck.Text]);
+  with FDM.QuerySQL(nStr) do
+  if RecordCount > 0 then
+  begin
+    EditDriver.Text := FieldByName('T_Owner').AsString;
+    EditDPhone.Text := FieldByName('T_Phone').AsString;
+  end;  
 end;
 
 initialization

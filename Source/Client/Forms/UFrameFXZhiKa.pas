@@ -85,8 +85,6 @@ end;
 //Desc: Êý¾Ý²éÑ¯SQL
 function TfFrameFXZhiKa.InitFormDataSQL(const nWhere: string): string;
 begin
-  FEnableBackDB := True;
-
   Result := 'Select zk.*, I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney As I_YuE,' +
             'sc.C_Name as Cus_Name,sm.S_Name as Sale_Name From $FXZhiKa zk ' +
             ' Left join $SC sc on zk.I_Customer=sc.C_ID ' +
@@ -125,7 +123,8 @@ begin
     EditCard.Text := Trim(EditCard.Text);
     if EditCard.Text = '' then Exit;
 
-    FWhere := Format('I_Card Like ''%%%s%%''', [EditCard.Text]);
+    FWhere := 'I_Card Like ''%%%s%%'' or I_CardNO Like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditCard.Text, EditCard.Text]);
     InitFormData(FWhere);
   end else
 

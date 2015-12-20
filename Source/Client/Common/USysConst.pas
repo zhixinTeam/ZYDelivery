@@ -104,6 +104,8 @@ const
   cFI_FormZhiKaParam    = $1014;                     //纸卡(订单)参数
   cFI_FormBill          = $1015;                     //开提货单
   cFI_FormFXZhiKa       = $1016;                     //分销订单
+  cFI_FormBillAdditional= $1017;                     //补提货单
+  cFI_FormFactZhiKaBind = $1018;                     //绑定订单
 
   cFI_FormMakeCard      = $1020;                     //办理磁卡
   cFI_FormReadICCard    = $1023;                     //办理磁卡
@@ -122,6 +124,7 @@ const
   cFI_FormGetProvider   = $1041;                     //选择供应商
   cFI_FormGetMeterail   = $1042;                     //选择原材料
   cFI_FormGetBill       = $1043;                     //选择交货单
+  cFI_FormGetFactZhika  = $1052;                     //选择工厂纸卡(订单)
 
   cFI_FormCusCredit     = $1064;                     //信用变动
   cFI_FormPayment       = $1066;                     //销售回款
@@ -187,6 +190,7 @@ type
 
     FFactNum    : string;                            //工厂编号
     FSerialID   : string;                            //电脑编号
+    FCustomer   : string;                            //关注客户编号
     FIsManual   : Boolean;                           //手动过磅
     FAutoPound  : Boolean;                           //自动称重
 
@@ -312,7 +316,7 @@ begin
   AddMenuModuleItem('MAIN_D01', cFI_FormZhiKa, mtForm);
   AddMenuModuleItem('MAIN_D02', cFI_FrameMakeCard);
   AddMenuModuleItem('MAIN_D03', cFI_FormBill, mtForm);
-  AddMenuModuleItem('MAIN_D04', cFI_FormBill, mtForm);
+  AddMenuModuleItem('MAIN_D04', cFI_FormBillAdditional, mtForm);
   AddMenuModuleItem('MAIN_D05', cFI_FrameZhiKa);
   AddMenuModuleItem('MAIN_D06', cFI_FrameBill);
   AddMenuModuleItem('MAIN_D09', cFI_FrameFXZhiKa);
@@ -363,7 +367,10 @@ begin
   AddMenuModuleItem('MAIN_M08', cFI_FrameOrderDetail);
   AddMenuModuleItem('MAIN_M09', cFI_FrameOrderBase);
 
-  AddMenuModuleItem('MAIN_N02', cFI_FormFXZhiKa, mtForm);
+  AddMenuModuleItem('MAIN_N01', cFI_FormZhiKa, mtForm);
+  AddMenuModuleItem('MAIN_N02', cFI_FormFactZhiKaBind, mtForm);
+  AddMenuModuleItem('MAIN_N03', cFI_FrameZhiKa);
+  AddMenuModuleItem('MAIN_N04', cFI_FrameFXZhiKa);
 
   AddMenuModuleItem('MAIN_Y01', cFI_FormTransContract, mtForm);  
   AddMenuModuleItem('MAIN_Y02', cFI_FrameTruckLogs);

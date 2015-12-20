@@ -43,7 +43,6 @@ type
     N6: TMenuItem;
     Edit1: TcxTextEdit;
     dxLayout1Item9: TdxLayoutItem;
-    N7: TMenuItem;
     N8: TMenuItem;
     N9: TMenuItem;
     dxLayout1Item10: TdxLayoutItem;
@@ -62,7 +61,6 @@ type
     procedure N3Click(Sender: TObject);
     procedure N4Click(Sender: TObject);
     procedure N5Click(Sender: TObject);
-    procedure N7Click(Sender: TObject);
     procedure PMenu1Popup(Sender: TObject);
     procedure CheckDeleteClick(Sender: TObject);
     procedure N10Click(Sender: TObject);
@@ -118,8 +116,6 @@ end;
 function TfFrameBill.InitFormDataSQL(const nWhere: string): string;
 var nStr: string;
 begin
-  FEnableBackDB := True;
-
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
   Result := 'Select * From $Bill ';
@@ -295,37 +291,6 @@ begin
       InitFormData(FWhere);
       ShowMsg('车牌号修改成功', sHint);
     end;
-  end;
-end;
-
-//Desc: 修改封签号
-procedure TfFrameBill.N7Click(Sender: TObject);
-var nStr,nID,nSeal: string;
-begin
-  if cxView1.DataController.GetSelectedCount > 0 then
-  begin
-    nStr := SQLQuery.FieldByName('L_Seal').AsString;
-    nSeal := nStr;
-    if not ShowInputBox('请输入新的封签编号:', '修改', nSeal, 100) then Exit;
-
-    if (nSeal = '') or (nStr = nSeal) then Exit;
-    //无效或一致
-    nID := SQLQuery.FieldByName('L_ID').AsString;
-
-    nStr := '确定要将交货单[ %s ]的封签号该为[ %s ]吗?';
-    nStr := Format(nStr, [nID, nSeal]);
-    if not QueryDlg(nStr, sAsk) then Exit;
-
-    nStr := 'Update %s Set L_Seal=''%s'' Where L_ID=''%s''';
-    nStr := Format(nStr, [sTable_Bill, nSeal, nID]);
-    FDM.ExecuteSQL(nStr);
-
-    nStr := '修改封签号[ %s -> %s ].';
-    nStr := Format(nStr, [SQLQuery.FieldByName('L_Seal').AsString, nSeal]);
-    FDM.WriteSysLog(sFlag_BillItem, nID, nStr, False);
-
-    InitFormData(FWhere);
-    ShowMsg('封签号修改成功', sHint);
   end;
 end;
 

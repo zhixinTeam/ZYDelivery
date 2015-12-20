@@ -94,6 +94,7 @@ type
     {$IFDEF SHXZY}
     function SaveStatisticsTrucks(var nData: string): Boolean;
     //车辆超重管理
+    function SaveFactZhiKa(var nData: string):Boolean;
     {$ENDIF}
 
     {$IFDEF XAZL}
@@ -476,6 +477,7 @@ begin
 
    {$IFDEF SHXZY}
    cBC_StatisticsTrucks    : Result := SaveStatisticsTrucks(nData);
+   cBC_SaveFactZhiKa       : Result := SaveFactZhiKa(nData);
    {$ENDIF}
    else
     begin
@@ -1037,7 +1039,7 @@ var nStr, nGroup, nWhere:string;
     nRest: Double;
 begin
   Result := False;
-  nStr := 'Select P_Name From %s Where P_ID=''%s''';
+  nStr := 'Select P_QLevel From %s Where P_ID=''%s''';
   nStr := Format(nStr, [sTable_StockParam, FIn.FData]);
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   if RecordCount>0 then
@@ -1611,13 +1613,13 @@ begin
       Exit;
     end;
 
-    if FieldByName('PValue').AsFloat<=0 then
+    if FieldByName('PValue').AsFloat<=1 then
          nPValue := FieldByName('PValue').AsFloat
     else nPValue := FieldByName('PrePValue').AsFloat;
 
     nValue := FieldByName('NetValue').AsFloat;
 
-    if FieldByName('MValue').AsFLoat<=0 then
+    if FieldByName('MValue').AsFLoat<=1 then
          nMValue := nPValue + nValue
     else nMValue := FieldByName('MValue').AsFloat;
 
@@ -1633,6 +1635,39 @@ begin
     gDBConnManager.WorkerExec(FDBConn, nSQL);
   end;
 end;
+
+function TWorkerBusinessCommander.SaveFactZhiKa(var nData: string): Boolean;
+var nSQL: string;
+    nDBWorker: PDBWorker;
+begin
+  Result := False;
+  if (FIn.FData='') or (FIn.FExtParam='') then
+  begin
+    nData := '订单编号不能为空!';
+    Exit;
+  end;
+
+  nDBWorker := nil;
+  try
+    nSQL := MacroValue(sQuery_ZhiKa, [MI('$Table', sTable_ZhiKa),
+            MI('$ZID', FIn.FExtParam)]);
+    with gDBConnManager.SQLQuery(nSQL, nDBWorker, sFlag_DB_Master) do
+    begin
+      if RecordCount<1 then
+      begin
+        nData := '工厂系统中,订单编号 [ %s ] 不存在';
+        nData := Format(nData, [FIn.FExtParam]);
+        Exit;
+      end;
+
+
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBWorker);
+  end;
+
+
+end;  
 {$ENDIF}
 
 {$IFDEF XAZL}
@@ -3289,19 +3324,16 @@ begin
       if FListA.Values['BuDan'] = sFlag_Yes then //补单
       begin
         nStr := MakeSQLByStr([SF('L_Status', sFlag_TruckOut),
-                SF('L_InTime', sField_SQLServer_Now, sfVal),
-                SF('L_PValue', 0, sfVal),
-                SF('L_PDate', sField_SQLServer_Now, sfVal),
-                SF('L_PMan', FIn.FBase.FFrom.FUser),
-                SF('L_MValue', FListC.Values['Value'], sfVal),
-                SF('L_MDate', sField_SQLServer_Now, sfVal),
-                SF('L_MMan', FIn.FBase.FFrom.FUser),
-                SF('L_OutFact', sField_SQLServer_Now, sfVal),
+                SF('L_InTime', Str2DateTime(FListA.Values['PDate']), sfDateTime),
+                SF('L_PValue', StrToFloat(FListA.Values['PValue']), sfVal),
+                SF('L_PDate', Str2DateTime(FListA.Values['PDate']), sfDateTime),
+                SF('L_PMan', FListA.Values['PMan']),
+                SF('L_MValue', FListC.Values['MValue'], sfVal),
+                SF('L_MDate', Str2DateTime(FListA.Values['MDate']), sfDateTime),
+                SF('L_MMan', FListA.Values['MMan']),
+                SF('L_OutFact', Str2DateTime(FListA.Values['MDate']), sfDateTime),
                 SF('L_OutMan', FIn.FBase.FFrom.FUser),
-                SF('L_ZhiKa', FListA.Values['ZhiKa']),
-                SF('L_ZKType', FListA.Values['ZKType']),
-                SF('L_ICC', FListA.Values['ICCard']),
-                SF('L_ICCT', FListA.Values['ICCardType']),
+                SF('L_Memo', FListA.Values['Memo']),
                 SF('L_Card', '')
                 ], sTable_Bill, SF('L_ID', nOut.FData), False);
         gDBConnManager.WorkerExec(FDBConn, nStr);
@@ -3564,7 +3596,7 @@ end;
 function TWorkerBusinessBills.BillSaleAdjust(var nData: string): Boolean;
 var nIdx: Integer;
     nOut: TWorkerBusinessCommand;
-    nStr, nNewZKType, nNewZK: string;
+    nStr, nNewZKType, nNewZK, nICType: string;
     nVal,nNewMon,nOldMon,nNewPrice,nOldPrice: Double;
 begin
   Result := False;
@@ -3606,7 +3638,7 @@ begin
   end;
 
   //----------------------------------------------------------------------------
-  nStr := 'Select F_ZType From $ICTable Where F_ZID =''$NewZK''';
+  nStr := 'Select F_ZType,F_CardType From $ICTable Where F_ZID =''$NewZK''';
   nStr := MacroValue(nStr, [MI('$ICTable', sTable_ICCardInfo),
           MI('$NewZK', nNewZK)]);
           
@@ -3619,6 +3651,7 @@ begin
     end;
 
     nNewZKType := Fields[0].AsString;
+    nICType    := Fields[1].AsString;
   end;
 
   //----------------------------------------------------------------------------
@@ -3859,11 +3892,11 @@ begin
   end;
   //还原出金
 
-  nStr := MakeSQLByStr([SF('L_ZhiKa', FIn.FExtParam),
+  nStr := MakeSQLByStr([SF('L_ZhiKa', FIn.FExtParam),SF('L_ZKType', nNewZKType),
           SF('L_Project', FListA.Values['Project']),
           SF('L_Area', FListA.Values['Area']),
           SF('L_ICC', FListA.Values['Card']),
-          SF('L_ICCT', nNewZKType),
+          SF('L_ICCT', nICType),
 
           SF('L_CusID', FListA.Values['CusID']),
           SF('L_CusName', FListA.Values['CusName']),

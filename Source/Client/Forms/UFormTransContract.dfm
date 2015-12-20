@@ -177,6 +177,7 @@ inherited fFormTransContract: TfFormTransContract
       Top = 338
       Hint = 'T.T_Truck'
       ParentFont = False
+      Properties.OnEditValueChanged = EditTruckPropertiesEditValueChanged
       TabOrder = 15
       Width = 121
     end

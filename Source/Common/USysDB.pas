@@ -73,6 +73,9 @@ ResourceString
   {*数据库标识*}
   sFlag_DB_K3         = 'King_K3';                   //金蝶数据库
   sFlag_DB_NC         = 'YonYou_NC';                 //用友数据库
+  sFlag_DB_Master     = 'Fact_Master';               //工厂主数据库
+  sFlag_DB_DRX        = 'Drx_Master';                //德仁鑫数据库
+  sFlag_DB_SHY        = 'Shy_Master';                //盛华运数据库
 
   {*相关标记*}
   sFlag_Yes           = 'Y';                         //是
@@ -804,7 +807,7 @@ ResourceString
        'L_CusID varChar(15), L_CusName varChar(80), L_CusPY varChar(80),' +
        'L_SaleID varChar(15), L_SaleMan varChar(32),' +
        'L_Type Char(1), L_StockNo varChar(20), L_StockName varChar(80),' +
-       'L_Value $Float, L_Price $Float, L_ZKMoney Char(1),' +
+       'L_Value $Float, L_Price $Float, L_PPrice $Float, L_ZKMoney Char(1),' +
        'L_Truck varChar(15), L_Status Char(1), L_NextStatus Char(1),' +
        'L_InTime DateTime, L_InMan varChar(32),' +
        'L_PValue $Float, L_PDate DateTime, L_PMan varChar(32),' +
@@ -932,7 +935,7 @@ ResourceString
        'P_FactID varChar(32), P_PStation varChar(10), P_MStation varChar(10),' +
        'P_Direction varChar(10), P_PModel varChar(10), P_Status Char(1),' +
        'P_Valid Char(1), P_PrintNum Integer Default 1,' +
-       'P_DelMan varChar(32), P_DelDate DateTime, P_KZValue $Float)';
+       'P_DelMan varChar(32), P_DelDate DateTime, P_KZValue $Float Default 0)';
   {-----------------------------------------------------------------------------
    过磅记录: Materails
    *.P_ID: 编号
@@ -1414,6 +1417,22 @@ ResourceString
    *.$Table:扩展信息表
    *.$Group:分组名称
    *.$ID:信息标识
+  -----------------------------------------------------------------------------}
+
+  sQuery_ZhiKa = 'Select Z_ID, Z_Name, Z_CardNO, Z_Customer, Z_InValid,' +
+         'Z_TJStatus From $Table Where Z_ID=''$ZID'' Order By Z_ID ASC';
+  {-----------------------------------------------------------------------------
+   从纸卡表中读取数据信息
+   *.$Table:订单表
+   *.$ZID:订单编号
+  -----------------------------------------------------------------------------}
+
+  sQuery_ZhiKaDtl = 'Select D_ZID, D_Type, D_StockNo, D_StockName, D_Price,' +
+         'D_Value From $Table Where D_ZID=''$DZID'' Order By D_StockNo ASC';
+  {-----------------------------------------------------------------------------
+   从纸卡表中读取数据信息
+   *.$Table:订单明细表
+   *.$DZID:订单编号
   -----------------------------------------------------------------------------}
 
 function CardStatusToStr(const nStatus: string): string;

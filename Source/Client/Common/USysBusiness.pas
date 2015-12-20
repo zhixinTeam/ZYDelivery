@@ -69,7 +69,7 @@ function LoadSaleMan(const nList: TStrings; const nWhere: string = ''): Boolean;
 function LoadCustomer(const nList: TStrings; const nWhere: string = ''): Boolean;
 //读取客户列表
 function LoadCustomerInfo(const nCID: string; const nList: TcxMCListBox;
- var nHint: string): TDataSet;
+ var nHint: string; const nUseBackdb: Boolean=False): TDataSet;
 //载入客户信息
 function LoadContractInfo(const nCID: string; const nList: TcxMCListBox;
  var nHint: string): TDataset;
@@ -218,6 +218,9 @@ function GetICCardInfo(var nCardNO: string; const nPassword: string=''):Boolean;
 function SaveCompensation(const nSaleMan,nCusID,nCusName,nPayment,nMemo: string;
  const nMoney: Double): Boolean;
 //保存用户补偿金
+
+function SaveFactZhiKa(const nZhiKa: string; const nFactZhiKa: string): Boolean;
+//绑定工厂订单编号
 
 //------------------------------------------------------------------------------
 procedure PrintSaleContractReport(const nID: string; const nAsk: Boolean);
@@ -699,7 +702,7 @@ end;
 
 //Desc: 载入nCID客户的信息到nList中,并返回数据集
 function LoadCustomerInfo(const nCID: string; const nList: TcxMCListBox;
- var nHint: string): TDataSet;
+ var nHint: string; const nUseBackdb: Boolean): TDataSet;
 var nStr: string;
 begin
   nStr := 'Select cus.*,S_Name as C_SaleName From $Cus cus ' +
@@ -710,7 +713,7 @@ begin
   //xxxxx
 
   nList.Clear;
-  Result := FDM.QueryTemp(nStr);
+  Result := FDM.QueryTemp(nStr, nUseBackdb);
 
   if Result.RecordCount > 0 then
   with nList.Items,Result do
@@ -1987,6 +1990,12 @@ begin
     Result := False;
     if not nBool then FDM.ADOConn.RollbackTrans;
   end;
+end;
+
+function SaveFactZhiKa(const nZhiKa: string; const nFactZhiKa: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessCommand(cBC_SaveFactZhiKa, nZhiKa, nFactZhiKa, @nOut);
 end;
 
 //Date: 2015-01-16

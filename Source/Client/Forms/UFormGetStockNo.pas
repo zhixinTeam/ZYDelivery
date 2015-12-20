@@ -111,7 +111,7 @@ begin
   EditNo.Text := nNo;
   ListStock.Items.Clear;
 
-  nStr := 'Select P_Name From %s Where P_ID=''%s''';
+  nStr := 'Select P_QLevel From %s Where P_ID=''%s''';
   nStr := Format(nStr, [sTable_StockParam, nNo]);
   with FDM.QueryTemp(nStr) do
   if RecordCount>0 then

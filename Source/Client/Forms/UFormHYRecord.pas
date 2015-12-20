@@ -309,8 +309,9 @@ begin
   
   if EditStock.Properties.Items.Count < 1 then
   begin
-    nStr := 'Select P_ID,P_Name,P_Stock From %s';
+    nStr := 'Select P_ID,P_QLevel,P_Stock From %s';
     nStr := Format(nStr, [sTable_StockParam]);
+    //根据强度等级分组
 
     with FDM.QueryTemp(nStr) do
     if RecordCount>0 then

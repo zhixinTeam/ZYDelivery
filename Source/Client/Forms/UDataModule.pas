@@ -75,7 +75,7 @@ type
     {*自动编号*}
     procedure FillStringsData(const nList: TStrings; const nSQL: string;
       const nFieldLen: integer = 0; const nFieldFlag: string = '';
-      const nExclude: TDynamicStrArray = nil);
+      const nExclude: TDynamicStrArray = nil; const nUseBackdb: Boolean=False);
     {*填充数据*}
     function LoadDBImage(const nDS: TDataSet; const nFieldName: string;
       const nPicture: TPicture): Boolean;
@@ -448,7 +448,7 @@ end;
 //Desc: 用nSQL查询的结果填充nList列表
 procedure TFDM.FillStringsData(const nList: TStrings; const nSQL: string;
  const nFieldLen: integer = 0; const nFieldFlag: string = '';
- const nExclude: TDynamicStrArray = nil);
+ const nExclude: TDynamicStrArray = nil; const nUseBackdb: Boolean=False);
 var nPos: integer;
     nStr,nPrefix: string;
 begin
@@ -466,7 +466,7 @@ begin
       nPrefix := '';
     end;
 
-    LoadDataToList(QueryTemp(nStr), nList, nPrefix, nFieldLen,
+    LoadDataToList(QueryTemp(nStr, nUseBackdb), nList, nPrefix, nFieldLen,
                                     nFieldFlag, nExclude);
     //fill record into list
   except
