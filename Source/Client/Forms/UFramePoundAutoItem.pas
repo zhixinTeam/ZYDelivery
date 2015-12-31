@@ -65,7 +65,7 @@ type
     procedure Timer_SaveFailTimer(Sender: TObject);
   private
     { Private declarations }
-    FCardUsed: string;
+    FCardUsed, FProNextStatus: string;
     //卡片类型
     FIsWeighting, FIsSaving: Boolean;
     //称重标识,保存标识
@@ -432,6 +432,9 @@ begin
     end;
   end;
 
+  if FCardUsed = sFlag_Provide then
+    FProNextStatus := FBillItems[0].FNextStatus;
+
   FInnerData.FPModel := sFlag_PoundPD;
   FUIData := FInnerData;
   SetUIData(False);
@@ -575,6 +578,10 @@ begin
 
       if (FType = sFlag_San) and (nVal>0) and FSanStop then
       begin
+        nStr := '车辆[%s]实际装车量超出核载，请通知司机卸货';
+        nStr := Format(nStr, [FTruck]);
+        PlayVoice(nStr);
+
         nStr := '车辆[ %s ]实际装车量误差较大,详情如下:' + #13#10#13#10 +
                 '※.开单量: %.2f吨' + #13#10 +
                 '※.装车量: %.2f吨' + #13#10 +
@@ -653,12 +660,7 @@ begin
 
   if FCardUsed = sFlag_Provide then
   begin
-    //xxxxx
-    if FBillItems[0].FStatus = sFlag_TruckXH then
-         nNextStatus := sFlag_TruckBFM
-    else nNextStatus := sFlag_TruckBFP;
-
-    Result := SavePurchaseOrders(nNextStatus, FBillItems,FPoundTunnel); 
+    Result := SavePurchaseOrders(FProNextStatus, FBillItems,FPoundTunnel);
   end else Result := SaveTruckPoundItem(FPoundTunnel, FBillItems);
   //保存称重
 end;

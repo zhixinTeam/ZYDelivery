@@ -637,6 +637,8 @@ var nStr,nR: string;
     nPos: Integer;
 begin
   nStr := BytesToString(AData);
+  WriteLog(nStr + ' ::: 接收硬件守护卡号');
+
   nPos := Pos('NEWDATA', nStr);
   if nPos < 1 then Exit;
 

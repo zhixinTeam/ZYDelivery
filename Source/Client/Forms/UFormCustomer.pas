@@ -74,11 +74,14 @@ type
     dxLayoutControl1Item23: TdxLayoutItem;
     BtnNo: TcxRadioButton;
     dxLayoutControl1Item24: TdxLayoutItem;
-    dxLayoutControl1Group9: TdxLayoutGroup;
     cxLabel2: TcxLabel;
     dxLayoutControl1Item25: TdxLayoutItem;
     cxLabel3: TcxLabel;
     dxLayoutControl1Item26: TdxLayoutItem;
+    EditCode: TcxTextEdit;
+    dxLayoutControl1Item19: TdxLayoutItem;
+    dxLayoutControl1Group15: TdxLayoutGroup;
+    dxLayoutControl1Group14: TdxLayoutGroup;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnAddClick(Sender: TObject);

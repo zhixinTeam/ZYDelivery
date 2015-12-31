@@ -463,7 +463,7 @@ ResourceString
   -----------------------------------------------------------------------------}
 
   sSQL_NewCustomer = 'Create Table $Table(R_ID $Inc, C_ID varChar(15), ' +
-       'C_Name varChar(80), C_PY varChar(80), C_Addr varChar(100), ' +
+       'C_Name varChar(80), C_PY varChar(80), C_Code varChar(15), C_Addr varChar(100), ' +
        'C_FaRen varChar(50), C_LiXiRen varChar(50), C_WeiXin varChar(15),' +
        'C_Phone varChar(15), C_Fax varChar(15), C_Tax varChar(32),' +
        'C_Bank varChar(35), C_Account varChar(18), C_SaleMan varChar(15),' +
@@ -474,6 +474,7 @@ ResourceString
    *.C_ID: 编号
    *.C_Name: 名称
    *.C_PY: 拼音简写
+   *.C_Code: 客户代码
    *.C_Addr: 地址
    *.C_FaRen: 法人
    *.C_LiXiRen: 联系人

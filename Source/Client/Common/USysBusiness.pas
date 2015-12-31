@@ -2256,7 +2256,8 @@ begin
   FDR.AddParamItem(nParam);
 
   FDR.Dataset1.DataSet := FDM.SqlTemp;
-  FDR.ShowReport;
+  //FDR.ShowReport;
+  FDR.PrintReport;
   Result := FDR.PrintSuccess;
 end;
 
@@ -2307,7 +2308,8 @@ begin
   FDR.AddParamItem(nParam);
 
   FDR.Dataset1.DataSet := FDM.SqlTemp;
-  FDR.ShowReport;
+  //FDR.ShowReport;
+  FDR.PrintReport;
   Result := FDR.PrintSuccess;
 end;
 
@@ -2352,7 +2354,8 @@ begin
   FDR.AddParamItem(nParam);
 
   FDR.Dataset1.DataSet := FDM.SqlTemp;
-  FDR.ShowReport;
+  //FDR.ShowReport;
+  FDR.PrintReport;
   Result := FDR.PrintSuccess;
 
   if Result  then

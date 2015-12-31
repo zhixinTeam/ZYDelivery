@@ -4,7 +4,7 @@ inherited fFormCustomer: TfFormCustomer
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   ClientHeight = 530
-  ClientWidth = 520
+  ClientWidth = 517
   OldCreateOrder = True
   OnClose = FormClose
   OnCreate = FormCreate
@@ -14,7 +14,7 @@ inherited fFormCustomer: TfFormCustomer
   object dxLayoutControl1: TdxLayoutControl
     Left = 0
     Top = 0
-    Width = 520
+    Width = 517
     Height = 530
     Align = alClient
     TabOrder = 0
@@ -47,7 +47,7 @@ inherited fFormCustomer: TfFormCustomer
       Properties.MaxLength = 50
       Properties.ScrollBars = ssVertical
       Style.Edges = [bBottom]
-      TabOrder = 15
+      TabOrder = 16
       Height = 45
       Width = 385
     end
@@ -69,7 +69,7 @@ inherited fFormCustomer: TfFormCustomer
       ParentFont = False
       Style.BorderStyle = cbsOffice11
       Style.Edges = [bLeft, bTop, bRight, bBottom]
-      TabOrder = 20
+      TabOrder = 21
     end
     object InfoItems: TcxComboBox
       Left = 81
@@ -80,7 +80,7 @@ inherited fFormCustomer: TfFormCustomer
       Properties.IncrementalSearch = False
       Properties.ItemHeight = 20
       Properties.MaxLength = 30
-      TabOrder = 16
+      TabOrder = 17
       Width = 100
     end
     object EditInfo: TcxTextEdit
@@ -88,43 +88,43 @@ inherited fFormCustomer: TfFormCustomer
       Top = 340
       ParentFont = False
       Properties.MaxLength = 50
-      TabOrder = 18
+      TabOrder = 19
       Width = 120
     end
     object BtnAdd: TButton
-      Left = 451
+      Left = 448
       Top = 315
       Width = 46
       Height = 18
       Caption = #28155#21152
-      TabOrder = 17
+      TabOrder = 18
       OnClick = BtnAddClick
     end
     object BtnDel: TButton
-      Left = 452
+      Left = 449
       Top = 340
       Width = 45
       Height = 17
       Caption = #21024#38500
-      TabOrder = 19
+      TabOrder = 20
       OnClick = BtnDelClick
     end
     object BtnOK: TButton
-      Left = 364
+      Left = 361
       Top = 497
       Width = 70
       Height = 22
       Caption = #20445#23384
-      TabOrder = 22
+      TabOrder = 23
       OnClick = BtnOKClick
     end
     object BtnExit: TButton
-      Left = 439
+      Left = 436
       Top = 497
       Width = 70
       Height = 22
       Caption = #21462#28040
-      TabOrder = 23
+      TabOrder = 24
       OnClick = BtnExitClick
     end
     object cxTextEdit1: TcxTextEdit
@@ -191,8 +191,8 @@ inherited fFormCustomer: TfFormCustomer
       Hint = 'T.C_Account'
       ParentFont = False
       Properties.MaxLength = 18
-      TabOrder = 9
-      Width = 121
+      TabOrder = 10
+      Width = 209
     end
     object EditSaleMan: TcxComboBox
       Left = 81
@@ -212,44 +212,44 @@ inherited fFormCustomer: TfFormCustomer
       Hint = 'T.C_XuNi'
       Caption = #38750#27491#24335#23458#25143': '#27491#24120#26597#35810#26102#19981#20104#26174#31034'.'
       ParentFont = False
-      TabOrder = 21
+      TabOrder = 22
       Transparent = True
       Width = 218
     end
     object EditWX: TcxComboBox
-      Left = 81
-      Top = 208
+      Left = 280
+      Top = 186
       Hint = 'T.C_WeiXin'
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
       Properties.DropDownRows = 20
       Properties.ItemHeight = 20
-      TabOrder = 14
+      TabOrder = 11
       Width = 121
     end
     object BtnYes: TcxRadioButton
       Left = 86
-      Top = 186
+      Top = 211
       Width = 58
       Height = 17
       Caption = #26159
       Checked = True
       ParentColor = False
-      TabOrder = 11
+      TabOrder = 13
       TabStop = True
     end
     object BtnNo: TcxRadioButton
       Left = 149
-      Top = 186
+      Top = 211
       Width = 62
       Height = 17
       Caption = #21542
       ParentColor = False
-      TabOrder = 12
+      TabOrder = 14
     end
     object cxLabel2: TcxLabel
       Left = 23
-      Top = 186
+      Top = 211
       Caption = #36164#28304#32508#21512':'
       ParentFont = False
       Style.TextColor = clBlack
@@ -257,10 +257,17 @@ inherited fFormCustomer: TfFormCustomer
     end
     object cxLabel3: TcxLabel
       Left = 216
-      Top = 186
+      Top = 211
       Caption = '     '#22791#27880':'#21306#20998#36164#28304#31867#23458#25143#21644#38750#36164#28304#31867#23458#25143
       ParentFont = False
       Transparent = True
+    end
+    object EditCode: TcxTextEdit
+      Left = 81
+      Top = 186
+      Hint = 'T.C_Code'
+      TabOrder = 9
+      Width = 121
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
       ShowCaption = False
@@ -345,58 +352,68 @@ inherited fFormCustomer: TfFormCustomer
           Hidden = True
           LayoutDirection = ldHorizontal
           ShowBorder = False
-          object dxLayoutControl1Item17: TdxLayoutItem
-            Caption = #24320' '#25143' '#34892':'
-            Control = EditBank
-            ControlOptions.ShowBorder = False
+          object dxLayoutControl1Group15: TdxLayoutGroup
+            ShowCaption = False
+            Hidden = True
+            ShowBorder = False
+            object dxLayoutControl1Item17: TdxLayoutItem
+              Caption = #24320' '#25143' '#34892':'
+              Control = EditBank
+              ControlOptions.ShowBorder = False
+            end
+            object dxLayoutControl1Item19: TdxLayoutItem
+              Caption = #23458#25143#20195#30721':'
+              Control = EditCode
+              ControlOptions.ShowBorder = False
+            end
           end
-          object dxLayoutControl1Item18: TdxLayoutItem
-            AutoAligns = [aaVertical]
-            AlignHorz = ahClient
-            Caption = #38134#34892#36134#25143':'
-            Control = cxTextEdit6
-            ControlOptions.ShowBorder = False
+          object dxLayoutControl1Group14: TdxLayoutGroup
+            ShowCaption = False
+            Hidden = True
+            ShowBorder = False
+            object dxLayoutControl1Item18: TdxLayoutItem
+              AutoAligns = [aaVertical]
+              AlignHorz = ahClient
+              Caption = #38134#34892#36134#25143':'
+              Control = cxTextEdit6
+              ControlOptions.ShowBorder = False
+            end
+            object dxLayoutControl1Item22: TdxLayoutItem
+              Caption = #24494#20449#36134#21495':'
+              Control = EditWX
+              ControlOptions.ShowBorder = False
+            end
           end
         end
         object dxLayoutControl1Group10: TdxLayoutGroup
           ShowCaption = False
           Hidden = True
+          LayoutDirection = ldHorizontal
           ShowBorder = False
-          object dxLayoutControl1Group9: TdxLayoutGroup
+          object dxLayoutControl1Item25: TdxLayoutItem
+            Caption = 'cxLabel2'
             ShowCaption = False
-            Hidden = True
-            LayoutDirection = ldHorizontal
-            ShowBorder = False
-            object dxLayoutControl1Item25: TdxLayoutItem
-              Caption = 'cxLabel2'
-              ShowCaption = False
-              Control = cxLabel2
-              ControlOptions.ShowBorder = False
-            end
-            object dxLayoutControl1Item23: TdxLayoutItem
-              Caption = 'cxRadioButton1'
-              ShowCaption = False
-              Control = BtnYes
-              ControlOptions.AutoColor = True
-              ControlOptions.ShowBorder = False
-            end
-            object dxLayoutControl1Item24: TdxLayoutItem
-              Caption = 'cxRadioButton2'
-              ShowCaption = False
-              Control = BtnNo
-              ControlOptions.AutoColor = True
-              ControlOptions.ShowBorder = False
-            end
-            object dxLayoutControl1Item26: TdxLayoutItem
-              Caption = 'cxLabel3'
-              ShowCaption = False
-              Control = cxLabel3
-              ControlOptions.ShowBorder = False
-            end
+            Control = cxLabel2
+            ControlOptions.ShowBorder = False
           end
-          object dxLayoutControl1Item22: TdxLayoutItem
-            Caption = #24494#20449#36134#21495':'
-            Control = EditWX
+          object dxLayoutControl1Item23: TdxLayoutItem
+            Caption = 'cxRadioButton1'
+            ShowCaption = False
+            Control = BtnYes
+            ControlOptions.AutoColor = True
+            ControlOptions.ShowBorder = False
+          end
+          object dxLayoutControl1Item24: TdxLayoutItem
+            Caption = 'cxRadioButton2'
+            ShowCaption = False
+            Control = BtnNo
+            ControlOptions.AutoColor = True
+            ControlOptions.ShowBorder = False
+          end
+          object dxLayoutControl1Item26: TdxLayoutItem
+            Caption = 'cxLabel3'
+            ShowCaption = False
+            Control = cxLabel3
             ControlOptions.ShowBorder = False
           end
         end

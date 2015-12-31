@@ -2706,6 +2706,17 @@ begin
   nTruck := FListA.Values['Truck'];
   if not VerifyTruckNO(nTruck, nData) then Exit;
 
+  {$IFDEF SHXZY}
+  nStr := 'Select Count(*) From %s Where T_Truck=''%s''';
+  nStr := Format(nStr, [sTable_Truck, nTruck]);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount < 1 then
+  begin
+    nData := Format('车牌号[ %s ]档案不存在.', [nTruck]);
+    Exit;
+  end;
+  {$ENDIF}
+
   //----------------------------------------------------------------------------
   SetLength(FStockItems, 0);
   SetLength(FMatchItems, 0);
@@ -2843,14 +2854,16 @@ begin
       Exit;
     end;
 
-    if FieldByName('I_Enabled').AsString = sFlag_No then
+    if (FieldByName('I_Enabled').AsString = sFlag_No) and
+       (FListA.Values['ZKType'] = sFlag_BillFX) then
     begin
       nData := Format('订单[ %s ]已被管理员作废.', [Values['ZhiKa']]);
       Exit;
     end;
 
     nStr := FieldByName('I_TJStatus').AsString;
-    if nStr  <> '' then
+    if (nStr  <> '')  and
+       (FListA.Values['ZKType'] = sFlag_BillFX) then
     begin
       if nStr = sFlag_TJOver then
            nData := '订单[ %s ]已调价,请重新开单.'
@@ -3470,6 +3483,24 @@ begin
     //bill list
 
     if not TWorkerBusinessCommander.CallMe(cBC_SyncStockBill, nSQL, '', @nOut) then
+      raise Exception.Create(nOut.FData);
+    //xxxxx
+  except
+    nStr := 'Delete From %s Where L_ID In (%s)';
+    nStr := Format(nStr, [sTable_Bill, nSQL]);
+    gDBConnManager.WorkerExec(FDBConn, nStr);
+    raise;
+  end;
+  {$ENDIF}
+
+  {$IFDEF SHXZY}
+  if FListA.Values['BuDan'] = sFlag_Yes then //补单
+  try
+    nSQL := AdjustListStrFormat(FOut.FData, '''', True, ',', False);
+    //bill list
+
+    if not TWorkerBusinessCommander.CallMe(cBC_StatisticsTrucks, nSQL,
+      sFlag_Sale, @nOut) then
       raise Exception.Create(nOut.FData);
     //xxxxx
   except
@@ -4677,6 +4708,44 @@ begin
       Exit;
     end;
 
+    {$IFDEF SHXZY}
+    nSQL := 'Select T_HZValue From %s Where T_Truck=''%s''';
+    nSQL := Format(nSQL, [sTable_Truck, nBills[nInt].FTruck]);
+
+    nVal := 0;
+    with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+    if RecordCount > 0 then nVal := Fields[0].AsFloat;
+
+    if (nVal > 0) and (nVal < nMVal) then
+    begin
+      nData := '车辆[ %s ]已超载[ %s ]吨，请卸货!';
+      nData := Format(nData, [nBills[nInt].FTruck,
+                FloatToStr(Float2Float(nMVal-nVal, cPrecision, True))]);
+      Exit;
+    end;
+    {$ENDIF}
+    //车辆超载卸货
+
+    nVal := nMVal - nBills[nInt].FPData.FValue;
+    for nIdx:=Low(nBills) to High(nBills) do
+    with nBills[nIdx] do
+    if FType = sFlag_San then
+    begin
+      if nVal < 0 then FKZValue := FValue else
+      if nVal < FValue then FKZValue := 0
+      else FKZValue := FValue - nVal;
+
+      nVal := nVal - FValue;
+    end;
+
+    if nVal > 0 then
+    begin
+      nData := '车辆[ %s ]已超出开单量[ %s ]吨，请卸货!';
+      nData := Format(nData, [nBills[nInt].FTruck,
+                FloatToStr(nVal)]);
+      Exit;
+    end;
+	
     //for nIdx:=Low(nBills) to High(nBills) do
     with nBills[0] do
     if FType = sFlag_San then //散装需交验资金额
