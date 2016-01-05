@@ -1613,7 +1613,7 @@ begin
       Exit;
     end;
 
-    if FieldByName('PValue').AsFloat<=1 then
+    if FieldByName('PValue').AsFloat >= 1 then
          nPValue := FieldByName('PValue').AsFloat
     else nPValue := FieldByName('PrePValue').AsFloat;
 
@@ -2710,7 +2710,7 @@ begin
   nStr := 'Select Count(*) From %s Where T_Truck=''%s''';
   nStr := Format(nStr, [sTable_Truck, nTruck]);
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-  if RecordCount < 1 then
+  if Fields[0].AsInteger < 1 then
   begin
     nData := Format('车牌号[ %s ]档案不存在.', [nTruck]);
     Exit;
@@ -4715,6 +4715,7 @@ begin
     nVal := 0;
     with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
     if RecordCount > 0 then nVal := Fields[0].AsFloat;
+    nVal := Float2Float(nVal / 1000, cPrecision, False);
 
     if (nVal > 0) and (nVal < nMVal) then
     begin
@@ -4732,10 +4733,11 @@ begin
     if FType = sFlag_San then
     begin
       if nVal < 0 then FKZValue := FValue else
-      if nVal < FValue then FKZValue := 0
-      else FKZValue := FValue - nVal;
+      if nVal < FValue then FKZValue := FValue - nVal
+      else FKZValue := 0;
 
-      nVal := nVal - FValue;
+      nVal   := nVal - FValue;
+      FValue := FValue - FKZValue;
     end;
 
     if nVal > 0 then
@@ -4746,41 +4748,11 @@ begin
       Exit;
     end;
 	
-    //for nIdx:=Low(nBills) to High(nBills) do
-    with nBills[0] do
-    if FType = sFlag_San then //散装需交验资金额
+    for nIdx:=Low(nBills) to High(nBills) do
+    with nBills[nIdx] do
+    if (FType = sFlag_San) and (FKZValue > 0) then //散装需
     begin
-      if not TWorkerBusinessCommander.CallMe(cBC_GetZhiKaMoney,
-             nBills[0].FZhiKa, nBills[0].FZKType, @nOut) then
-      begin
-        nData := nOut.FData;
-        Exit;
-      end;
-
-      m := StrToFloat(nOut.FData);
-      m := m + Float2Float(FPrice * FValue, cPrecision, False);
-      //订单可用金
-
-      nVal := FValue;
-      FValue := nMVal - FPData.FValue;
-      //新净重,实际提货量
-      f := Float2Float(FPrice * FValue, cPrecision, True) - m;
-      //实际所需金额与可用金差额
-
-      if f > 0 then
-      begin
-        nData := '客户[ %s.%s ]资金余额不足,详情如下:' + #13#10#13#10 +
-                 '※.可用金额: %.2f元' + #13#10 +
-                 '※.提货金额: %.2f元' + #13#10 +
-                 '※.需 补 交: %.2f元' + #13#10+#13#10 +
-                 '请到财务室办理"补交货款"手续,然后再次称重.';
-        nData := Format(nData, [FCusID, FCusName, m, FPrice * FValue, f]);
-        Exit;
-      end;
-
-      m := Float2Float(FPrice * FValue, cPrecision, True);
-      m := m - Float2Float(FPrice * nVal, cPrecision, True);
-      //新增冻结金额
+      m := Float2Float(-FKZValue * FPrice, cPrecision, False);
 
       if FZKType=sFlag_BillSZ then
       begin
@@ -4806,85 +4778,17 @@ begin
         FListA.Add(nSQL); //更新纸卡冻结
       end;
 
-      nVal := Float2Float(FValue - nVal, cPrecision, True);
-      if nVal > 0 then
-      begin
-        FListD.Clear;
-        FListD.Add(FSeal);
-        if not TWorkerBusinessCommander.CallMe(cBC_GetStockBatValue,
-               PackerEncodeStr(FListD.Text), '', @nOut) then
-        begin
-          nData := nOut.FData;
-          Exit;
-        end;
-
-        FListD.Text := PackerDecodeStr(nOut.FData);
-        if FloatRelation(nVal, StrToFloat(FListD.Values[FSeal]), rtGreater) then
-        begin
-          FListD.Clear;
-          FListD.Values['Verify'] := sFlag_Yes;
-          FListD.Values['Value']  := FloatToStr(FValue);
-
-          if not TWorkerBusinessCommander.CallMe(cBC_GetStockBatcode,
-                 FStockNo, PackerEncodeStr(FListD.Text), @nOut) then
-          begin
-            nData := '批次超发，请通知化验室重新录入批次后再次过磅';
-            Exit;
-          end;
-
-          nVal := Float2Float(FValue - nVal, cPrecision, True);
-          nSQL := 'Update %s Set E_Freeze=E_Freeze-(%s) ' +
-                  'Where E_ID=(Select R_ExtID From %s Where R_SerialNO=''%s'' ' +
-                  ' And Year(R_Date)>=Year(GetDate()))';
-          nSQL := Format(nSQL, [sTable_StockRecordExt, FloatToStr(nVal),
-                  sTable_StockRecord, FSeal]);
-          FListA.Add(nSQL);
-          //旧批次减少冻结量
-
-          nSQL := 'Update %s Set E_Freeze=E_Freeze+(%s) ' +
-                  'Where E_ID=(Select R_ExtID From %s Where R_SerialNO=''%s'' ' +
-                  ' And Year(R_Date)>=Year(GetDate()))';
-          nSQL := Format(nSQL, [sTable_StockRecordExt, FloatToStr(FValue),
-                  sTable_StockRecord, nOut.FData]);
-          FListA.Add(nSQL);
-          //新批次增加冻结量
-
-          nSQL := MakeSQLByStr([SF('L_Seal', nOut.FData)
-                  ], sTable_Bill, SF('L_ID', FID), False);
-          FListA.Add(nSQL); //更新提货单批次
-        end
-        else
-        begin
-          nSQL := 'Update %s Set E_Freeze=E_Freeze+(%s) ' +
-                  'Where E_ID=(Select R_ExtID From %s Where R_SerialNO=''%s'' ' +
-                  ' And Year(R_Date)>=Year(GetDate()))';
-          nSQL := Format(nSQL, [sTable_StockRecordExt, FloatToStr(nVal),
-                  sTable_StockRecord, FSeal]);
-          FListA.Add(nSQL);
-        end;
-      end
-      else
-      begin
-        nSQL := 'Update %s Set E_Freeze=E_Freeze+(%s) ' +
-                'Where E_ID=(Select R_ExtID From %s Where R_SerialNO=''%s'' ' +
-                ' And Year(R_Date)>=Year(GetDate()))';
-        nSQL := Format(nSQL, [sTable_StockRecordExt, FloatToStr(nVal),
-                sTable_StockRecord, FSeal]);
-        FListA.Add(nSQL);
-      end;
+      nSQL := 'Update %s Set E_Freeze=E_Freeze+(%s) ' +
+              'Where E_ID=(Select R_ExtID From %s Where R_SerialNO=''%s'' ' +
+              ' And Year(R_Date)>=Year(GetDate()))';
+      nSQL := Format(nSQL, [sTable_StockRecordExt, FloatToStr(-FKZValue),
+              sTable_StockRecord, FSeal]);
+      FListA.Add(nSQL);
       //批次冻结量矫正
 
-      nSQL := MakeSQLByStr([SF('L_Value', FValue, sfVal)
+      nSQL := MakeSQLByStr([SF('L_Value', FValue-FKZValue, sfVal)
               ], sTable_Bill, SF('L_ID', FID), False);
       FListA.Add(nSQL); //更新提货量
-
-      if nOut.FExtParam = sFlag_Yes then
-      begin
-        nSQL := 'Update %s Set Z_FixedMoney=Z_FixedMoney-(%.2f) ' +
-                'Where Z_ID=''%s''';
-        nSQL := Format(nSQL, [sTable_ZhiKa, m, FZhiKa]);
-        FListA.Add(nSQL); //更新订单限提金额
-      end;
     end;
 
     nVal := 0;
