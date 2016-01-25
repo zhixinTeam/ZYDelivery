@@ -17,6 +17,7 @@ type
   TProviderParam = record
     FID   : string;
     FName : string;
+    FType : string;
     FSaler: string;
   end;
 
@@ -334,6 +335,7 @@ begin
     Values['SaleMan']       := GetStrValue(EditSalesMan.Text);
 
     Values['ProviderID']    := FProvider.FID;
+    Values['ProviderType']  := FProvider.FType;
     Values['ProviderName']  := Trim(EditProvider.Text);
 
     Values['StockNO']       := FMeterail.FID;
@@ -368,6 +370,7 @@ begin
     begin
       FID   := nP.FParamB;
       FName := nP.FParamC;
+      FType := nP.FParamD;
       FSaler:= nP.FParamE;
 
       EditProvider.Text := FName;

@@ -21,6 +21,8 @@ type
     dxLayout1Item6: TdxLayoutItem;
     cxLabel1: TcxLabel;
     dxLayout1Item7: TdxLayoutItem;
+    cxLabel2: TcxLabel;
+    dxLayout1Item3: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnOKClick(Sender: TObject);
@@ -136,7 +138,7 @@ begin
       begin
         Caption := FieldByName('P_ID').AsString;
         SubItems.Add(FieldByName('P_Name').AsString);
-        SubItems.Add(FieldByName('P_Memo').AsString);
+        SubItems.Add(FieldByName('P_Type').AsString);
         SubItems.Add(FieldByName('P_Saler').AsString);
 
         ImageIndex := 11;

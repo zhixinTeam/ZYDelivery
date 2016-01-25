@@ -266,6 +266,7 @@ inherited fFormCustomer: TfFormCustomer
       Left = 81
       Top = 186
       Hint = 'T.C_Code'
+      ParentFont = False
       TabOrder = 9
       Width = 121
     end

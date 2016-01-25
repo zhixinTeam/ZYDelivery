@@ -119,6 +119,7 @@ ResourceString
   sFlag_BillFL        = 'F';                         //返利订单
   sFlag_BillSZ        = 'S';                         //标准订单
   sFlag_BillFX        = 'V';                         //分销订单
+  sFlag_BillMY        = 'M';                         //贸易订单
 
   sFlag_OrderNew       = 'N';                        //新单
   sFlag_OrderEdit      = 'E';                        //修改
@@ -241,6 +242,7 @@ ResourceString
   sFlag_BatchAuto     = 'Batch_Auto';                //自动生成批次号
   sFlag_BatchBrand    = 'Batch_Brand';               //批次区分品牌
   sFlag_BatchValid    = 'Batch_Valid';               //启用批次管理
+  sFlag_DeleteHasOut  = 'DeleteHasOut';              //允许删除已出厂
 
   sFlag_BusGroup      = 'BusFunction';               //业务编码组
   sFlag_BillNo        = 'Bus_Bill';                  //交货单号
@@ -254,6 +256,8 @@ ResourceString
   sFlag_Order         = 'Bus_Order';                 //采购单号
   sFlag_OrderDtl      = 'Bus_OrderDtl';              //采购单号
   sFlag_OrderBase     = 'Bus_OrderBase';             //采购申请单号
+  sFlag_MYZhiKa       = 'Bus_MYZhiKa';               //贸易公司订单
+  sFlag_FLZhiKa       = 'Bus_FLZhiKa';               //返利订单
 
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组
@@ -280,6 +284,8 @@ ResourceString
   sTable_TransCredit      = 'Sys_TransCredit';        //客户信用
   sTable_TransAccount     = 'Sys_TransAccount';       //运费账户
   sTable_TransInOutMoney  = 'Sys_TransInOutMoney';    //资金明细
+  sTable_CompensateAccount= 'Sys_CompensateAccount';       //运费账户
+  sTable_CompensateInOutMoney= 'Sys_CompensateInOutMoney';    //资金明细
   //客户账户信息
 
   sTable_PoundLog     = 'Sys_PoundLog';              //过磅数据
@@ -305,6 +311,8 @@ ResourceString
   sTable_ICCardInfo   = 'S_ICCardInfo';              //提货卡
   sTable_FXZhiKa      = 'S_FXZhiKa';                 //分销订单
   sTable_FLZhiKa      = 'S_FLZhiKa';                 //返利订单
+  sTable_MYZhiKa      = 'S_MYZhiKa';                 //贸易订单
+  sTable_FLZhiKaDtl   = 'S_FLZhiKaDtl';                 //返利订单
 
   sTable_Truck        = 'S_Truck';                   //车辆表
   sTable_ZTLines      = 'S_ZTLines';                 //装车道
@@ -655,6 +663,7 @@ ResourceString
        'T_DisFlag Char(1), T_WeiFlag Char(1), T_Enabled Char(1) Default ''Y'','+
        'T_Man varChar(32), T_Date DateTime, ' +
        'T_VerifyMan varChar(32), T_VerifyDate DateTime,' +
+       'T_Settle Char(1), T_SetMan varChar(32), T_SetDate DateTime,' +
        'T_Memo varChar(50))';
   {-----------------------------------------------------------------------------
    运费合同: TransContract
@@ -690,6 +699,9 @@ ResourceString
    *.T_Date:
    *.T_VerifyMan:
    *.T_VerifyDate:
+   *.T_Settle: 是否已结算
+   *.T_SetDate: 结算时间
+   *.T_SetMan: 结算人
    *.T_Memo: 备注信息
   -----------------------------------------------------------------------------}
 
@@ -745,7 +757,7 @@ ResourceString
    *.D_TPrice:允许调价
   -----------------------------------------------------------------------------}
 
-    sSQL_NewICCardInfo = 'Create Table $Table(R_ID $Inc, ' +
+  sSQL_NewICCardInfo = 'Create Table $Table(R_ID $Inc, ' +
        'F_ZID varChar(15), F_ZType Char(1),'+
 			 'F_Card varChar(64), F_Password varChar(64), F_CardType Char(1),' +
        'F_ParentCard varChar(64), F_CardNO varChar(64))';
@@ -799,6 +811,28 @@ ResourceString
    *.I_Date:办卡时间
    *.I_VerifyMan:修改ren
    *.I_VerifyDate:修改时间
+  -----------------------------------------------------------------------------}
+
+  sSQL_NewMYZhiKa = 'Create Table $Table(R_ID $Inc, M_ID varChar(15),' +
+       'M_MID varChar(15), M_FID varChar(15), M_Fact varChar(64), ' +
+        'M_Password varChar(64), M_CardType Char(1),' +
+       'M_Card varChar(64), M_CardNO varChar(64),' +
+       'M_Man varChar(32), M_Date DateTime,' +
+       'M_VerifyMan varChar(32), M_VerifyDate DateTime)';
+  {-----------------------------------------------------------------------------
+   贸易订单明细:MYZhiKa
+   *.R_ID:记录编号
+   *.M_ID: 贸易订单编号
+   *.M_MID:贸易公司订单号
+   *.M_FID:工厂订单号
+   *.M_Fact:贸易公司编号
+   *.M_Password: 密码
+   *.M_Card:IC卡号
+   *.M_CardNO: 卡序列号
+   *.M_Man:办理人
+   *.M_Date:办卡时间
+   *.M_VerifyMan:修改ren
+   *.M_VerifyDate:修改时间
   -----------------------------------------------------------------------------}
 
   sSQL_NewBill = 'Create Table $Table(R_ID $Inc, L_ID varChar(20),' +
@@ -1288,10 +1322,11 @@ ResourceString
        'B_Value $Float, B_SentValue $Float,B_RestValue $Float,' +
        'B_LimValue $Float, B_WarnValue $Float,B_FreezeValue $Float,' +
        'B_BStatus Char(1),B_Area varChar(50), B_Project varChar(100),' +
-       'B_ProID varChar(32), B_ProName varChar(80), B_ProPY varChar(80),' +
+       'B_ProType Char(1), B_ProID varChar(32), ' +
+       'B_ProName varChar(80), B_ProPY varChar(80),' +
        'B_SaleID varChar(32), B_SaleMan varChar(80), B_SalePY varChar(80),' +
        'B_StockType Char(1), B_StockNo varChar(32), B_StockName varChar(80),' +
-       'B_ProType Char(1), B_Man varChar(32), B_Date DateTime,' +
+       'B_Man varChar(32), B_Date DateTime,' +
        'B_DelMan varChar(32), B_DelDate DateTime, B_Memo varChar(500))';
   {-----------------------------------------------------------------------------
    采购申请单表: Order
@@ -1316,11 +1351,12 @@ ResourceString
   sSQL_NewOrder = 'Create Table $Table(R_ID $Inc, O_ID varChar(20),' +
        'O_BID varChar(20),O_Card varChar(16), O_CType varChar(1),' +
        'O_Value $Float,O_Area varChar(50), O_Project varChar(100),' +
-       'O_ProID varChar(32), O_ProName varChar(80), O_ProPY varChar(80),' +
+       'O_ProType Char(1), O_ProID varChar(32), ' +
+       'O_ProName varChar(80), O_ProPY varChar(80),' +
        'O_SaleID varChar(32), O_SaleMan varChar(80), O_SalePY varChar(80),' +
        'O_Type Char(1), O_StockNo varChar(32), O_StockName varChar(80),' +
        'O_Truck varChar(15), O_OStatus Char(1),' +
-       'O_ProType Char(1), O_Man varChar(32), O_Date DateTime,' +
+       'O_Man varChar(32), O_Date DateTime,' +
        'O_DelMan varChar(32), O_DelDate DateTime, O_Memo varChar(500))';
   {-----------------------------------------------------------------------------
    采购订单表: Order
@@ -1331,7 +1367,7 @@ ResourceString
    *.O_Value:订单量，
    *.O_OStatus: 订单状态
    *.O_Area,O_Project: 区域,项目
-   *.O_ProID,O_ProName,O_ProPY:供应商
+   *.O_ProType,O_ProID,O_ProName,O_ProPY:供应商
    *.O_SaleID,O_SaleMan:业务员
    *.O_Type: 类型(袋,散)
    *.O_StockNo: 原材料编号
@@ -1347,11 +1383,12 @@ ResourceString
   sSQL_NewOrderDtl = 'Create Table $Table(R_ID $Inc, D_ID varChar(20),' +
        'D_OID varChar(20), D_PID varChar(20), D_Card varChar(16), ' +
        'D_Area varChar(50), D_Project varChar(100),D_Truck varChar(15), ' +
-       'D_ProID varChar(32), D_ProName varChar(80), D_ProPY varChar(80),' +
+       'D_ProType Char(1), D_ProID varChar(32), ' +
+       'D_ProName varChar(80), D_ProPY varChar(80),' +
        'D_SaleID varChar(32), D_SaleMan varChar(80), D_SalePY varChar(80),' +
        'D_Type Char(1), D_StockNo varChar(32), D_StockName varChar(80),' +
        'D_DStatus Char(1), D_Status Char(1), D_NextStatus Char(1),' +
-       'D_InTime DateTime, D_InMan varChar(32), D_ProType Char(1),' +
+       'D_InTime DateTime, D_InMan varChar(32),' +
        'D_PValue $Float, D_PDate DateTime, D_PMan varChar(32),' +
        'D_MValue $Float, D_MDate DateTime, D_MMan varChar(32),' +
        'D_YTime DateTime, D_YMan varChar(32), ' +
@@ -1368,7 +1405,7 @@ ResourceString
    *.D_Card: 采购磁卡号
    *.D_DStatus: 订单状态
    *.D_Area,D_Project: 区域,项目
-   *.D_ProID,D_ProName,D_ProPY:供应商
+   *.D_ProType,D_ProID,D_ProName,D_ProPY:供应商
    *.D_SaleID,D_SaleMan:业务员
    *.D_Type: 类型(袋,散)
    *.D_StockNo: 原材料编号
@@ -1420,7 +1457,8 @@ ResourceString
    *.$ID:信息标识
   -----------------------------------------------------------------------------}
 
-  sQuery_ZhiKa = 'Select Z_ID, Z_Name, Z_CardNO, Z_Customer, Z_InValid,' +
+  sQuery_ZhiKa = 'Select Z_ID,Z_Name,Z_Freeze,Z_Card, Z_CardNO, Z_Password,' +
+         'Z_Customer,Z_InValid,' +
          'Z_TJStatus From $Table Where Z_ID=''$ZID'' Order By Z_ID ASC';
   {-----------------------------------------------------------------------------
    从纸卡表中读取数据信息
@@ -1530,7 +1568,9 @@ begin
   AddSysTableItem(sTable_InOutMoney, sSQL_NewInOutMoney);
   AddSysTableItem(sTable_TransCredit, sSQL_NewCusCredit);
   AddSysTableItem(sTable_TransAccount, sSQL_NewCusAccount);
-  AddSysTableItem(sTable_TransInOutMoney, sSQL_NewInOutMoney); 
+  AddSysTableItem(sTable_TransInOutMoney, sSQL_NewInOutMoney);
+  AddSysTableItem(sTable_CompensateAccount, sSQL_NewCusAccount);
+  AddSysTableItem(sTable_CompensateInOutMoney, sSQL_NewInOutMoney);
   AddSysTableItem(sTable_SysShouJu, sSQL_NewSysShouJu);
   //客户帐户信息与销售合同
 
@@ -1539,7 +1579,10 @@ begin
   AddSysTableItem(sTable_BillBak, sSQL_NewBill);
   AddSysTableItem(sTable_ZhiKa, sSQL_NewZhiKa);
   AddSysTableItem(sTable_FXZhiKa,sSQL_NewFXZhiKa);
+  AddSysTableItem(sTable_MYZhiKa,sSQL_NewMYZhiKa);
   AddSysTableItem(sTable_ZhiKaDtl, sSQL_NewZhiKaDtl);
+  AddSysTableItem(sTable_FLZhiKa, sSQL_NewZhiKa);
+  AddSysTableItem(sTable_FLZhiKaDtl, sSQL_NewZhiKaDtl);
   AddSysTableItem(sTable_ICCardInfo,sSQL_NewICCardInfo);
   //提货单信息
 

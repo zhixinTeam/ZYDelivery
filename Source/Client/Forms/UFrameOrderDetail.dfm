@@ -231,6 +231,14 @@ inherited fFrameOrderDetail: TfFrameOrderDetail
       Caption = #26102#38388#27573#26597#35810
       OnClick = mniN1Click
     end
+    object N5: TMenuItem
+      Caption = #36807#31354#26102#38388#26597
+      OnClick = N5Click
+    end
+    object N6: TMenuItem
+      Caption = #20837#21378#26102#38388#26597
+      OnClick = N5Click
+    end
     object N1: TMenuItem
       Caption = '-'
     end

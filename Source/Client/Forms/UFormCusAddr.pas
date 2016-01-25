@@ -280,7 +280,7 @@ procedure TfFormCusAddr.EditIDPropertiesButtonClick(Sender: TObject;
   AButtonIndex: Integer);
 var nID: integer;
 begin
-  nID := FDM.GetFieldMax(sTable_SysShouJu, 'R_ID') + 1;
+  nID := FDM.GetFieldMax(sTable_CusAddr, 'R_ID') + 1;
   EditID.Text := FDM.GetSerialID2(FPrefixID, sTable_CusAddr, 'R_ID', 'A_ID', nID);
 end;
 

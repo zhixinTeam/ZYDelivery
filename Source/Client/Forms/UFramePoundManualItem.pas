@@ -846,7 +846,7 @@ begin
         end;  
       end;
 
-      if (FType = sFlag_San) and (nVal>0)  and FSanStop then
+      if (FType = sFlag_San) and FloatRelation(nVal, 0, rtGreater) and FSanStop then
       begin
         nStr := '车辆[ %s ]实际装车量误差较大,详情如下:' + #13#10#13#10 +
                 '※.开单量: %.2f吨' + #13#10 +

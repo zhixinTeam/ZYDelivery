@@ -1,6 +1,6 @@
 inherited fFormBillAdditional: TfFormBillAdditional
-  Left = 674
-  Top = 109
+  Left = 326
+  Top = 127
   ClientHeight = 536
   ClientWidth = 417
   Position = poDesktopCenter
@@ -158,48 +158,54 @@ inherited fFormBillAdditional: TfFormBillAdditional
     end
     object EditPValue: TcxTextEdit [12]
       Left = 81
-      Top = 396
+      Top = 389
+      ParentFont = False
       TabOrder = 15
-      Width = 121
+      Width = 88
     end
     object EditPMan: TcxTextEdit [13]
-      Left = 265
-      Top = 396
+      Left = 240
+      Top = 389
+      ParentFont = False
       TabOrder = 16
-      Width = 121
+      Width = 145
     end
     object EditMValue: TcxTextEdit [14]
       Left = 81
-      Top = 421
+      Top = 414
+      ParentFont = False
       TabOrder = 17
-      Width = 121
+      Width = 96
     end
     object EditMMan: TcxTextEdit [15]
-      Left = 265
-      Top = 421
+      Left = 240
+      Top = 414
+      ParentFont = False
       TabOrder = 18
       Width = 121
     end
-    object EditMemo: TcxMemo [16]
-      Left = 81
-      Top = 446
+    object EditPDate: TcxDateEdit [16]
+      Left = 240
+      Top = 439
+      ParentFont = False
+      Properties.Kind = ckDateTime
       TabOrder = 19
-      Height = 43
       Width = 121
     end
-    object EditPDate: TcxDateEdit [17]
-      Left = 265
-      Top = 446
+    object EditMDate: TcxDateEdit [17]
+      Left = 240
+      Top = 464
+      ParentFont = False
       Properties.Kind = ckDateTime
       TabOrder = 20
       Width = 121
     end
-    object EditMDate: TcxDateEdit [18]
-      Left = 265
-      Top = 471
-      Properties.Kind = ckDateTime
+    object EditMemo: TcxMemo [18]
+      Left = 81
+      Top = 439
       TabOrder = 21
-      Width = 121
+      Height = 52
+      Width = 88
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
@@ -322,7 +328,7 @@ inherited fFormBillAdditional: TfFormBillAdditional
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item17: TdxLayoutItem
-            Caption = #22791#27880#20449#24687':'
+            Caption = #22791'    '#27880':'
             Control = EditMemo
             ControlOptions.ShowBorder = False
           end

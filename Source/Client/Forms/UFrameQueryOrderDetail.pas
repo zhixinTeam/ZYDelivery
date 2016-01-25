@@ -39,6 +39,8 @@ type
     N1: TMenuItem;
     N2: TMenuItem;
     N3: TMenuItem;
+    N4: TMenuItem;
+    N5: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
@@ -46,6 +48,7 @@ type
     procedure mniN1Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
     procedure N3Click(Sender: TObject);
+    procedure N4Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -110,8 +113,13 @@ begin
     Result := Result + ' Where (' + FJBWhere + ')';
   end;
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And D_ProType=''$ZY''';
+
   Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
-            MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
+            MI('$ZY', sFlag_CusZYF), MI('$S', Date2Str(FStart)),
+            MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
 end;
 
@@ -202,6 +210,24 @@ begin
   end;
 
   N2.Click;
+end;
+
+procedure TfFrameOrderDetailQuery.N4Click(Sender: TObject);
+begin
+  inherited;
+  if ShowDateFilterForm(FTimeS, FTimeE, True) then
+  try
+    if Sender = N4 then   //过空时间
+       FJBWhere := '(D_PDate>=''%s'' and P_PDate <''%s'')'
+    else
+    if Sender = N5 then   //进厂时间
+      FJBWhere := '(D_InTime>=''%s'' and D_InTime <''%s'')';
+
+    FJBWhere := Format(FJBWhere, [DateTime2Str(FTimeS), DateTime2Str(FTimeE)]);
+    InitFormData('');
+  finally
+    FJBWhere := '';
+  end;
 end;
 
 initialization

@@ -41,6 +41,11 @@ type
     dxLayout1Item6: TdxLayoutItem;
     EditCustomer: TcxButtonEdit;
     dxLayout1Item7: TdxLayoutItem;
+    N5: TMenuItem;
+    N8: TMenuItem;
+    N9: TMenuItem;
+    N10: TMenuItem;
+    N11: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -48,6 +53,8 @@ type
     procedure N6Click(Sender: TObject);
     procedure N4Click(Sender: TObject);
     procedure N1Click(Sender: TObject);
+    procedure N8Click(Sender: TObject);
+    procedure N11Click(Sender: TObject);
   protected
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
@@ -85,17 +92,22 @@ end;
 //Desc: 数据查询SQL
 function TfFrameFXZhiKa.InitFormDataSQL(const nWhere: string): string;
 begin
-  Result := 'Select zk.*, I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney As I_YuE,' +
-            'sc.C_Name as Cus_Name,sm.S_Name as Sale_Name From $FXZhiKa zk ' +
-            ' Left join $SC sc on zk.I_Customer=sc.C_ID ' +
-            ' Left Join $SM sm on zk.I_SaleMan=sm.S_ID ';
+  Result := 'Select *, cast( I_YuE /I_Price as decimal(18, 2))  As I_Rest,' +
+            ' sc.C_Name as Cus_Name,sm.S_Name as Sale_Name From(' +
+            'Select zk.*, I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney As I_YuE' +
+            ' From $FXZhiKa zk) fxdtl' +
+            ' Left join $SC sc on fxdtl.I_Customer=sc.C_ID ' +
+            ' Left Join $SM sm on fxdtl.I_SaleMan=sm.S_ID ';
   //提货卡信息
 
   if nWhere <> '' then
-    Result := Result + ' Where ' + nWhere;
+       Result := Result + ' Where ' + nWhere
+  else Result := Result + ' Where I_Enabled=''$Yes''';
 
-  Result := MacroValue(Result, [MI('$FXZhiKa', sTable_FXZhiKa),
-            MI('$SC', sTable_Customer), MI('$SM', sTable_Salesman)]);
+
+  Result := MacroValue(Result, [MI('$Yes', sFlag_Yes),
+            MI('$FXZhiKa', sTable_FXZhiKa), MI('$SC', sTable_Customer),
+            MI('$SM', sTable_Salesman)]);
 end;
 
 function TfFrameFXZhiKa.FilterColumnField: string;
@@ -176,6 +188,11 @@ begin
     ShowMsg('该卡有未出厂车辆，禁止停用', sHint); Exit;
   end;
 
+  if SQLQuery.FieldByName('I_Enabled').AsString = sFlag_No then
+  begin
+    ShowMsg('该订单已停用', sHint); Exit;
+  end;
+
   nStr := '确定要停用编号为[ %s ]的分销订单吗?';
   nStr := Format(nStr, [SQLQuery.FieldByName('I_ID').AsString]);
   if not QueryDlg(nStr, sAsk) then Exit;
@@ -208,8 +225,9 @@ begin
     ShowMsg('停用磁卡失败！', sHint);
   end;
 
-  DeleteICCardInfo(SQLQuery.FieldByName('I_Card').AsString,
-    SQLQuery.FieldByName('I_ID').AsString);
+  nStr := SQLQuery.FieldByName('I_Card').AsString;
+  if nStr <> '' then
+    DeleteICCardInfo(nStr, SQLQuery.FieldByName('I_ID').AsString);
 
   InitFormData('');
 end;
@@ -266,6 +284,90 @@ begin
   CreateBaseFormItem(cFI_FormFXZhiKa, '', @nP);
 
   InitFormData('')
+end;
+
+procedure TfFrameFXZhiKa.N8Click(Sender: TObject);
+begin
+  inherited;
+  case TMenuItem(Sender).Tag of
+  0: FWhere := 'I_Enabled = ''$No''';
+  1: FWhere := 'I_Enabled = ''$Yes''';
+  2: FWhere := '1=1';
+  end;
+
+  FWhere := MacroValue(FWhere, [MI('$Yes', sFlag_Yes), MI('$No', sFlag_No)]);
+  InitFormData(FWhere)
+end;
+
+procedure TfFrameFXZhiKa.N11Click(Sender: TObject);
+var nStr, nStrVal, nRID, nCID: string;
+    nVal, nRest, nPrice, nMoney: Double;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount < 1 then
+  begin
+    ShowMsg('请选择要需要降低限额的卡片', sHint); Exit;
+  end;
+
+  if SQLQuery.FieldByName('I_Enabled').AsString = sFlag_No then
+  begin
+    ShowMsg('该订单已停用', sHint); Exit;
+  end;
+
+  nRest := SQLQuery.FieldByName('I_Rest').AsFloat;
+  nStr := '客户 [%s] 提货卡当前可提货量为 [%.2f] 吨, 是否降低限额?';
+  nStr := Format(nStr, [SQLQuery.FieldByName('Cus_Name').AsString,
+          nRest]);
+  if not QueryDlg(nStr, sAsk) then Exit;
+
+  nStr := '剩余量 [%.2f] ,请输入降低限额量:';
+  nStr := Format(nStr, [nRest]);
+  if not ShowInputBox(nStr, sHint, nStrVal) then Exit;
+
+  nVal := StrToFloatDef(nStrVal, 0);
+  if FloatRelation(nVal, 0, rtLE) then
+  begin
+    ShowMsg('请输入大于0的量', sHint);
+    Exit;
+  end;
+
+  if FloatRelation(nVal, nRest, rtGreater) then
+  begin
+    ShowMsg('输入量大于可提货量，请重新操作', sHint);
+    Exit;
+  end;
+  //xxxxx
+
+  nRID   := SQLQuery.FieldByName('R_ID').AsString;
+  nCID   := SQLQuery.FieldByName('I_Customer').AsString;
+  nPrice := SQLQuery.FieldByName('I_Price').AsFloat;
+  nMoney := Float2Float(nVal * nPrice, cPrecision, True);
+
+
+  FDM.ADOConn.BeginTrans;
+  try
+    nStr := 'Update %s Set I_Money=I_Money+(-%s),I_Value=I_Value+(-%s),' +
+            'I_VerifyMan=''%s'',I_VerifyDate=%s Where R_ID=%s';
+    nStr := Format(nStr, [sTable_FXZhiKa, FloatToStr(nMoney),FloatToStr(nVal),
+            gSysParam.FUserID, FDM.SQLServerNow, nRID]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := '提货量减少了 [%s], 可用额度减少了[%s]';
+    nStr := Format(nStr, [FloatToStr(nVal),FloatToStr(nMoney)]);
+    FDM.WriteSysLog(sFlag_ZhiKaItem, nRID, nStr);
+
+    nStr := 'Update %s Set A_CardUseMoney=A_CardUseMoney+(-%s) ' +
+            'Where A_CID=''%s''';
+    nStr := Format(nStr, [sTable_CusAccount, FloatToStr(nMoney),
+            nCID]);
+    FDM.ExecuteSQL(nStr);
+
+    FDM.ADOConn.CommitTrans;
+    ShowMsg('降低限额成功', sHint);
+  except
+    ShowMsg('未知原因导致降低限额失败', sHint);
+    raise;
+  end;
 end;
 
 initialization

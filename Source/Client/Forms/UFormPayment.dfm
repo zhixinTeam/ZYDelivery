@@ -13,16 +13,16 @@ inherited fFormPayment: TfFormPayment
     inherited BtnOK: TButton
       Left = 242
       Top = 367
-      TabOrder = 12
+      TabOrder = 13
     end
     inherited BtnExit: TButton
       Left = 312
       Top = 367
-      TabOrder = 13
+      TabOrder = 14
     end
     object EditType: TcxComboBox [2]
       Left = 81
-      Top = 285
+      Top = 264
       ParentFont = False
       Properties.IncrementalSearch = False
       Properties.ItemHeight = 18
@@ -32,8 +32,9 @@ inherited fFormPayment: TfFormPayment
     end
     object EditMoney: TcxTextEdit [3]
       Left = 249
-      Top = 285
+      Top = 264
       ParentFont = False
+      Properties.OnChange = EditMoneyPropertiesChange
       TabOrder = 9
       Text = '0'
       Width = 125
@@ -46,13 +47,13 @@ inherited fFormPayment: TfFormPayment
       ParentFont = False
       Properties.MaxLength = 200
       Properties.ScrollBars = ssVertical
-      TabOrder = 11
+      TabOrder = 12
       Height = 45
       Width = 369
     end
     object cxLabel2: TcxLabel [5]
       Left = 340
-      Top = 285
+      Top = 264
       AutoSize = False
       Caption = #20803
       ParentFont = False
@@ -61,7 +62,7 @@ inherited fFormPayment: TfFormPayment
       Transparent = True
       Height = 20
       Width = 25
-      AnchorY = 295
+      AnchorY = 274
     end
     object ListInfo: TcxMCListBox [6]
       Left = 23
@@ -84,7 +85,7 @@ inherited fFormPayment: TfFormPayment
     end
     object EditID: TcxButtonEdit [7]
       Left = 81
-      Top = 146
+      Top = 125
       ParentFont = False
       Properties.Buttons = <
         item
@@ -98,7 +99,7 @@ inherited fFormPayment: TfFormPayment
     end
     object EditSalesMan: TcxComboBox [8]
       Left = 268
-      Top = 146
+      Top = 125
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
       Properties.DropDownRows = 20
@@ -110,7 +111,7 @@ inherited fFormPayment: TfFormPayment
     end
     object EditName: TcxComboBox [9]
       Left = 81
-      Top = 171
+      Top = 150
       ParentFont = False
       Properties.DropDownRows = 20
       Properties.ImmediateDropDown = False
@@ -123,7 +124,7 @@ inherited fFormPayment: TfFormPayment
     end
     object EditIn: TcxTextEdit [10]
       Left = 81
-      Top = 228
+      Top = 207
       ParentFont = False
       Properties.ReadOnly = True
       TabOrder = 4
@@ -132,7 +133,7 @@ inherited fFormPayment: TfFormPayment
     end
     object EditOut: TcxTextEdit [11]
       Left = 264
-      Top = 228
+      Top = 207
       ParentFont = False
       Properties.ReadOnly = True
       TabOrder = 6
@@ -141,7 +142,7 @@ inherited fFormPayment: TfFormPayment
     end
     object cxLabel1: TcxLabel [12]
       Left = 176
-      Top = 228
+      Top = 207
       AutoSize = False
       Caption = #20803
       ParentFont = False
@@ -150,11 +151,11 @@ inherited fFormPayment: TfFormPayment
       Transparent = True
       Height = 20
       Width = 25
-      AnchorY = 238
+      AnchorY = 217
     end
     object cxLabel3: TcxLabel [13]
       Left = 340
-      Top = 228
+      Top = 207
       AutoSize = False
       Caption = #20803
       ParentFont = False
@@ -162,7 +163,17 @@ inherited fFormPayment: TfFormPayment
       Transparent = True
       Height = 20
       Width = 25
-      AnchorY = 238
+      AnchorY = 217
+    end
+    object EditBig: TcxLabel [14]
+      Left = 23
+      Top = 289
+      AutoSize = False
+      Caption = #37329#39069#22823#20889':'
+      ParentFont = False
+      Transparent = True
+      Height = 16
+      Width = 338
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
@@ -252,6 +263,12 @@ inherited fFormPayment: TfFormPayment
             Control = cxLabel2
             ControlOptions.ShowBorder = False
           end
+        end
+        object dxLayout1Item11: TdxLayoutItem
+          Caption = 'cxLabel4'
+          ShowCaption = False
+          Control = EditBig
+          ControlOptions.ShowBorder = False
         end
         object dxLayout1Item5: TdxLayoutItem
           Caption = #22791#27880#20449#24687':'

@@ -23,9 +23,6 @@
 {.$DEFINE ClientMon}
 //进程守护客户端
 
-{$DEFINE HardMon}
-//编译硬件守护
-
 {.$DEFINE GenRODL}
 //生成RODL资源
 
@@ -47,7 +44,7 @@
 {$ENDIF}
 
 //--------------------------------- 特定系统 -----------------------------------
-{.$DEFINE COMMON}
+{$DEFINE COMMON}
 //通用版本
 
 {$DEFINE SHXZY}
@@ -55,8 +52,12 @@
 
 //山西卓越
 {$IFDEF SHXZY}
-  {$DEFINE COMMON}
-  //
+  {$DEFINE HardMon}
+  //编译硬件守护
+{$ENDIF}
+
+{$IFDEF MYGS}
+  {$DEFINE SHXZY}
 {$ENDIF}
 
 //如东海鑫

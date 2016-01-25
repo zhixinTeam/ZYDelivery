@@ -61,8 +61,14 @@ const
   cFI_FrameZhiKaDetail  = $0055;                     //纸卡明细
   cFI_FrameDispatchQuery = $0056;                    //调度查询
   cFI_FrameOrderDetailQuery = $0057;                 //采购明细
-  cFI_FrameTransAccountQuery = $0058;                  //客户运费
-  cFI_FrameTransInOutMoney   = $0059;                  //出入金明细
+  cFI_FrameTransAccountQuery = $0058;                //客户运费
+  cFI_FrameTransInOutMoney   = $0059;                //出入金明细
+  cFI_FrameCompensateAccountQuery = $0060;           //客户运费
+  cFI_FrameCompensateInOutMoney   = $0061;           //出入金明细
+  cFI_FrameQuerySealDetail        = $0062;           //发货回单
+  cFI_FrameQueryOrderTotal        = $0063;           //发货回单
+  cFI_FrameQueryBillTotal         = $0064;
+  cFI_FrameTruckJieSuan           = $0065;           //运费结算单
 
   cFI_FrameTrucks       = $0070;                     //车辆档案
   cFI_FrameTruckLogs    = $0071;                     //车辆档案
@@ -74,6 +80,8 @@ const
   cFI_FrameStockHuaYan  = $0082;                     //开化验单
   cFI_FrameStockHY_Each = $0083;                     //随车开单
 
+  cFI_FrameFLZhiKa      = $0091;                     //返利订单
+  cFI_FrameFLPayment    = $0092;                     //返利金额
 
   cFI_FrameProvider     = $0104;                     //供应
   cFI_FrameProvideLog   = $0105;                     //供应日志
@@ -145,6 +153,9 @@ const
   cFI_FormStockHuaYan   = $1082;                     //开化验单
   cFI_FormStockHY_Each  = $1083;                     //随车开单
 
+  cFI_FormFLZhiKa       = $1091;                     //返利订单
+  cFI_FormFLPayment     = $1092;                     //返利金额
+
   cFI_FormProvider      = $1104;                     //供应商
   cFI_FormMaterails     = $1106;                     //原材料
   cFI_FormOrder         = $1107;                     //采购订单
@@ -152,6 +163,7 @@ const
   cFI_FormPurchase      = $1155;                     //采购验收
   cFI_FormGetPOrderBase  = $1109;                     //采购订单
   cFI_FormDeduct        = $1110;                     //暗扣规则
+  cFI_FormOrderAdditional=$1111;                     //补采购订单
 
 
   {*Command*}
@@ -340,6 +352,10 @@ begin
 
   //AddMenuModuleItem('MAIN_J02', cFI_FrameBatch);
   //AddMenuModuleItem('MAIN_J03', cFI_FrameBatchQuery);
+  AddMenuModuleItem('MAIN_J04', cFI_FormFLPayment, mtForm);
+  AddMenuModuleItem('MAIN_J05', cFI_FrameFLPayment);
+  AddMenuModuleItem('MAIN_J06', cFI_FormFLZhiKa, mtForm);
+  AddMenuModuleItem('MAIN_J07', cFI_FrameFLZhiKa);
 
   AddMenuModuleItem('MAIN_K01', cFI_FrameStock);
   AddMenuModuleItem('MAIN_K02', cFI_FrameStockRecord);
@@ -358,6 +374,13 @@ begin
   AddMenuModuleItem('MAIN_L09', cFI_FrameOrderDetailQuery);
   AddMenuModuleItem('MAIN_L12', cFI_FrameTransAccountQuery);
   AddMenuModuleItem('MAIN_L13', cFI_FrameTransInOutMoney);
+  AddMenuModuleItem('MAIN_L14', cFI_FrameCompensateAccountQuery);
+  AddMenuModuleItem('MAIN_L15', cFI_FrameCompensateInOutMoney);
+  AddMenuModuleItem('MAIN_L16', cFI_FrameQuerySealDetail);
+
+  AddMenuModuleItem('MAIN_L20', cFI_FrameQueryOrderTotal);
+  AddMenuModuleItem('MAIN_L21', cFI_FrameQueryBillTotal);
+  AddMenuModuleItem('MAIN_L22', cFI_FrameTruckJieSuan);
 
   AddMenuModuleItem('MAIN_M01', cFI_FrameProvider);
   AddMenuModuleItem('MAIN_M02', cFI_FrameMaterails);
@@ -366,6 +389,7 @@ begin
   AddMenuModuleItem('MAIN_M05', cFI_FrameDeduct);
   AddMenuModuleItem('MAIN_M08', cFI_FrameOrderDetail);
   AddMenuModuleItem('MAIN_M09', cFI_FrameOrderBase);
+  AddMenuModuleItem('MAIN_M11', cFI_FormOrderAdditional, mtForm);
 
   AddMenuModuleItem('MAIN_N01', cFI_FormZhiKa, mtForm);
   AddMenuModuleItem('MAIN_N02', cFI_FormFactZhiKaBind, mtForm);

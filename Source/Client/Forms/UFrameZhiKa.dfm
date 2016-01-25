@@ -26,7 +26,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
     Width = 831
     Height = 135
     object EditID: TcxButtonEdit [0]
-      Left = 81
+      Left = 69
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -40,7 +40,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
       Width = 105
     end
     object EditCID: TcxButtonEdit [1]
-      Left = 249
+      Left = 237
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -86,7 +86,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
       Width = 105
     end
     object EditDate: TcxButtonEdit [6]
-      Left = 585
+      Left = 573
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -99,7 +99,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
       Width = 185
     end
     object EditSale: TcxButtonEdit [7]
-      Left = 417
+      Left = 405
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -115,7 +115,7 @@ inherited fFrameZhiKa: TfFrameZhiKa
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item1: TdxLayoutItem
-          Caption = #35746#21333#32534#21495':'
+          Caption = 'IC'#21345#21495':'
           Control = EditID
           ControlOptions.ShowBorder = False
         end

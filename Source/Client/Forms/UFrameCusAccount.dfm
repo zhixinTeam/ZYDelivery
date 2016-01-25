@@ -168,6 +168,7 @@ inherited fFrameCusAccount: TfFrameCusAccount
     end
     object N4: TMenuItem
       Caption = #26597#35810#36134#25143#20313#39069
+      Visible = False
       OnClick = N4Click
     end
     object N5: TMenuItem
@@ -175,6 +176,7 @@ inherited fFrameCusAccount: TfFrameCusAccount
     end
     object N6: TMenuItem
       Caption = #26657#27491#23458#25143#36164#37329
+      Visible = False
       OnClick = N6Click
     end
   end

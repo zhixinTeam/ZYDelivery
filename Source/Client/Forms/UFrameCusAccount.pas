@@ -60,26 +60,69 @@ implementation
 uses
   ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness;
 
+const
+  gA_YuE = 'A_InMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
+  gI_YuE = 'I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney';
+  gYuE   = 'IsNull(I_YuE, 0) + A_YuE';
+
 class function TfFrameCusAccount.FrameID: integer;
 begin
   Result := cFI_FrameCusAccountQuery;
 end;
 
 function TfFrameCusAccount.InitFormDataSQL(const nWhere: string): string;
+var nSQL, nWh: string;
 begin
-  Result := 'Select ca.*,cus.*,S_Name as C_SaleName,' +
+  {Result := 'Select ca.*,cus.*,S_Name as C_SaleName,' +
             '(A_InMoney-A_OutMoney-A_Compensation-A_FreezeMoney-A_CardUseMoney)' +
             ' As A_YuE From $CA ca ' +
             ' Left Join $Cus cus On cus.C_ID=ca.A_CID ' +
             ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ';
+  Result := 'Select cus.*,S_Name as C_SaleName,' +
+            'isnull(I_YuE, 0) As I_YuE, A_YuE,' +
+            '(isnull(I_YuE, 0) + A_YuE) As YuE, ca.* ' +
+            ' From $CA ca ' +
+            ' Left Join ( ' +
+            ' Select Sum(I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney) As I_YuE,' +
+            ' I_Customer From $FX Group By I_Customer ' +
+            ' ) fx on fx.I_Customer=ca.A_CID ' +
+            ' Left Join ( ' +
+            ' Select (A_InMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney) As A_YuE,' +
+            '  A_CID As A_Customer From $CA) fb on fb.A_Customer=ca.A_CID ' +
+            ' Left Join $Cus cus On cus.C_ID=ca.A_CID ' +
+            ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan '; }
   //xxxxx
 
-  if nWhere = '' then
-       Result := Result + 'Where IsNull(C_XuNi, '''')<>''$Yes'''
-  else Result := Result + 'Where (' + nWhere + ')';
+  nSQL := 'Select IsNull(I_YuE, 0) As I_YuE, $YU As YuE, '+
+          'Abs($YU) As YingShow, 0 As YingFu, tt.*, ' +
+          'cus.*,S_Name as C_SaleName ' +
+          'From (' +
+          'Select ($AY) As A_YuE, * From $CA ca ' +
+          ' Left Join (Select Sum($IU) As I_YuE, I_Customer ' +
+          ' From $FX Group By I_Customer ) fx on fx.I_Customer=ca.A_CID) As tt'+
+          ' Left Join $Cus cus On cus.C_ID=tt.A_CID ' +
+          ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ' +
+          ' Where $YU<0 $Where ' +
+          'Union ' +
+          'Select IsNull(I_YuE, 0) As I_YuE, $YU As YuE, '+
+          '0 As YingShow, Abs($YU) As YingFu, tt.*, ' +
+          'cus.*,S_Name as C_SaleName ' +
+          'From (' +
+          'Select ($AY) As A_YuE, * From $CA ca ' +
+          ' Left Join (Select Sum($IU) As I_YuE, I_Customer ' +
+          ' From $FX Group By I_Customer ) fx on fx.I_Customer=ca.A_CID) As tt'+
+          ' Left Join $Cus cus On cus.C_ID=tt.A_CID ' +
+          ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ' +
+          ' Where $YU>=0 $Where ';
 
-  Result := MacroValue(Result, [MI('$CA', sTable_CusAccount),
-            MI('$Cus', sTable_Customer), MI('$SM', sTable_Salesman),
+  if nWhere = '' then
+       nWh := ' And IsNull(C_XuNi, '''')<>''$Yes'''
+  else nWh := ' And (' + nWhere + ')';
+
+  Result := MacroValue(nSQL, [MI('$CA', sTable_CusAccount),
+            MI('$FX', sTable_FXZhiKa), MI('$Cus', sTable_Customer),
+            MI('$SM', sTable_Salesman), MI('$Where', nWh),
+            MI('$YU', gYuE), MI('$AY', gA_YuE), MI('$IU', gI_YuE),
             MI('$Yes', sFlag_Yes)]);
   //xxxxx
 end;

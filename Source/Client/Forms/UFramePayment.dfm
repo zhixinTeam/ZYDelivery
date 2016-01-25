@@ -15,7 +15,7 @@ inherited fFramePayment: TfFramePayment
       OnClick = BtnEditClick
     end
     inherited BtnDel: TToolButton
-      Visible = False
+      OnClick = BtnDelClick
     end
   end
   inherited cxGrid1: TcxGrid

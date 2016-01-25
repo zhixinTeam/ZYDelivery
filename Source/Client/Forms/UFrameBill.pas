@@ -51,6 +51,7 @@ type
     EditTruck: TcxButtonEdit;
     dxLayout1Item11: TdxLayoutItem;
     N11: TMenuItem;
+    N7: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -65,6 +66,7 @@ type
     procedure CheckDeleteClick(Sender: TObject);
     procedure N10Click(Sender: TObject);
     procedure N11Click(Sender: TObject);
+    procedure N7Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
     //日期区间
@@ -181,7 +183,6 @@ begin
     EditCard.Text := Trim(EditCard.Text);
     if EditCard.Text = '' then Exit;
 
-    FUseDate := Length(EditCard.Text) <= 3;
     FWhere := Format('L_ICC like ''%%%s%%''', [EditCard.Text]);
     InitFormData(FWhere);
   end else
@@ -191,7 +192,6 @@ begin
     EditTruck.Text := Trim(EditTruck.Text);
     if EditTruck.Text = '' then Exit;
 
-    FUseDate := Length(EditTruck.Text) <= 3;
     FWhere := Format('L_Truck like ''%%%s%%''', [EditTruck.Text]);
     InitFormData(FWhere);
   end;
@@ -412,6 +412,37 @@ begin
   finally
     FWhere := '';
   end;
+end;
+
+procedure TfFrameBill.N7Click(Sender: TObject);
+var nOld, nNew, nStr: string;
+begin
+  inherited;
+
+  nOld := SQLQuery.FieldByName('L_Lading').AsString;
+
+  if nOld = sFlag_TiHuo then
+  begin
+    nNew := sFlag_SongH;
+    nStr := '提货方式从 [T、自提] 改为 [S、送货]';
+  end else
+
+  if nOld = sFlag_SongH then
+  begin
+    nNew := sFlag_TiHuo;
+    nStr := '提货方式从 [S、送货] 改为 [T、自提]';
+  end;
+
+  if not QueryDlg(nStr, sHint) then Exit;
+
+  nStr := 'Update %s Set L_Lading=''%s'' Where L_ID=''%s''';
+  nStr := Format(nStr, [sTable_Bill, nNew,
+          SQLQuery.FieldByName('L_ID').AsString]);
+  //xxxxx
+
+  FDM.ExecuteSQL(nStr);
+  ShowMsg('修改提货方式成功', sHint);
+  InitFormData(FWhere);
 end;
 
 initialization

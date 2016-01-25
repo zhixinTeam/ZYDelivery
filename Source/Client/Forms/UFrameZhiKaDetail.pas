@@ -65,9 +65,7 @@ type
     procedure N15Click(Sender: TObject);
     procedure N17Click(Sender: TObject);
     procedure N20Click(Sender: TObject);
-    procedure cxView1CellDblClick(Sender: TcxCustomGridTableView;
-      ACellViewInfo: TcxGridTableDataCellViewInfo; AButton: TMouseButton;
-      AShift: TShiftState; var AHandled: Boolean);
+    procedure cxView1DblClick(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -530,14 +528,11 @@ begin
   InitFormData(FWhere);
 end;
 
-procedure TfFrameZhiKaDetail.cxView1CellDblClick(
-  Sender: TcxCustomGridTableView;
-  ACellViewInfo: TcxGridTableDataCellViewInfo; AButton: TMouseButton;
-  AShift: TShiftState; var AHandled: Boolean);
+procedure TfFrameZhiKaDetail.cxView1DblClick(Sender: TObject);
 var nRowIdx, nValIdx: Integer;
 begin
   inherited;
-  if cxView1.DataController.RecordCount = 0 then Exit;
+  if cxView1.DataController.RecordCount = 0 then Exit;          
 
   nRowIdx := cxView1.DataController.FocusedRowIndex;
   nValIdx := cxView1.GetColumnByFieldName(FCheckField).Index;

@@ -228,7 +228,7 @@ begin
 
     Values['Area']          := FCardData.Values['SQ_Area'];
     Values['Truck']         := Trim(EditTruck.Text);
-    Values['Project']       := FCardData.Values['SQ_ID'];
+    Values['Project']       := FCardData.Values['SQ_Project'];
 
     nCardType               := GetCtrlData(EditCardType);
     Values['CardType']      := nCardType;
@@ -238,6 +238,7 @@ begin
 
     Values['ProviderID']    := FCardData.Values['SQ_ProID'];
     Values['ProviderName']  := FCardData.Values['SQ_ProName'];
+    Values['ProviderType']  := FCardData.Values['SQ_ProType'];
 
     Values['StockNO']       := FCardData.Values['SQ_StockNo'];
     Values['StockName']     := FCardData.Values['SQ_StockName'];

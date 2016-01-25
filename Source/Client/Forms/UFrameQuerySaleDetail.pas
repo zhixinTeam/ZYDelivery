@@ -41,12 +41,16 @@ type
     dxLayout1Item9: TdxLayoutItem;
     EditSaleMan: TcxButtonEdit;
     dxLayout1Item10: TdxLayoutItem;
+    N2: TMenuItem;
+    N3: TMenuItem;
+    N4: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure mniN1Click(Sender: TObject);
     procedure N1Click(Sender: TObject);
+    procedure N3Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -112,7 +116,7 @@ begin
     Result := Result + ' Where (' + FJBWhere + ')';
   end;
 
-  if not gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
        Result := Result + ''
   else Result := Result + ' And L_CusType=''$ZY''';
 
@@ -345,6 +349,24 @@ begin
     nList.Free;
     nListSQL.Free;
     nListEvent.Free;
+  end;
+end;
+
+procedure TfFrameSaleDetailQuery.N3Click(Sender: TObject);
+begin
+  inherited;
+  if ShowDateFilterForm(FTimeS, FTimeE, True) then
+  try
+    if Sender = N3 then   //过重时间
+       FJBWhere := '(L_MDate>=''%s'' and L_MDate <''%s'')'
+    else
+    if Sender = N4 then   //开单时间
+      FJBWhere := '(L_Date>=''%s'' and L_Date <''%s'')';
+
+    FJBWhere := Format(FJBWhere, [DateTime2Str(FTimeS), DateTime2Str(FTimeE)]);
+    InitFormData('');
+  finally
+    FJBWhere := '';
   end;
 end;
 

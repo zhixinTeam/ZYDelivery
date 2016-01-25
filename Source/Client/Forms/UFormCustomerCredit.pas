@@ -32,11 +32,14 @@ type
     cxLabel2: TcxLabel;
     dxLayout1Item9: TdxLayoutItem;
     dxLayout1Group5: TdxLayoutGroup;
+    EditBig: TcxLabel;
+    dxLayout1Item10: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditSaleManPropertiesChange(Sender: TObject);
     procedure EditCusKeyPress(Sender: TObject; var Key: Char);
     procedure BtnOKClick(Sender: TObject);
+    procedure EditCreditPropertiesChange(Sender: TObject);
   protected
     { Protected declarations }
     FTransportCredit: Boolean;
@@ -197,6 +200,14 @@ begin
     ModalResult := mrOk;
     ShowMsg('授信成功', sHint);
   end;
+end;
+
+procedure TfFormCustomerCredit.EditCreditPropertiesChange(Sender: TObject);
+begin
+  inherited;
+  if IsNumber(EditCredit.Text, True) then
+       EditBig.Caption := '金额大写:' + SmallTOBig(StrToFloat(EditCredit.Text))
+  else EditBig.Caption := '金额大写:';
 end;
 
 initialization

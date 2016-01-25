@@ -221,6 +221,14 @@ inherited fFrameOrderDetailQuery: TfFrameOrderDetailQuery
       Caption = #26102#38388#27573#26597#35810
       OnClick = mniN1Click
     end
+    object N4: TMenuItem
+      Caption = #36807#31354#26102#38388#26597
+      OnClick = N4Click
+    end
+    object N5: TMenuItem
+      Caption = #36827#21378#26102#38388#26597
+      OnClick = N4Click
+    end
     object N1: TMenuItem
       Caption = '-'
     end

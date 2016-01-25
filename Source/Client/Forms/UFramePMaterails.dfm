@@ -25,7 +25,7 @@ inherited fFrameMaterails: TfFrameMaterails
     Height = 135
     object cxTextEdit1: TcxTextEdit [0]
       Left = 69
-      Top = 96
+      Top = 93
       Hint = 'T.M_Name'
       ParentFont = False
       TabOrder = 1
@@ -47,7 +47,7 @@ inherited fFrameMaterails: TfFrameMaterails
     end
     object cxTextEdit2: TcxTextEdit [2]
       Left = 257
-      Top = 96
+      Top = 93
       Hint = 'T.M_Memo'
       ParentFont = False
       TabOrder = 2
@@ -103,6 +103,18 @@ inherited fFrameMaterails: TfFrameMaterails
       Caption = #21516#27493#21407#26448#26009
       Visible = False
       OnClick = N1Click
+    end
+    object N2: TMenuItem
+      Caption = '-'
+      Enabled = False
+    end
+    object N3: TMenuItem
+      Caption = #35774#32622#39564#25910
+      OnClick = N3Click
+    end
+    object N4: TMenuItem
+      Caption = #21462#28040#39564#25910
+      OnClick = N3Click
     end
   end
 end

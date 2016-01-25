@@ -23,8 +23,7 @@ inherited fFrameZhiKaDetail: TfFrameZhiKaDetail
     LevelTabs.Slants.Kind = skCutCorner
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
-      OnCellDblClick = cxView1CellDblClick
-      OptionsSelection.MultiSelect = True
+      OnDblClick = cxView1DblClick
     end
     inherited cxLevel1: TcxGridLevel
       Caption = #24050#21150#29702

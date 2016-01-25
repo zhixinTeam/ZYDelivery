@@ -878,12 +878,95 @@ begin
   Result := True;
 end;
 
+//-----------------------------------------------------------------------
+type
+  TPrinterHYKJ = class(TCodePrinterBase)
+  protected
+    function PrintCode(const nCode: string;
+     var nHint: string): Boolean; override;
+  public
+    class function DriverName: string; override;
+  end;
+
+const awCRC_Code: array [0..255] of ULONG= (
+  $0000, $080D, $0817, $001A, $0823, $002E, $0034, $0839, $084B, $0046, $005C,
+  $0851, $0068, $0865, $087F, $0072, $089B, $0096, $008C, $0881, $00B8, $08B5,
+  $08AF, $00A2, $00D0, $08DD, $08C7, $00CA, $08F3, $00FE, $00E4, $08E9, $093B,
+  $0136, $012C, $0921, $0118, $0915, $090F, $0102, $0170, $097D, $0967, $016A,
+	$0953, $015E, $0144, $0949, $01A0, $09AD, $09B7, $01BA, $0983, $018E, $0194,
+  $0999, $09EB, $01E6, $01FC, $09F1, $01C8, $09C5, $09DF, $01D2, $0A7B, $0276,
+	$026C, $0A61, $0258, $0A55, $0A4F, $0242, $0230, $0A3D, $0A27, $022A, $0A13,
+  $021E, $0204, $0A09, $02E0, $0AED, $0AF7, $02FA, $0AC3, $02CE, $02D4, $0AD9,
+	$0AAB, $02A6, $02BC, $0AB1, $0288, $0A85, $0A9F, $0292, $0340, $0B4D, $0B57,
+  $035A, $0B63, $036E, $0374, $0B79, $0B0B, $0306, $031C, $0B11, $0328, $0B25,
+	$0B3F, $0332, $0BDB, $03D6, $03CC, $0BC1, $03F8, $0BF5, $0BEF, $03E2, $0390,
+  $0B9D, $0B87, $038A, $0BB3, $03BE, $03A4, $0BA9, $0CFB, $04F6, $04EC, $0CE1,
+	$04D8, $0CD5, $0CCF, $04C2, $04B0, $0CBD, $0CA7, $04AA, $0C93, $049E, $0484,
+  $0C89, $0460, $0C6D, $0C77, $047A, $0C43, $044E, $0454, $0C59, $0C2B, $0426,
+  $043C, $0C31, $0408, $0C05, $0C1F, $0412, $05C0, $0DCD, $0DD7, $05DA, $0DE3,
+  $05EE, $05F4, $0DF9, $0D8B, $0586, $059C, $0D91, $05A8, $0DA5, $0DBF, $05B2,
+  $0D5B, $0556, $054C, $0D41, $0578, $0D75, $0D6F, $0562, $0510, $0D1D, $0D07,
+	$050A, $0D33, $053E, $0524, $0D29, $0680, $0E8D, $0E97, $069A, $0EA3, $06AE,
+  $06B4, $0EB9, $0ECB, $06C6, $06DC, $0ED1, $06E8, $0EE5, $0EFF, $06F2, $0E1B,
+  $0616, $060C, $0E01, $0638, $0E35, $0E2F, $0622, $0650, $0E5D, $0E47, $064A,
+  $0E73, $067E, $0664, $0E69, $0FBB, $07B6, $07AC, $0FA1, $0798, $0F95, $0F8F,
+	$0782, $07F0, $0FFD, $0FE7, $07EA, $0FD3, $07DE, $07C4, $0FC9, $0720, $0F2D,
+  $0F37, $073A, $0F03, $070E, $0714, $0F19, $0F6B, $0766, $077C, $0F71, $0748,
+  $0F45, $0F5F, $0752);
+
+
+function CRC12(const nSrc: string; const nLen: Integer): Word;
+var nIdx: Integer;
+    nCrc, nTmp, nLdx: Word;
+begin
+  nCrc := 0;
+
+  for nIdx:=1 to nLen do
+  begin
+    nTmp := (nCrc and $0FF0) shr 4;
+    nLdx := Ord(nSrc[nIdx]) xor nTmp;
+    nCrc := ((nCrc and $000F) shl 8) xor awCRC_Code[nLdx];
+  end;
+
+  Result := nCrc;
+end;
+
+class function TPrinterHYKJ.DriverName: string;
+begin
+  Result := 'HYKJ';
+end;
+
+function TPrinterHYKJ.PrintCode(const nCode: string;
+  var nHint: string): Boolean;
+var nData, nHead: string;
+    nCrc: TByteWord;
+    nBuf: TIdBytes;
+begin
+  //漳平洪阳科技喷码机
+  //FE 01 04 Length+5 01 01 两位包数(00 00) 时钟设置(00) datas Crc16 FD
+  nHead := Char($FE);
+  nData := Char($01) + Char($04)+ Char(Length(nCode) + 5);
+  nData := nData + Char(01) + Char($01) + Char($00) + Char($00) + Char($00);
+  nData := nData + nCode;
+
+  nCrc := TByteWord(CRC12(nData, Length(nData)));
+  nData := nHead + nData + Char(nCrc.FL) + Char(nCrc.FH) + Char($FD);
+  FClient.Socket.Write(nData, Indy8BitEncoding);
+
+  SetLength(nBuf, 0);
+  FClient.Socket.ReadBytes(nBuf, 3, False);
+  //FE 00 FD 喷码成功
+
+  Result := True;
+end;
+
 initialization
   gCodePrinterManager := TCodePrinterManager.Create;
   gCodePrinterManager.RegDriver(TPrinterZero);
   gCodePrinterManager.RegDriver(TPrinterJY);
   gCodePrinterManager.RegDriver(TPrinterWSD);
   gCodePrinterManager.RegDriver(TPrinterSGB);
+  gCodePrinterManager.RegDriver(TPrinterHYKJ);
 finalization
   FreeAndNil(gCodePrinterManager);
 end.

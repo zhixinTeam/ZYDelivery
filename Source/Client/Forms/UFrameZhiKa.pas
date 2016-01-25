@@ -200,7 +200,7 @@ begin
     EditID.Text := Trim(EditID.Text);
     if EditID.Text = '' then Exit;
 
-    FWhere := 'Z_ID like ''%' + EditID.Text + '%''';
+    FWhere := 'Z_CardNO like ''%' + EditID.Text + '%''';
     InitFormData(FWhere);
   end else
 

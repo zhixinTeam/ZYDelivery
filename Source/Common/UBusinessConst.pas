@@ -27,12 +27,14 @@ const
   cBC_GetCardUsed             = $0004;   //获取卡片类型
   cBC_UserLogin               = $0005;   //用户登录
   cBC_UserLogOut              = $0006;   //用户注销
+  cBC_GetSerialNOByDate       = $0007;   //获取串行编号
 
   cBC_GetCustomerMoney        = $0010;   //获取客户可用金
   cBC_GetZhiKaMoney           = $0011;   //获取纸卡(订单)可用金
   cBC_CustomerHasMoney        = $0012;   //客户是否有余额
   cBC_AdjustCustomerMoney     = $0013;   //矫正客户余额
   cBC_GetTransportMoney       = $0014;   //获取运费可用金
+  cBC_GetCompensateMoney      = $0019;   //获取客户可用金
 
   cBC_SaveTruckInfo           = $0015;   //保存车辆信息
   cBC_GetTruckPoundData       = $0016;   //获取车辆称重数据
@@ -59,10 +61,13 @@ const
   cBC_SaveOrderBase           = $0046;   //保存采购申请单
   cBC_DeleteOrderBase         = $0047;   //删除采购申请单
   cBC_GetGYOrderValue         = $0048;   //获取已收货量
+  cBC_SaveOrderDtlAdd         = $0049;
 
   cBC_GetPostBills            = $0030;   //获取岗位交货单
   cBC_SavePostBills           = $0031;   //保存岗位交货单
   cBC_SaveFactZhiKa           = $0032;   //保存工厂订单
+  cBC_SaveFLZhiKa             = $0033;   //保存纸卡(订单)
+  cBC_DeleteFLZhiKa           = $0034;   //删除纸卡(订单)
 
   cBC_ChangeDispatchMode      = $0053;   //切换调度模式
   cBC_GetPoundCard            = $0054;   //获取磅站卡号
@@ -92,6 +97,10 @@ const
   cBC_SyncProvider            = $0085;   //远程同步供应商
   cBC_SyncMaterails           = $0086;   //远程同步原材料
   cBC_StatisticsTrucks        = $0087;   //将所有出厂车辆统计
+
+  cBC_VerifyMYZhiKaMoney      = $0090;   //校验贸易公司客户可用金
+  cBC_SaveMYBills             = $0091;   //保存贸易公司交易明细
+  cBC_DeleteMYBill            = $0092;   //删除贸易公司交易明细
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
@@ -124,6 +133,7 @@ type
     FZKType     : string;          //订单类型
     FCusID      : string;          //客户编号
     FCusName    : string;          //客户名称
+    FCusType    : string;          //客户类型
     FTruck      : string;          //车牌号码
 
     FType       : string;          //品种类型
@@ -221,6 +231,7 @@ begin
         FZKType     := Values['ZKType'];
         FCusID      := Values['CusID'];
         FCusName    := Values['CusName'];
+        FCusType    := Values['CusType'];
         FTruck      := Values['Truck'];
 
         FType       := Values['Type'];
@@ -318,6 +329,7 @@ begin
         Values['ZKType']     := FZKType;
         Values['CusID']      := FCusID;
         Values['CusName']    := FCusName;
+        Values['CusType']    := FCusType;
         Values['Truck']      := FTruck;
 
         Values['Seal']       := FSeal;

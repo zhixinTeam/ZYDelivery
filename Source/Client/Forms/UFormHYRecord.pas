@@ -59,8 +59,6 @@ type
     dxLayoutControl1Item3: TdxLayoutItem;
     dxLayoutControl1Group3: TdxLayoutGroup;
     Label19: TLabel;
-    Label20: TLabel;
-    Label21: TLabel;
     Label22: TLabel;
     Label23: TLabel;
     Label24: TLabel;
@@ -70,15 +68,9 @@ type
     Label30: TLabel;
     Label31: TLabel;
     Label32: TLabel;
-    Label34: TLabel;
-    Label38: TLabel;
-    Label39: TLabel;
-    Label40: TLabel;
     cxTextEdit17: TcxTextEdit;
     cxTextEdit18: TcxTextEdit;
     cxTextEdit19: TcxTextEdit;
-    cxTextEdit20: TcxTextEdit;
-    cxTextEdit21: TcxTextEdit;
     cxTextEdit22: TcxTextEdit;
     cxTextEdit23: TcxTextEdit;
     cxTextEdit24: TcxTextEdit;
@@ -86,14 +78,6 @@ type
     cxTextEdit26: TcxTextEdit;
     cxTextEdit27: TcxTextEdit;
     cxTextEdit28: TcxTextEdit;
-    cxTextEdit45: TcxTextEdit;
-    cxTextEdit52: TcxTextEdit;
-    cxTextEdit53: TcxTextEdit;
-    cxTextEdit54: TcxTextEdit;
-    Label41: TLabel;
-    cxTextEdit55: TcxTextEdit;
-    Label42: TLabel;
-    cxTextEdit56: TcxTextEdit;
     Label43: TLabel;
     cxTextEdit57: TcxTextEdit;
     Label44: TLabel;
@@ -377,8 +361,8 @@ begin
     Label24.Caption := '密度g/cm:';
     Label19.Caption := '流动度比:';
     Label22.Caption := '含 水 量:';
-    Label21.Caption := '石膏掺量:';
-    Label34.Caption := '助 磨 剂:';
+    //Label21.Caption := '石膏掺量:';
+    //Label34.Caption := '助 磨 剂:';
     Label18.Caption := '7天活性指数:';
     Label26.Caption := '28天活性指数:';
   end else
@@ -386,8 +370,8 @@ begin
     Label24.Caption := '氧 化 镁:';
     Label19.Caption := '碱 含 量:';
     Label22.Caption := '细    度:';
-    Label21.Caption := '稠    度:';
-    Label34.Caption := '游 离 钙:';
+    //Label21.Caption := '稠    度:';
+    //Label34.Caption := '游 离 钙:';
     Label18.Caption := '3天抗折强度:';
     Label26.Caption := '28天抗折强度:';
   end;

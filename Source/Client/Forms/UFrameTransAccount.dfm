@@ -22,6 +22,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
     Height = 205
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
+      OptionsSelection.CellMultiSelect = True
     end
   end
   inherited dxLayout1: TdxLayoutControl
@@ -32,7 +33,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
       Top = 93
       Hint = 'T.A_CID'
       ParentFont = False
-      TabOrder = 2
+      TabOrder = 3
       Width = 115
     end
     object cxTextEdit4: TcxTextEdit [1]
@@ -40,7 +41,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
       Top = 93
       Hint = 'T.C_Name'
       ParentFont = False
-      TabOrder = 3
+      TabOrder = 4
       Width = 150
     end
     object EditCustomer: TcxButtonEdit [2]
@@ -62,7 +63,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
       Top = 93
       Hint = 'T.C_Bank'
       ParentFont = False
-      TabOrder = 5
+      TabOrder = 6
       Width = 100
     end
     object cxTextEdit1: TcxTextEdit [4]
@@ -70,7 +71,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
       Top = 93
       Hint = 'T.C_Account'
       ParentFont = False
-      TabOrder = 4
+      TabOrder = 5
       Width = 175
     end
     object EditID: TcxButtonEdit [5]
@@ -87,6 +88,13 @@ inherited fFrameTransAccount: TfFrameTransAccount
       OnKeyPress = OnCtrlKeyPress
       Width = 115
     end
+    object EditTime: TcxDateEdit [6]
+      Left = 472
+      Top = 36
+      Properties.Kind = ckDateTime
+      TabOrder = 2
+      Width = 153
+    end
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item2: TdxLayoutItem
@@ -97,6 +105,11 @@ inherited fFrameTransAccount: TfFrameTransAccount
         object dxLayout1Item8: TdxLayoutItem
           Caption = #23458#25143#21517#31216':'
           Control = EditCustomer
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item3: TdxLayoutItem
+          Caption = #26102#38388#36873#25321':'
+          Control = EditTime
           ControlOptions.ShowBorder = False
         end
       end

@@ -41,6 +41,7 @@ type
     procedure PopupMenu1Popup(Sender: TObject);
     procedure N1Click(Sender: TObject);
     procedure N2Click(Sender: TObject);
+    procedure BtnDelClick(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -61,7 +62,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, USysConst, USysDB, UFormBase, UFormDateFilter,
-  UFormInputbox, UDataModule;
+  UFormInputbox, UDataModule, USysBusiness;
 
 //------------------------------------------------------------------------------
 class function TfFrameTransPayment.FrameID: integer;
@@ -173,9 +174,9 @@ var nMemo, nStr: string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
-    nStr  := SQLQuery.FieldByName('M_Memo').AsString;
+    nStr  := Trim(SQLQuery.FieldByName('M_Memo').AsString);
     nMemo := nStr;
-    if not ShowInputBox('请输入新的备注信息:', '修改', nMemo, 15) then Exit;
+    if not ShowInputBox('请输入新的备注信息:', '修改', nMemo) then Exit;
 
     if (nMemo = '') or (nStr = nMemo) then Exit;
     //无效或一致
@@ -194,9 +195,9 @@ var nPayment, nStr: string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
-    nStr  := SQLQuery.FieldByName('M_Payment').AsString;
+    nStr  := Trim(SQLQuery.FieldByName('M_Payment').AsString);
     nPayment := nStr;
-    if not ShowInputBox('请输入新的付款方式:', '修改', nPayment, 15) then Exit;
+    if not ShowInputBox('请输入新的付款方式:', '修改', nPayment) then Exit;
 
     if (nPayment = '') or (nStr = nPayment) then Exit;
     //无效或一致
@@ -206,6 +207,33 @@ begin
             SQLQuery.FieldByName('R_ID').AsString]);
     FDM.ExecuteSQL(nStr);
     ShowMsg('修改付款方式成功!', sHint);
+    InitFormData(FWhere);
+  end;
+end;
+
+procedure TfFrameTransPayment.BtnDelClick(Sender: TObject);
+var nStr: string;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := '是否删除回款记录 [ %s ] 该记录详细信息如下: ' + #13#10 +
+            '客户编号: [ %s ] 客户名称: [ %s] ' + #13#10 +
+            '回款金额: [ %.2f ] 元';
+    nStr := Format(nStr, [SQLQuery.FieldByName('R_ID').AsString,
+            SQLQuery.FieldByName('M_CusID').AsString,
+            SQLQuery.FieldByName('M_CusName').AsString,
+            SQLQuery.FieldByName('M_Money').AsFloat]);
+    if not QueryDlg(nStr, sAsk) then Exit;
+
+    nStr := SQLQuery.FieldByName('R_ID').AsString;
+    if not DeleteCustomerPayment(nStr, True) then
+    begin
+      ShowMsg('删除记录失败', sHint);
+      Exit;
+    end;
+
+    ShowMsg('删除回款记录成功!', sHint);
     InitFormData(FWhere);
   end;
 end;

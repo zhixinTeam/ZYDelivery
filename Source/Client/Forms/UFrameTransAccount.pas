@@ -15,7 +15,7 @@ uses
   cxMaskEdit, cxButtonEdit, cxTextEdit, ADODB, cxLabel, UBitmapPanel,
   cxSplitter, cxGridLevel, cxClasses, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
-  ComCtrls, ToolWin;
+  ComCtrls, ToolWin, cxDropDownEdit, cxCalendar;
 
 type
   TfFrameTransAccount = class(TfFrameNormal)
@@ -38,6 +38,8 @@ type
     N4: TMenuItem;
     N5: TMenuItem;
     N6: TMenuItem;
+    EditTime: TcxDateEdit;
+    dxLayout1Item3: TdxLayoutItem;
     procedure N3Click(Sender: TObject);
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
@@ -46,7 +48,10 @@ type
     procedure N6Click(Sender: TObject);
   private
     { Private declarations }
+    FDateTimeFilter :string;
   protected
+    procedure OnCreateFrame; override;
+    procedure OnDestroyFrame; override;
     function InitFormDataSQL(const nWhere: string): string; override;
     {*查询SQL*}
   public
@@ -65,13 +70,37 @@ begin
   Result := cFI_FrameTransAccountQuery;
 end;
 
+procedure TfFrameTransAccount.OnCreateFrame;
+begin
+  inherited;
+  EditTime.Date := Date;
+end;
+
+procedure TfFrameTransAccount.OnDestroyFrame;
+begin
+  inherited;
+end;
+
 function TfFrameTransAccount.InitFormDataSQL(const nWhere: string): string;
 begin
-  Result := 'Select ca.*,cus.*,S_Name as C_SaleName,' +
-            '(A_InMoney-A_OutMoney-A_Compensation-A_FreezeMoney) As A_YuE ' +
+  FDateTimeFilter := DateTime2Str(EditTime.Date);
+
+  Result := 'Select ca.*,cus.*,S_Name as C_SaleName, ' +
+            'IsNull(T_OutMoney, 0) As T_OutMoney, IsNull(M_InMoney, 0) As M_InMoney, ' +
+            '(A_BeginBalance+A_InMoney-A_OutMoney-A_Compensation-' +
+            'A_FreezeMoney) As A_YuE, ' +
+            '(A_BeginBalance + IsNull(M_InMoney, 0)-IsNull(T_OutMoney, 0)) As T_YuE ' +
             'From $CA ca ' +
             ' Left Join $Cus cus On cus.C_ID=ca.A_CID ' +
-            ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ';
+            ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ' +
+            ' Left Join (Select Sum(T_CusMoney) As T_OutMoney, T_CusID ' +
+            '  From $THT Where T_Enabled=''$Yes'' ' +
+            '  And T_Payment Like ''回%%'' And T_Date<''$DATE'' ' +
+            '  Group By T_CusID) ht on ht.T_CusID = ca.A_CID ' +
+            ' Left Join (Select Sum(M_Money) As M_InMoney, M_CusID  ' +
+            ' From $MDT Where M_Date<''$DATE'' ' +
+            ' Group By M_CusID) mdt on mdt.M_CusID=ca.A_CID ';
+
   //xxxxx
 
   if nWhere = '' then
@@ -80,8 +109,9 @@ begin
 
   Result := MacroValue(Result, [MI('$CA', sTable_TransAccount),
             MI('$Cus', sTable_Customer), MI('$SM', sTable_Salesman),
-            MI('$Yes', sFlag_Yes)]);
-  //xxxxx
+            MI('$THT', sTable_TransContract),MI('$MDT', sTable_TransInOutMoney),
+            MI('$DATE', FDateTimeFilter), MI('$Yes', sFlag_Yes)]);
+  //xxxxx   
 end;
 
 //Desc: 执行查询  
@@ -116,7 +146,6 @@ begin
   {$ELSE}
   N4.Visible := False;
   {$ENDIF}
-  N6.Enabled := gSysParam.FIsAdmin;
 end;
 
 //Desc: 快捷菜单
@@ -154,25 +183,11 @@ var nStr,nCID: string;
     nVal: Double;
 begin
   if cxView1.DataController.GetSelectedCount < 1 then Exit;
+
   nCID := SQLQuery.FieldByName('A_CID').AsString;
-
-  nStr := 'Select Sum(L_Money) from (' +
-          '  select L_Value * L_Price as L_Money from %s' +
-          '  where L_OutFact Is not Null And L_CusID = ''%s'') t';
-  nStr := Format(nStr, [sTable_Bill, nCID]);
-
-  with FDM.QuerySQL(nStr) do
-  begin
-    nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
-    nStr := 'Update %s Set A_OutMoney=%.2f Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_TransAccount, nVal, nCID]);
-    FDM.ExecuteSQL(nStr);
-  end;
-
-  nStr := 'Select Sum(L_Money) from (' +
-          '  select L_Value * L_Price as L_Money from %s' +
-          '  where L_OutFact Is Null And L_CusID = ''%s'') t';
-  nStr := Format(nStr, [sTable_Bill, nCID]);
+  nStr := 'Select Sum(T_CusMoney) From %s Where T_CusID=''%s'' ' +
+          'And (IsNull(T_Enabled, '''')<>''%s'') And T_PayMent Like ''%%%s%%''';
+  nStr := Format(nStr, [sTable_TransContract, nCID, sFlag_No, '回']);
 
   with FDM.QuerySQL(nStr) do
   begin

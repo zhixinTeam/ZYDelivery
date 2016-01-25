@@ -14,12 +14,12 @@ inherited fFormCustomerCredit: TfFormCustomerCredit
       Left = 281
       Top = 226
       Caption = #30830#23450
-      TabOrder = 7
+      TabOrder = 8
     end
     inherited BtnExit: TButton
       Left = 351
       Top = 226
-      TabOrder = 8
+      TabOrder = 9
     end
     object EditSaleMan: TcxComboBox [2]
       Left = 81
@@ -50,6 +50,7 @@ inherited fFormCustomerCredit: TfFormCustomerCredit
       Top = 86
       ParentFont = False
       Properties.ReadOnly = False
+      Properties.OnChange = EditCreditPropertiesChange
       TabOrder = 2
       Text = '0'
       Width = 142
@@ -68,12 +69,12 @@ inherited fFormCustomerCredit: TfFormCustomerCredit
     end
     object EditMemo: TcxMemo [6]
       Left = 81
-      Top = 136
+      Top = 157
       ParentFont = False
       Properties.MaxLength = 50
       Properties.ScrollBars = ssVertical
       Style.Edges = [bBottom]
-      TabOrder = 6
+      TabOrder = 7
       Height = 50
       Width = 301
     end
@@ -96,6 +97,16 @@ inherited fFormCustomerCredit: TfFormCustomerCredit
       Height = 20
       Width = 52
       AnchorY = 121
+    end
+    object EditBig: TcxLabel [9]
+      Left = 23
+      Top = 136
+      AutoSize = False
+      Caption = #37329#39069#22823#20889':'
+      ParentFont = False
+      Transparent = True
+      Height = 16
+      Width = 378
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
@@ -157,6 +168,12 @@ inherited fFormCustomerCredit: TfFormCustomerCredit
                 Control = cxLabel2
                 ControlOptions.ShowBorder = False
               end
+            end
+            object dxLayout1Item10: TdxLayoutItem
+              Caption = 'cxLabel3'
+              ShowCaption = False
+              Control = EditBig
+              ControlOptions.ShowBorder = False
             end
             object dxLayout1Item7: TdxLayoutItem
               AutoAligns = [aaHorizontal]

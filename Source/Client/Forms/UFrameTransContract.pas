@@ -14,7 +14,7 @@ uses
   cxTextEdit, cxMaskEdit, cxButtonEdit, ADODB, cxLabel, UBitmapPanel,
   cxSplitter, cxGridLevel, cxClasses, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
-  ComCtrls, ToolWin;
+  ComCtrls, ToolWin, cxDropDownEdit, cxCheckComboBox;
 
 type
   TfFrameTransContract = class(TfFrameNormal)
@@ -30,17 +30,21 @@ type
     dxLayout1Item6: TdxLayoutItem;
     cxTextEdit3: TcxTextEdit;
     dxLayout1Item5: TdxLayoutItem;
-    EditSale: TcxButtonEdit;
+    EditDrver: TcxButtonEdit;
     dxLayout1Item7: TdxLayoutItem;
     PMenu1: TPopupMenu;
     N1: TMenuItem;
     N2: TMenuItem;
     N5: TMenuItem;
-    N6: TMenuItem;
     N7: TMenuItem;
     EditDate: TcxButtonEdit;
     dxLayout1Item8: TdxLayoutItem;
     N3: TMenuItem;
+    EditSellte: TcxCheckComboBox;
+    dxLayout1Item9: TdxLayoutItem;
+    N4: TMenuItem;
+    N6: TMenuItem;
+    N8: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
@@ -52,12 +56,20 @@ type
     procedure N5Click(Sender: TObject);
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
+    procedure EditSettlePropertiesEditValueChanged(Sender: TObject);
+    procedure EditSelltePropertiesClickCheck(Sender: TObject;
+      ItemIndex: Integer; var AllowToggle: Boolean);
+    procedure N6Click(Sender: TObject);
+    procedure N8Click(Sender: TObject);
   private
     { Private declarations }
     FStart,FEnd: TDate;
     //时间区间
     FUseDate: Boolean;
     //使用区间
+    function SelectSettleFlag: string;
+    function GetVal(const nRow: Integer; const nField: string): string;
+    //获取指定字段
   protected
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
@@ -73,7 +85,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl,UDataModule, UFrameBase, UFormBase, USysBusiness,
-  USysConst, USysDB, UFormDateFilter;
+  USysConst, USysDB, UFormDateFilter, UAdjustForm, UFormCtrl;
 
 //------------------------------------------------------------------------------
 class function TfFrameTransContract.FrameID: integer;
@@ -96,21 +108,25 @@ end;
 
 //Desc: 数据查询SQL
 function TfFrameTransContract.InitFormDataSQL(const nWhere: string): string;
+var nSettle: String;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
   Result := 'Select *,T_CusMoney-T_DrvMoney As JieSheng From $Con ';
   //xxxxx
-  
+
   if nWhere = '' then
        Result := Result + ' Where (IsNull(T_Enabled, '''')<>''$NO'')'
   else Result := Result + ' Where (' + nWhere + ')';
+
+  nSettle := SelectSettleFlag;
+  Result := Result + ' And ' + '(IsNull(T_Settle, ''$No'') = ''$Sel'')';
 
   if FUseDate then
     Result := Result + ' And ' + '(T_Date>=''$ST'' and T_Date <''$End'')';
 
   Result := MacroValue(Result, [MI('$Con', sTable_TransContract),
-            MI('$NO', sFlag_NO),
+            MI('$Yes', sFlag_Yes), MI('$NO', sFlag_NO), MI('$Sel', nSettle),
             MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
 end;
@@ -152,7 +168,12 @@ begin
   if SQLQuery.FieldByName('T_Enabled').AsString = sFlag_No then
   begin
     ShowMsg('协议已无效，无法修改', sHint); Exit;
-  end;  
+  end;
+
+  if SQLQuery.FieldByName('T_Settle').AsString = sFlag_No then
+  begin
+    ShowMsg('协议已运费已结算，无法修改', sHint); Exit;
+  end;
 
   nParam.FCommand := cCmd_EditData;
   nParam.FParamA := SQLQuery.FieldByName('R_ID').AsString;
@@ -178,17 +199,34 @@ begin
     ShowMsg('协议已无效，无法删除', sHint); Exit;
   end;
 
+  if SQLQuery.FieldByName('T_Settle').AsString = sFlag_No then
+  begin
+    ShowMsg('协议已运费已结算，无法删除', sHint); Exit;
+  end;
+
+  nStr := '确定要删除编号为[ %s ]的单据吗?';
+  nStr := Format(nStr, [SQLQuery.FieldByName('T_ID').AsString]);
+  if not QueryDlg(nStr, sAsk) then Exit;
+
   FDM.ADOConn.BeginTrans;
   try
-    nCID := SQLQuery.FieldByName('T_CusID').AsString;
-    nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-%s Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_TransAccount,
-            SQLQuery.FieldByName('CusMoney').AsString,nCID]);
-    FDM.ExecuteSQL(nStr);
+    nStr := SQLQuery.FieldByName('T_Payment').AsString;
+
+    if Pos('回', nStr)>0 then
+    begin
+      nCID := SQLQuery.FieldByName('T_CusID').AsString;
+      nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-%s Where A_CID=''%s''';
+      nStr := Format(nStr, [sTable_TransAccount,
+              SQLQuery.FieldByName('T_CusMoney').AsString,nCID]);
+      FDM.ExecuteSQL(nStr);
+    end;
 
     nStr := 'Update %s Set T_Enabled=''%s'' Where R_ID=%s';
     nStr := Format(nStr,[sTable_TransContract, sFlag_No,
             SQLQuery.FieldByName('R_ID').AsString]);
+    FDM.ExecuteSQL(nStr);
+    
+    FDM.ADOConn.CommitTrans;        
     ShowMsg('已成功删除协议记录', sHint);
   except
     FDM.ADOConn.RollbackTrans;
@@ -223,13 +261,13 @@ begin
     InitFormData(FWhere);
   end else
 
-  if Sender = EditSale then
+  if Sender = EditDrver then
   begin
-    EditSale.Text := Trim(EditSale.Text);
-    if EditSale.Text = '' then Exit;
+    EditDrver.Text := Trim(EditDrver.Text);
+    if EditDrver.Text = '' then Exit;
 
-    FWhere := 'T_SalePY like ''%%%s%%'' Or T_SaleMan like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditSale.Text, EditSale.Text]);
+    FWhere := 'T_Driver like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditDrver.Text, EditDrver.Text]);
     InitFormData(FWhere);
   end else
 
@@ -283,6 +321,147 @@ procedure TfFrameTransContract.EditDatePropertiesButtonClick(
 begin
   inherited;
   if ShowDateFilterForm(FStart, FEnd) then InitFormData('');
+end;
+
+procedure TfFrameTransContract.EditSettlePropertiesEditValueChanged(
+  Sender: TObject);
+begin
+  inherited;
+  InitFormData(FWhere);
+end;
+
+procedure TfFrameTransContract.EditSelltePropertiesClickCheck(
+  Sender: TObject; ItemIndex: Integer; var AllowToggle: Boolean);
+var nIdx: Integer;
+    nOStatus: TcxCheckBoxState;
+begin
+  inherited;
+  nOStatus := EditSellte.States[ItemIndex];
+
+  for nIdx := 0 to EditSellte.Properties.Items.Count - 1 do
+  if nIdx <> ItemIndex then EditSellte.States[nIdx] := nOStatus;
+
+  InitFormData(FWhere);
+end;
+
+function TfFrameTransContract.SelectSettleFlag: string;
+begin
+  if EditSellte.ItemIndex = 0 then
+       Result := sFlag_Yes
+  else Result := sFlag_No;
+end;
+
+function TfFrameTransContract.GetVal(const nRow: Integer;
+ const nField: string): string;
+var nVal: Variant;
+begin
+  nVal := cxView1.DataController.GetValue(
+            cxView1.Controller.SelectedRows[nRow].RecordIndex,
+            cxView1.GetColumnByFieldName(nField).Index);
+  //xxxxx
+
+  if VarIsNull(nVal) then
+       Result := ''
+  else Result := nVal;
+end;
+
+procedure TfFrameTransContract.N6Click(Sender: TObject);
+var nList: TStrings;
+    nIdx,nLen: Integer;
+    nSetDate: TDateTime;
+    nSQL, nPID, nSettle: string;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then
+    Exit;
+  //xxxxx
+
+  nSetDate := FDM.ServerNow;
+  nList := TStringList.Create;
+  try
+    nLen := cxView1.DataController.GetSelectedCount - 1;
+
+    for nIdx:=0 to nLen do
+    begin
+      nPID := GetVal(nIdx, 'T_ID');
+      nSettle := GetVal(nIdx, 'T_Settle');
+      if (nPID = '') or (nSettle = sFlag_Yes) then Continue;
+
+      nSQL := MakeSQLByStr([SF('T_Settle', sFlag_Yes),
+              SF('T_SetDate', DateTime2Str(nSetDate)),
+              SF('T_SetMan', gSysParam.FUserID)
+              ], sTable_TransContract, SF('T_ID', nPID), False);
+      nList.Add(nSQL);
+    end;
+
+    if nList.Count < 1 then
+    begin
+      ShowMsg('选中记录无效', sHint); Exit;
+    end;
+
+    FDM.ADOConn.BeginTrans;
+    try
+      for nIdx := 0 to nList.Count - 1 do
+        FDM.ExecuteSQL(nList[nIdx]);
+
+      FDM.ADOConn.CommitTrans;
+      ShowMsg('结算成功', sHint);
+      InitFormData(FWhere);
+    except
+      ShowMsg('未知错误导致结算失败', sHint);
+      FDM.ADOConn.RollbackTrans;
+      Exit;
+    end;
+  finally
+    nList.Free;
+  end;
+end;
+
+procedure TfFrameTransContract.N8Click(Sender: TObject);
+var nList: TStrings;
+    nIdx,nLen: Integer;
+    nSQL, nPID, nSettle: string;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then
+    Exit;
+  //xxxxx
+
+  nList := TStringList.Create;
+  try
+    nLen := cxView1.DataController.GetSelectedCount - 1;
+
+    for nIdx:=0 to nLen do
+    begin
+      nPID := GetVal(nIdx, 'T_ID');
+      nSettle := GetVal(nIdx, 'T_Settle');
+      if (nPID = '') or (nSettle <> sFlag_Yes) then Continue;
+
+      nSQL := 'Update %s Set T_Settle=Null, T_SetMan=Null, T_SetDate=Null ' +
+              'Where T_ID=''%s''';
+      nSQL := Format(nSQL, [sTable_TransContract, nPID]);
+      nList.Add(nSQL);
+    end;
+
+    if nList.Count < 1 then
+    begin
+      ShowMsg('选中记录无效', sHint); Exit;
+    end;
+
+    FDM.ADOConn.BeginTrans;
+    try
+      for nIdx := 0 to nList.Count - 1 do
+        FDM.ExecuteSQL(nList[nIdx]);
+
+      FDM.ADOConn.CommitTrans;
+      ShowMsg('反结算成功', sHint);
+      InitFormData(FWhere);
+    except
+      ShowMsg('未知错误导致反结算失败', sHint);
+      FDM.ADOConn.RollbackTrans;
+      Exit;
+    end;
+  finally
+    nList.Free;
+  end;
 end;
 
 initialization

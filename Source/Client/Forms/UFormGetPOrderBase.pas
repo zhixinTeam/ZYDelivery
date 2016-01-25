@@ -19,6 +19,7 @@ type
 
     FProvID: string;
     FProvName: string;
+    FProvType: string;
 
     FSaleID: string;
     FSaleName: string;
@@ -42,6 +43,8 @@ type
     dxLayout1Item7: TdxLayoutItem;
     EditMate: TcxButtonEdit;
     dxLayout1Item3: TdxLayoutItem;
+    cxLabel2: TcxLabel;
+    dxLayout1Item4: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnOKClick(Sender: TObject);
@@ -180,6 +183,7 @@ begin
       FID       := FieldByName('B_ID').AsString;
       FProvID   := FieldByName('B_ProID').AsString;
       FProvName := FieldByName('B_ProName').AsString;
+      FProvType := FieldByName('B_ProType').AsString;
       FSaleID   := FieldByName('B_SaleID').AsString;
       FSaleName := FieldByName('B_SaleMan').AsString;
       FStockNO  := FieldByName('B_StockNO').AsString;
@@ -198,6 +202,7 @@ begin
         SubItems.Add(FStockName);
         SubItems.Add(FProvName);
         SubItems.Add(FRestValue);
+        SubItems.Add(FProvType);
         ImageIndex := cItemIconIndex;
       end;
 
@@ -235,6 +240,7 @@ begin
         Values['SQ_ID']       := FID;
         Values['SQ_ProID']    := FProvID;
         Values['SQ_ProName']  := FProvName;
+        Values['SQ_ProType']  := FProvType;
         Values['SQ_SaleID']   := FSaleID;
         Values['SQ_SaleName'] := FSaleName;
         Values['SQ_StockNO']  := FStockNO;

@@ -21,6 +21,7 @@ type
     FSaleID: string;
     FSalePY: string;
 
+    FCalcMoney: Boolean;
     FCusMoney: Double;
   end;
 
@@ -240,7 +241,6 @@ begin
   
   gForm := nil;  
   Action := caFree;
-  if FRID<> '' then ReleaseCtrlData(Self);
 end;
 
 procedure TfFormTransContract.BtnExitClick(Sender: TObject);
@@ -278,7 +278,9 @@ begin
     FCusPY := FieldByName('T_CusPY').AsString;
     FSaleID:= FieldByName('T_SaleID').AsString;
     FSalePY:= FieldByName('T_SalePY').AsString;
+
     FCusMoney := FieldByName('T_CusMoney').AsFloat;
+    FCalcMoney:= Pos('回', FieldByName('T_PayMent').AsString) > 0;
 
     EditValue.Text := Format('%.2f', [FieldByName('T_WeiValue').AsFloat]);
     EditTValue.Text := Format('%.2f', [FieldByName('T_TrueValue').AsFloat]);
@@ -413,6 +415,18 @@ begin
       ShowMsg(nStr, sHint);
       Exit;
     end;
+
+    nSQL := 'Select count(*) From %s Where T_LID=''%s'' ' +
+            'And IsNull(T_Enabled, '''') <> ''%s''';
+    nSQL := Format(nSQL, [sTable_TransContract, EditLID.Text, sFlag_No]);
+    with FDM.QuerySQL(nSQL) do
+    if (RecordCount>0) and (Fields[0].AsInteger>0) then
+    begin
+      nStr := '交货单号 [ %s ] 已经做完运费协议';
+      nStr := Format(nStr, [EditLID.Text]);
+      ShowMsg(nStr, sHint);
+      Exit;
+    end;
   end;
 
   nTVal := StrToFloatDef(EditTValue.Text, 0);
@@ -420,10 +434,11 @@ begin
   nDPrice := StrToFloatDef(EditDPrice.Text, 0);
   nCPrice := StrToFloatDef(EditCPrice.Text, 0);
 
-  nDrvMoney := Float2Float(nDPrice * nFVal, cPrecision, False);
+  //nDrvMoney := Float2Float(nDPrice * nFVal, cPrecision, False);
+  nCusMoney := Float2Float(nCPrice * nFVal, cPrecision, True);
   if FloatRelation(nTVal, 0, rtGreater, cPrecision) then
-       nCusMoney := Float2Float(nCPrice * nTVal, cPrecision, True)
-  else nCusMoney := Float2Float(nCPrice * nFVal, cPrecision, True);
+       nDrvMoney := Float2Float(nDPrice * nTVal, cPrecision, True)
+  else nDrvMoney := Float2Float(nDPrice * nFVal, cPrecision, True);
 
   nList := TStringList.Create;
   try
@@ -489,6 +504,15 @@ begin
     FDM.ExecuteSQL(nSQL);
     //xxxxx
 
+    if FInfo.FCalcMoney and (FInfo.FCusID <> '') then
+    begin
+      nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%s) Where A_CID=''%s''';
+      nSQL := Format(nSQL, [sTable_TransAccount, FloatToStr(FInfo.FCusMoney),
+              FInfo.FCusID]);
+      FDM.ExecuteSQL(nSQL);
+    end;
+    //Edit：修改前结算客户运费,则先还原运费
+
     if Pos('回', EditPayment.Text)>0 then
     begin
       nSQLTmp := 'Select * From %s Where A_CID=''%s''';
@@ -503,7 +527,8 @@ begin
           raise Exception.Create(nStr);
         end;
 
-        nMoney := FieldByName('A_InMoney').AsFloat +
+        nMoney := FieldByName('A_BeginBalance').AsFloat +
+                  FieldByName('A_InMoney').AsFloat +
                   FieldByName('A_CreditLimit').AsFloat-
                   FieldByName('A_OutMoney').AsFloat -
                   FieldByName('A_CardUseMoney').AsFloat -
@@ -511,7 +536,7 @@ begin
                   FieldByName('A_FreezeMoney').AsFloat;
         //xxxxx
 
-        nMoney := Float2Float(nMoney + FInfo.FCusMoney, cPrecision, False);
+        nMoney := Float2Float(nMoney, cPrecision, False);
 
         if FloatRelation(nCusMoney, nMoney, rtGreater, cPrecision) then
         begin
@@ -523,8 +548,6 @@ begin
           raise Exception.Create(nStr);
         end;
       end;
-
-      nCusMoney := nCusMoney - FInfo.FCusMoney;
 
       nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) Where A_CID=''%s''';
       nSQL := Format(nSQL, [sTable_TransAccount, FloatToStr(nCusMoney),

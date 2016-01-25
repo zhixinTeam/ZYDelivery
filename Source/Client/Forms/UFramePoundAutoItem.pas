@@ -443,7 +443,13 @@ begin
   //初始化样本
   
   if not FPoundTunnel.FUserInput then
-    gPoundTunnelManager.ActivePort(FPoundTunnel.FID, OnPoundDataEvent, True);
+  if not gPoundTunnelManager.ActivePort(FPoundTunnel.FID,
+          OnPoundDataEvent, True) then
+  begin
+    WriteSysLog('连接地磅表头失败，请检查硬件连接');
+    Timer_SaveFail.Enabled := True;
+    Exit;
+  end;
   FIsWeighting := True;
 end;
 
@@ -576,7 +582,7 @@ begin
         end;
       end;
 
-      if (FType = sFlag_San) and (nVal>0) and FSanStop then
+      if (FType = sFlag_San) and FloatRelation(nVal, 0, rtGreater) and FSanStop then
       begin
         nStr := '车辆[%s]实际装车量超出核载，请通知司机卸货';
         nStr := Format(nStr, [FTruck]);
@@ -624,7 +630,6 @@ end;
 //------------------------------------------------------------------------------
 //Desc: 原材料或临时
 function TfFrameAutoPoundItem.SavePoundData: Boolean;
-var nNextStatus: string;
 begin
   Result := False;
   //init

@@ -9,8 +9,8 @@ interface
 uses
   Windows, DB, Classes, Controls, SysUtils, UBusinessPacker, UBusinessWorker,
   UBusinessConst, ULibFun, UAdjustForm, UFormCtrl, UDataModule, UDataReport,
-  UFormBase, cxMCListBox, UMgrPoundTunnels, UMgrCamera, USysConst,
-  USysDB, USysLoger;
+  UFormBase, cxMCListBox, UMgrPoundTunnels, USysConst, HKVNetSDK, Forms,
+  USysDB, USysLoger, ADODB, Grids, Clipbrd, ComObj, Dialogs;
 
 type
   TLadingStockItem = record
@@ -97,6 +97,8 @@ function GetCustomerValidMoney(nCID: string; const nLimit: Boolean = True;
 function GetTransportValidMoney(nCID: string; const nLimit: Boolean = True;
  const nCredit: PDouble = nil): Double;
 //运费可用金额
+function GetCustomerCompensateMoney(nCID: string): Double;
+//返利金额
 
 function SyncRemoteCustomer: Boolean;
 //同步远程用户
@@ -117,14 +119,23 @@ function SaveCustomerPayment(const nCusID,nCusName,nSaleMan: string;
 function SaveCustomerCredit(const nCusID,nMemo: string; const nCredit: Double;
  const nEndTime: TDateTime; const nTransCredit: Boolean=False): Boolean;
 //保存信用记录
+function SaveCustomerFLPayment(const nCusID,nCusName,nSaleMan: string;
+ const nType,nMemo: string; const nMoney: Double): Boolean;
 function IsCustomerCreditValid(const nCusID: string): Boolean;
 //客户信用是否有效
+function DeleteCustomerPayment(const nRID: string;
+  const nTransAccount: Boolean): Boolean;
+//删除回款记录
 
 function IsStockValid(const nStocks: string): Boolean;
 //品种是否可以发货
 function SaveZhiKa(const nZhiKaData: string): string;
 //保存纸卡(订单)
 function DeleteZhiKa(const nZhiKa: string): Boolean;
+//删除纸卡(订单)
+function SaveFLZhiKa(const nZhiKaData: string): string;
+//保存纸卡(订单)
+function DeleteFLZhiKa(const nZhiKa: string): Boolean;
 //删除纸卡(订单)
 function SaveICCardInfo(const nZID: string; const nZType: string='S';
   const nCardType: string='V'):Boolean;
@@ -175,6 +186,7 @@ function SaveOrder(const nOrderData: string): string;
 //保存采购单
 function DeleteOrder(const nOrder: string): Boolean;
 //删除采购单
+function SaveOrderDtlAdd(const nOrderData: string; var nHint: string): Boolean;
 //function ChangeLadingTruckNo(const nBill,nTruck: string): Boolean;
 ////更改提货车辆
 function SetOrderCard(const nOrder,nTruck: string; nVerify: Boolean): Boolean;
@@ -193,6 +205,8 @@ function SavePurchaseOrders(const nPost: string; const nData: TLadingBillItems;
  const nTunnel: PPTTunnelItem = nil): Boolean;
 //保存指定岗位的采购单
 procedure LoadOrderItemToMC(const nItem: TLadingBillItem; const nMC: TStrings;
+ const nDelimiter: string);
+procedure LoadOrderBaseToMC(const nItem: TStrings; const nMC: TStrings;
  const nDelimiter: string);
 
 function GetStockBatcode(const nStock: string;
@@ -242,6 +256,23 @@ function PrintHeGeReport(const nHID: string; const nAsk: Boolean): Boolean;
 //化验单,合格证
 procedure PrintTruckLog(const nStart:TDate; const nEnd: TDate; nWhere: string='');
 //打印车辆登记表
+procedure PrintTruckJieSuan(nWhere: string='');
+//打印司机运费结算单
+
+//function PrintSealReport(nQuery: TADOQuery): Boolean;
+function PrintSealReport(const nSeal: string; const FStart,
+  FEnd: TDateTime): Boolean;
+
+function SmallTOBig(small: real): string;
+//金额转换大写
+procedure SelectAllOfGrid(nStringGrid: TStringGrid);
+function StringGridSelectText(nStringGrid: TStringGrid): string;
+procedure StringGridPasteFromClipboard(nStringGrid: TStringGrid);
+procedure StringGridCopyToClipboard(nStringGrid: TStringGrid);
+procedure StringGridExportToExcel(nStringGrid: TStringGrid; nFile: string='123');
+function StringGridPrintPreview(const nGrid: TStringGrid; const nTitle: string): Boolean;
+function StringGridPrintData(const nGrid: TStringGrid; const nTitle: string): Boolean;
+//StringGrid操作
 
 
 implementation
@@ -267,6 +298,97 @@ begin
   finally
     nList.Free;
   end;
+end;
+
+//------------------------------------------------------------------------------
+//金额转换为大写
+function SmallTOBig(small: real): string;
+var
+  SmallMonth, BigMonth: string;
+  wei1, qianwei1: string[2];
+  qianwei, dianweizhi, qian: integer;
+  fs_bj: boolean;
+begin
+  if small < 0 then
+    fs_bj := True
+  else
+    fs_bj := False;
+  small      := abs(small);
+  {------- 修改参数令值更精确 -------}
+  {小数点后的位置，需要的话也可以改动-2值}
+  qianwei    := -2;
+  {转换成货币形式，需要的话小数点后加多几个零}
+  Smallmonth := formatfloat('0.00', small);
+  {---------------------------------}
+  dianweizhi := pos('.', Smallmonth);{小数点的位置}
+  {循环小写货币的每一位，从小写的右边位置到左边}
+  for qian := length(Smallmonth) downto 1 do
+  begin
+    {如果读到的不是小数点就继续}
+    if qian <> dianweizhi then
+    begin
+      {位置上的数转换成大写}
+      case StrToInt(Smallmonth[qian]) of
+        1: wei1 := '壹';
+        2: wei1 := '贰';
+        3: wei1 := '叁';
+        4: wei1 := '肆';
+        5: wei1 := '伍';
+        6: wei1 := '陆';
+        7: wei1 := '柒';
+        8: wei1 := '捌';
+        9: wei1 := '玖';
+        0: wei1 := '零';
+      end;
+      {判断大写位置，可以继续增大到real类型的最大值}
+      case qianwei of
+        -3: qianwei1 := '厘';
+        -2: qianwei1 := '分';
+        -1: qianwei1 := '角';
+        0: qianwei1  := '元';
+        1: qianwei1  := '拾';
+        2: qianwei1  := '佰';
+        3: qianwei1  := '仟';
+        4: qianwei1  := '万';
+        5: qianwei1  := '拾';
+        6: qianwei1  := '佰';
+        7: qianwei1  := '仟';
+        8: qianwei1  := '亿';
+        9: qianwei1  := '拾';
+        10: qianwei1 := '佰';
+        11: qianwei1 := '仟';
+      end;
+      inc(qianwei);
+      BigMonth := wei1 + qianwei1 + BigMonth;{组合成大写金额}
+    end;
+  end;
+
+  BigMonth := StringReplace(BigMonth, '零拾', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零佰', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零仟', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零角零分', '', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零角', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零分', '', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零零', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零零', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零零', '零', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零亿', '亿', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零万', '万', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '零元', '元', [rfReplaceAll]);
+  BigMonth := StringReplace(BigMonth, '亿万', '亿', [rfReplaceAll]);
+  BigMonth := BigMonth + '整';
+  BigMonth := StringReplace(BigMonth, '分整', '分', [rfReplaceAll]);
+
+  if BigMonth = '元整' then
+    BigMonth := '零元整';
+  if copy(BigMonth, 1, 2) = '元' then
+    BigMonth := copy(BigMonth, 3, length(BigMonth) - 2);
+  if copy(BigMonth, 1, 2) = '零' then
+    BigMonth := copy(BigMonth, 3, length(BigMonth) - 2);
+  if fs_bj = True then
+    SmallTOBig := '- ' + BigMonth
+  else
+    SmallTOBig := BigMonth;
 end;
 
 //Desc: 验证主机是否已授权接入系统
@@ -568,22 +690,17 @@ begin
   //clear buffer
 
   nLogin := -1;
-  gCameraNetSDKMgr.NET_DVR_SetDevType(nTunnel.FCamera.FType);
-  //xxxxx
-
-  gCameraNetSDKMgr.NET_DVR_Init;
-  //xxxxx
-
+  NET_DVR_Init();
   try
     for nIdx:=1 to cRetry do
     begin
-      nLogin := gCameraNetSDKMgr.NET_DVR_Login(nTunnel.FCamera.FHost,
+      nLogin := NET_DVR_Login(PChar(nTunnel.FCamera.FHost),
                    nTunnel.FCamera.FPort,
-                   nTunnel.FCamera.FUser,
-                   nTunnel.FCamera.FPwd, nInfo);
+                   PChar(nTunnel.FCamera.FUser),
+                   PChar(nTunnel.FCamera.FPwd), @nInfo);
       //to login
 
-      nErr := gCameraNetSDKMgr.NET_DVR_GetLastError;
+      nErr := NET_DVR_GetLastError;
       if nErr = 0 then break;
 
       if nIdx = cRetry then
@@ -608,13 +725,11 @@ begin
         nStr := MakePicName();
         //file path
 
-        gCameraNetSDKMgr.NET_DVR_CaptureJPEGPicture(nLogin,
-                                   nTunnel.FCameraTunnels[nIdx],
-                                   nPic, nStr);
+        NET_DVR_CaptureJPEGPicture(nLogin, nTunnel.FCameraTunnels[nIdx],
+                                   @nPic, PChar(nStr));
         //capture pic
 
-        nErr := gCameraNetSDKMgr.NET_DVR_GetLastError;
-
+        nErr := NET_DVR_GetLastError;
         if nErr = 0 then
         begin
           nList.Add(nStr);
@@ -632,8 +747,8 @@ begin
     end;
   finally
     if nLogin > -1 then
-     gCameraNetSDKMgr.NET_DVR_Logout(nLogin);
-    gCameraNetSDKMgr.NET_DVR_Cleanup();
+      NET_DVR_Logout(nLogin);
+    NET_DVR_Cleanup();
   end;
 end;
 
@@ -860,6 +975,15 @@ begin
   nBool := FDM.ADOConn.InTransaction;
   if not nBool then FDM.ADOConn.BeginTrans;
   try
+    nStr := 'Select A_CID From %s Where A_CID=''%s''';
+    nStr := Format(nStr, [nAccountTable, nCusID]);
+    if FDM.QuerySQL(nStr).RecordCount < 1 then
+    begin
+      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
+      nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow]);
+      FDM.ExecuteSQL(nStr);
+    end;
+
     nStr := 'Update %s Set A_InMoney=A_InMoney+%.2f Where A_CID=''%s''';
     nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
     FDM.ExecuteSQL(nStr);
@@ -889,6 +1013,77 @@ begin
   end;
 end;
 
+
+//Desc: 删除回款RID记录
+function DeleteCustomerPayment(const nRID: string;
+    const nTransAccount: Boolean): Boolean;
+var nStr, nCID, nCName, nInOutTable, nAccountTable: string;
+    nBool: Boolean;
+    nVal: Double;
+begin
+  Result := False;
+
+  if nTransAccount then
+  begin
+    nInOutTable  := sTable_TransInOutMoney;
+    nAccountTable:= sTable_TransAccount;
+  end
+  else
+  begin
+    nInOutTable  := sTable_InOutMoney;
+    nAccountTable:= sTable_CusAccount;
+  end;
+
+  nStr := 'Select M_CusID, M_CusName, M_Money From %s Where R_ID=%s';
+  nStr := Format(nStr, [nInOutTable, nRID]);
+  with FDM.QuerySQL(nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nStr := '回款记录 [%s] 不存在.';
+      nStr := Format(nStr, [nRID]);
+      ShowMsg(nStr, sHint);
+      Exit;
+    end;
+
+    nCID := FieldByName('M_CusID').AsString;
+    nVal := Float2Float(FieldByName('M_Money').AsFloat, cPrecision, True);
+    nCName := FieldByName('M_CusName').AsString;
+  end;  
+
+  nBool := FDM.ADOConn.InTransaction;
+  if not nBool then FDM.ADOConn.BeginTrans;
+  try
+    nStr := 'Select A_CID From %s Where A_CID=''%s''';
+    nStr := Format(nStr, [nAccountTable, nCID]);
+    if FDM.QuerySQL(nStr).RecordCount < 1 then
+    begin
+      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
+      nStr := Format(nStr, [nAccountTable, nCID, FDM.SQLServerNow]);
+      FDM.ExecuteSQL(nStr);
+    end;
+
+    nStr := 'Update %s Set A_InMoney=A_InMoney-%.2f Where A_CID=''%s''';
+    nStr := Format(nStr, [nAccountTable, nVal, nCID]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := 'Delete From %s Where R_ID=%s';
+    nStr := Format(nStr, [nInOutTable, nRID]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := '删除客户 [%s] 的回款金额 [%.2f 元]';
+    nStr := Format(nStr, [nCName, nVal]);
+    FDM.WriteSysLog(sFlag_PaymentItem, sFlag_CustomerItem, nStr);
+
+    if not nBool then
+      FDM.ADOConn.CommitTrans;
+    Result := True;
+  except
+    Result := False;
+    if not nBool then FDM.ADOConn.RollbackTrans;
+  end;
+end;
+
 //Desc: 保存nCusID的一次授信记录
 function SaveCustomerCredit(const nCusID,nMemo: string; const nCredit: Double;
  const nEndTime: TDateTime; const nTransCredit: Boolean): Boolean;
@@ -908,6 +1103,15 @@ begin
     begin
       nCreditTable := sTable_CusCredit;
       nAccountTable:= sTable_CusAccount;
+    end;
+
+    nStr := 'Select A_CID From %s Where A_CID=''%s''';
+    nStr := Format(nStr, [nAccountTable, nCusID]);
+    if FDM.QuerySQL(nStr).RecordCount < 1 then
+    begin
+      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
+      nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow]);
+      FDM.ExecuteSQL(nStr);
     end;
 
     nStr := 'Select S_ID, S_Credit From $SM sm, $CM cm ' +
@@ -966,6 +1170,65 @@ begin
 
     nStr := 'Update %s Set A_CreditLimit=A_CreditLimit+%.2f Where A_CID=''%s''';
     nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
+    FDM.ExecuteSQL(nStr);
+
+    if not nBool then
+      FDM.ADOConn.CommitTrans;
+    Result := True;
+  except
+    Result := False;
+    if not nBool then FDM.ADOConn.RollbackTrans;
+  end;
+end;
+
+//Desc: 保存nCusID的一次返利记录
+function SaveCustomerFLPayment(const nCusID,nCusName,nSaleMan: string;
+ const nType,nMemo: string; const nMoney: Double): Boolean;
+var nStr: string;
+    nBool: Boolean;
+    nVal,nLimit: Double;
+begin
+  Result := False;
+  nVal := Float2Float(nMoney, cPrecision, False);
+  //adjust float value
+
+  if nVal < 0 then
+  begin
+    nLimit := GetCustomerCompensateMoney(nCusID);
+    //get money value
+
+    if (nLimit <= 0) or (nLimit < -nVal) then
+    begin
+      nStr := '客户: %s ' + #13#10#13#10 +
+              '当前余额为[ %.2f ]元,无法支出[ %.2f ]元.';
+      nStr := Format(nStr, [nCusName, nLimit, -nVal]);
+      
+      ShowDlg(nStr, sHint);
+      Exit;
+    end;
+  end;
+
+  nBool := FDM.ADOConn.InTransaction;
+  if not nBool then FDM.ADOConn.BeginTrans;
+  try
+    nStr := 'Select A_CID From %s Where A_CID=''%s''';
+    nStr := Format(nStr, [sTable_CompensateAccount, nCusID]);
+    if FDM.QuerySQL(nStr).RecordCount < 1 then
+    begin
+      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
+      nStr := Format(nStr, [sTable_CompensateAccount, nCusID, FDM.SQLServerNow]);
+      FDM.ExecuteSQL(nStr);
+    end;  
+
+    nStr := 'Update %s Set A_InMoney=A_InMoney+%.2f Where A_CID=''%s''';
+    nStr := Format(nStr, [sTable_CompensateAccount, nVal, nCusID]);
+    FDM.ExecuteSQL(nStr);
+
+    nStr := 'Insert Into %s(M_SaleMan,M_CusID,M_CusName,' +
+            'M_Type,M_Money,M_Date,M_Man,M_Memo) ' +
+            'Values(''%s'',''%s'',''%s'',''%s'',%.2f,%s,''%s'',''%s'')';
+    nStr := Format(nStr, [sTable_CompensateInOutMoney, nSaleMan, nCusID, nCusName, nType,
+            nVal, FDM.SQLServerNow, gSysParam.FUserID, nMemo]);
     FDM.ExecuteSQL(nStr);
 
     if not nBool then
@@ -1340,6 +1603,40 @@ begin
       Result := nil;
       nHint := '订单已无效';
     end;
+  end else
+
+  if nZType = sFlag_BillMY then
+  begin
+    nStr := 'Select zk.*,sm.S_ID,sm.S_Name,cus.C_ID,cus.C_Name From $ZK zk ' +
+            ' Left Join $SM sm On sm.S_ID=zk.Z_SaleMan ' +
+            ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer ' +
+            ' Left Join $MYZ my On my.M_FID=zk.Z_ID ' +
+            'Where M_ID=''$ID''';
+    //xxxxx
+
+    nStr := MacroValue(nStr, [MI('$ZK', sTable_ZhiKa), MI('$MYZ', sTable_MYZhiKa),
+               MI('$SM', sTable_Salesman), MI('$Cus', sTable_Customer),
+               MI('$ID', nZID)]);
+    //xxxxx
+
+    nList.Clear;
+    Result := FDM.QueryTemp(nStr);
+
+    if Result.RecordCount = 1 then
+    with nList.Items,Result do
+    begin
+      Add('订单编号:' + nList.Delimiter + FieldByName('Z_ID').AsString);
+      Add('业务人员:' + nList.Delimiter + FieldByName('S_Name').AsString+ ' ');
+      Add('客户名称:' + nList.Delimiter + FieldByName('C_Name').AsString + ' ');
+      Add('项目名称:' + nList.Delimiter + FieldByName('Z_Project').AsString + ' ');
+    
+      nStr := DateTime2Str(FieldByName('Z_Date').AsDateTime);
+      Add('订单时间:' + nList.Delimiter + nStr);
+    end else
+    begin
+      Result := nil;
+      nHint := '订单已无效';
+    end;
 
   end else
   begin
@@ -1381,6 +1678,29 @@ begin
   begin
     Result := nil;
     nHint := '订单已无效';
+  end;
+end;
+
+procedure LoadOrderBaseToMC(const nItem: TStrings; const nMC: TStrings;
+ const nDelimiter: string);
+var nStr: string;
+begin
+  if (not Assigned(nItem)) or (not Assigned(nMC)) then Exit;
+  with nMC do
+  begin
+    Clear;
+    Add(Format('申请单号:%s %s', [nDelimiter, nItem.Values['SQ_ID']]));
+    Add(Format('区    域:%s %s', [nDelimiter, nItem.Values['SQ_Area']]));
+    Add(Format('业 务 员:%s %s', [nDelimiter, nItem.Values['SQ_SaleName']]));
+    Add(Format('项目名称:%s %s', [nDelimiter, nItem.Values['SQ_Project']]));
+
+    if nItem.Values['SQ_ProType'] = sFlag_CusZY then
+         nStr := '资源类'
+    else nStr := '非资源类';
+    Add(Format('供 应 商:%s %s', [nDelimiter, nItem.Values['SQ_ProName']]));
+
+    Add(Format('品种编号:%s %s', [nDelimiter, nItem.Values['SQ_StockNO']]));
+    Add(Format('品种名称:%s %s', [nDelimiter, nItem.Values['SQ_StockName']]));
   end;
 end;
 
@@ -1466,6 +1786,14 @@ begin
   end;
 end;
 
+function GetCustomerCompensateMoney(nCID: string): Double;
+var nOut: TWorkerBusinessCommand;
+begin
+  if CallBusinessCommand(cBC_GetCompensateMoney, nCID, '', @nOut) then
+       Result := StrToFloat(nOut.FData)
+  else Result := 0;
+end;
+
 //Date: 2014-10-16
 //Parm: 品种列表(s1,s2..)
 //Desc: 验证nStocks是否可以发货
@@ -1493,6 +1821,26 @@ function DeleteZhiKa(const nZhiKa: string): Boolean;
 var nOut: TWorkerBusinessCommand;
 begin
   Result := CallBusinessSaleBill(cBC_DeleteZhiKa, nZhiKa, '', @nOut);
+end;
+
+//Date: 2015/11/20
+//Parm: 纸卡(订单)数据
+//Desc: 保存纸卡(订单),返回纸卡单号
+function SaveFLZhiKa(const nZhiKaData: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  if CallBusinessSaleBill(cBC_SaveFLZhiKa, nZhiKaData, '', @nOut) then
+       Result := nOut.FData
+  else Result := '';
+end;
+
+//Date: 2015/11/20
+//Parm: 纸卡(订单)编号
+//Desc: 删除纸卡(订单)
+function DeleteFLZhiKa(const nZhiKa: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessSaleBill(cBC_DeleteFLZhiKa, nZhiKa, '', @nOut);
 end;
 
 //Date: 2014-09-15
@@ -1706,6 +2054,13 @@ function DeleteOrder(const nOrder: string): Boolean;
 var nOut: TWorkerBusinessCommand;
 begin
   Result := CallBusinessPurchaseOrder(cBC_DeleteOrder, nOrder, '', @nOut);
+end;
+
+function SaveOrderDtlAdd(const nOrderData: string; var nHint: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessPurchaseOrder(cBC_SaveOrderDtlAdd, nOrderData, '', @nOut);
+  if not Result then nHint := nOut.FData;
 end;
 
 //Date: 2014-09-17
@@ -1994,8 +2349,24 @@ end;
 
 function SaveFactZhiKa(const nZhiKa: string; const nFactZhiKa: string): Boolean;
 var nOut: TWorkerBusinessCommand;
+    nList: TStrings;
 begin
-  Result := CallBusinessCommand(cBC_SaveFactZhiKa, nZhiKa, nFactZhiKa, @nOut);
+  Result := False;
+  if (Trim(nFactZhiKa)='') or (Trim(nZhiKa)='') then Exit;
+
+  nList := TStringList.Create;
+
+  try
+    nList.Clear;
+    nList.Values['OwnZhiKa']  := nZhiKa;
+    nList.Values['FactZhika'] := nFactZhiKa;
+    nList.Values['OwnFactID'] := gSysParam.FFactNum;
+
+    Result := CallBusinessCommand(cBC_SaveFactZhiKa,
+      PackerEncodeStr(nList.Text), '', @nOut);
+  finally
+    nList.Free;
+  end;
 end;
 
 //Date: 2015-01-16
@@ -2366,6 +2737,62 @@ begin
   end;
 end;
 
+//Date: 2012-4-15
+//Parm: nSeal;是否询问
+//Desc: 打印批次号的发货回单
+function PrintSealReport(const nSeal: string; const FStart,
+  FEnd: TDateTime): Boolean;
+var nStr: string;
+    nParam: TReportParamItem;
+begin
+  Result := False;
+  if nSeal = '' then Exit;
+
+  nStr := 'Select * From $Bill b ' +
+            ' Left Join $Sk s on b.L_Seal=s.R_SerialNo ' +
+            ' Left Join $Ext e on e.E_ID=s.R_ExtID ' +
+            'Where L_Seal like ''%' + nSeal + '%''' +
+            ' And (L_CusType=''$CZY'') ' +
+            ' And Year(R_Date)>=Year(''$ST'') and Year(R_Date) <Year(''$End'')+1 ';
+  //提货单
+
+  nStr := MacroValue(nStr, [MI('$Bill', sTable_Bill),MI('$CZY', sFlag_CusZY),
+          MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1)),
+          MI('$SK', sTable_StockRecord),MI('$Ext', sTable_StockRecordExt)]);
+
+  if FDM.QuerySQL(nStr).RecordCount < 1 then
+  begin
+    nStr := '满足条件的水泥编号 [ %s ] 已无效!!';
+    nStr := Format(nStr, [nSeal]);
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nStr := gPath + sReportDir + 'SealReport.fr3';
+  if not FDR.LoadReportFile(nStr) then
+  begin
+    nStr := '无法正确加载报表文件';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nStr := 'Select 1 ';
+  FDM.QueryTemp(nStr);
+
+  nParam.FName := 'UserName';
+  nParam.FValue := gSysParam.FUserID;
+  FDR.AddParamItem(nParam);
+
+  nParam.FName := 'Company';
+  nParam.FValue := gSysParam.FHintText;
+  FDR.AddParamItem(nParam);
+
+  FDR.Dataset1.DataSet := FDM.SqlTemp;
+  FDR.Dataset2.DataSet := FDM.SqlQuery;
+
+  FDR.ShowReport;
+  //FDR.PrintReport;
+  Result := FDR.PrintSuccess;
+end;
+
 
 //Desc: 获取nStock品种的报表文件
 function GetReportFileByStock(const nStock: string): string;
@@ -2520,7 +2947,61 @@ begin
   FDR.Dataset1.DataSet := FDM.SqlTemp;
   FDR.Dataset2.DataSet := FDM.SqlQuery;
   FDR.ShowReport;
-end;  
+end;
+
+procedure PrintTruckJieSuan(nWhere: string='');
+var nStr: string;
+    nParam: TReportParamItem;
+begin
+  nStr := 'Select T_Truck, T_Driver, T_CusName, T_Delivery, T_DPrice, ' +
+          'Sum(T_WeiValue) As T_Value, Sum(T_DrvMoney) As T_DMoney, ' +
+          'Count(*) As T_Count, T_DisValue, T_SetDate, T_StockName From $Con ' +
+          ' Where (IsNull(T_Enabled, '''')<>''$NO'') ' +
+          ' And (IsNull(T_Settle, '''') = ''$Yes'') ' +
+          ' And T_PayMent Like ''%回厂%''';
+  //xxxxx
+
+  if nWhere <> '' then
+    nStr := nStr + ' And (' + nWhere + ')';
+  //Conditional
+
+  nStr := nStr + ' Group By T_Truck, T_Driver, T_CusName, T_Delivery, ' +
+          'T_DPrice, T_DisValue, T_SetDate, T_StockName ';
+  //Group By
+
+  nStr := MacroValue(nStr, [MI('$Con', sTable_TransContract),
+          MI('$Yes', sFlag_Yes), MI('$NO', sFlag_NO)]);
+
+  if FDM.QuerySQL(nStr).RecordCount < 1 then
+  begin
+    nStr := '无满足条件的信息!!';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nStr := 'Select Sum(T_Value) As T_TotalValue, Sum(T_DMoney) As T_TotalMoney,'+
+          'Sum(T_Count) As T_TotalCount From ( ' + nStr + ') kk';
+  FDM.QueryTemp(nStr);
+  //xxxxx
+
+  nStr := gPath + sReportDir + 'TruckJieSuan.fr3';
+  if not FDR.LoadReportFile(nStr) then
+  begin
+    nStr := '无法正确加载报表文件';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nParam.FName := 'DaXie';
+  nParam.FValue := SmallTOBig(FDM.SqlTemp.FieldByName('T_TotalMoney').AsFloat);
+  FDR.AddParamItem(nParam);
+
+  nParam.FName := 'UserName';
+  nParam.FValue := gSysParam.FUserID;
+  FDR.AddParamItem(nParam);
+
+  FDR.Dataset1.DataSet := FDM.SqlTemp;
+  FDR.Dataset2.DataSet := FDM.SqlQuery;
+  FDR.ShowReport;
+end;
 
 //Date: 2015/1/18
 //Parm: 车牌号；电子标签；是否启用；旧电子标签
@@ -2537,6 +3018,162 @@ begin
   nRFIDCard := nP.FParamB;
   nIsUse    := nP.FParamC;
   Result    := (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK);
+end;
+
+
+//Date: 2016/1/22
+//Parm: 
+//Desc: 格式化内容
+function StringGridSelectText(nStringGrid: TStringGrid): string;
+var
+  nIdx, nJdx: Integer;
+  nStr: string;
+begin
+  Result := '';
+  if not Assigned(nStringGrid) then Exit;
+
+  for nJdx := nStringGrid.Selection.Top to nStringGrid.Selection.Bottom do
+  begin
+    nStr := '';
+    for nIdx := nStringGrid.Selection.Left to nStringGrid.Selection.Right do
+      nStr := nStr + #9 + nStringGrid.Cells[nIdx, nJdx];
+
+    Delete(nStr, 1, 1);
+    Result := Result + nStr + #13#10;
+  end;
+end;
+
+//Date: 2016/1/22
+//Parm: 
+//Desc: 从剪切板中粘贴内容到表格
+procedure StringGridPasteFromClipboard(nStringGrid: TStringGrid);
+var
+  nTextList: TStringList;
+  nLineList: TStringList;
+  nIdx, nJdx: Integer;
+begin
+  nTextList := TStringList.Create;
+  nLineList := TStringList.Create;
+
+  try
+    nLineList.Delimiter := #9;
+    nTextList.Text := Clipboard.AsText;
+
+    for nJdx := 0 to nTextList.Count - 1 do
+    begin
+      if nJdx + nStringGrid.Row >= nStringGrid.RowCount then Break;
+
+      nLineList.DelimitedText := nTextList[nJdx];
+      for nIdx := 0 to nLineList.Count - 1 do
+      begin
+        if nIdx + nStringGrid.Col >= nStringGrid.ColCount then Break;
+
+        nStringGrid.Cells[nIdx+nStringGrid.Col,
+          nJdx+nStringGrid.Row] := nLineList[nIdx];
+      end;
+    end;
+  finally
+    nTextList.Free;
+    nLineList.Free;
+  end;
+end;
+
+//Date: 2016/1/22
+//Parm: 
+//Desc: StringGrid复制到剪切板(Clipboard)
+procedure StringGridCopyToClipboard(nStringGrid: TStringGrid);
+begin
+  Clipboard.AsText := StringGridSelectText(nStringGrid);
+end;
+
+//Date: 2016/1/23
+//Parm: 
+//Desc: 全选内容
+procedure SelectAllOfGrid(nStringGrid: TStringGrid);
+begin
+  if not Assigned(nStringGrid) then Exit;
+
+  {with nStringGrid do
+  begin
+    Selection.Top    := 0;
+    Selection.Bottom := RowCount - 1;
+
+    Selection.Left   := 0;
+    Selection.Right  := ColCount - 1;
+  end; }
+end;
+
+procedure StringGridExportToExcel(nStringGrid: TStringGrid; nFile: string='123');
+var nSaveDialog:TSaveDialog;
+    nExcel, nPage:Variant;
+    nIdx, nJdx:Integer;
+    nFileName:string;
+begin
+  try
+    if Trim(nFile) = '' then nFile := '1';
+    nSaveDialog := TSaveDialog.Create(nil);
+    try
+      nSaveDialog.FileName := nFile;
+      nSaveDialog.Filter   := '*.xls';
+      if nSaveDialog.Execute then
+      begin
+        nFileName := nSaveDialog.FileName;
+        //Screen.Cursor:=crhourglass; //屏幕指针形状
+
+        try
+          nExcel := CreateOleObject('Excel.Application');  //Office
+        except
+          nExcel := CreateOleObject('ET.Application');     //WPS
+        end;
+
+        nExcel.WorkBooks.Add;
+        nExcel.Workbooks[1].WorkSheets[1].Name := nFile;
+        nPage := nExcel.Workbooks[1].Worksheets[nFile];
+
+        for nIdx:= 0 to nStringGrid.RowCount-1 do
+        begin
+          //第一列没有数据，不用
+          for nJdx:=0 to nStringGrid.ColCount-1 do
+            nPage.Cells[nIdx+1, nJdx+1]:= nStringGrid.Cells[nJdx, nIdx];
+        end;
+
+        nExcel.ActiveWorkbook.SaveAs(nFileName);
+        Application.ProcessMessages;
+        nExcel.Application.Quit;
+      end;
+    finally
+      nSaveDialog.Free;
+      //Screen.Cursor:=crDefault;
+    end;
+  except
+    raise
+  end;
+end;
+
+//Desc: 打印预览nGrid表格
+function StringGridPrintPreview(const nGrid: TStringGrid; const nTitle: string): Boolean;
+begin
+  with FDM.dxGridLink1 do
+  begin
+    ReportDocument.Creator := gSysParam.FUserName;
+    //ReportDocument.Caption := gSysParam
+    Component := nGrid;
+    ReportTitle.Text := nTitle;
+    Preview;
+    Result := True;
+  end;
+end;
+
+//Desc: 打印nGrid表格
+function StringGridPrintData(const nGrid: TStringGrid; const nTitle: string): Boolean;
+begin
+  with FDM.dxGridLink1 do
+  begin
+    Component := nGrid;
+    ReportTitle.Text := nTitle;
+    Print(True, nil);
+    Result := True;
+  end;
 end;
 
 

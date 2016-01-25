@@ -110,6 +110,7 @@ inherited fFrameNormal: TfFrameNormal
       DataController.Summary.FooterSummaryItems = <>
       DataController.Summary.SummaryGroups = <>
       DataController.OnGroupingChanged = cxView1DataControllerGroupingChanged
+      OptionsSelection.CellMultiSelect = True
     end
     object cxLevel1: TcxGridLevel
       GridView = cxView1

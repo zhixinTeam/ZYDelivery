@@ -27,6 +27,9 @@ type
     dxLayout1Item4: TdxLayoutItem;
     PopupMenu1: TPopupMenu;
     N1: TMenuItem;
+    N2: TMenuItem;
+    N3: TMenuItem;
+    N4: TMenuItem;
     procedure EditNamePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
@@ -34,6 +37,7 @@ type
     procedure BtnDelClick(Sender: TObject);
     procedure N1Click(Sender: TObject);
     procedure PopupMenu1Popup(Sender: TObject);
+    procedure N3Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -138,6 +142,49 @@ begin
   {$IFDEF SyncRemote}
   N1.Visible := True;
   {$ENDIF}
+  N3.Visible := gSysParam.FIsAdmin;
+  N4.Visible := gSysParam.FIsAdmin;
+end;
+
+procedure TfFrameMaterails.N3Click(Sender: TObject);
+var nSQL, nStr: string;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := SQLQuery.FieldByName('M_Name').AsString;
+    nStr := Format('确定要将原材料[ %s ] %s 吗?', [nStr, TMenuItem(Sender).Caption]);
+    if not QueryDlg(nStr, sAsk) then Exit;
+
+    nStr := SQLQuery.FieldByName('M_ID').AsString;
+    if Sender = N3 then
+    begin
+      nSQL := 'Delete From %s Where D_Name=''%s'' And D_Value=''%s''';
+      nSQL := Format(nSQL, [sTable_SysDict, sFlag_NFStock, nStr]);
+    end else
+
+    if Sender = N4 then
+    begin
+      nSQL := 'Insert Into %s (D_Name, D_Value, D_Desc, D_Memo) ' +
+              'Values(%s, %s, %s, %s)';
+      nSQL := Format(nSQL, [sTable_SysDict, sFlag_NFStock, nStr,
+              '现场不验收', SQLQuery.FieldByName('M_Name').AsString]);
+
+      nStr := Format('Select * From %s Where D_Name=''%s'' And D_Value=''%s''',
+              [sTable_SysDict, sFlag_NFStock, nStr]);
+      with FDM.QueryTemp(nStr) do
+      if RecordCount>0 then
+      begin
+        nStr := '原材料 [%s] 已经设置为不验收';
+        nStr := Format(nStr, [SQLQuery.FieldByName('M_Name').AsString]);
+        Exit;
+      end;
+    end;
+
+    FDM.ExecuteSQL(nSQL);
+  end;
+
+  InitFormData(FWhere);
 end;
 
 initialization

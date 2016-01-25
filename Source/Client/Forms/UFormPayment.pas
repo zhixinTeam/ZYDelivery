@@ -43,6 +43,8 @@ type
     dxLayout1Item15: TdxLayoutItem;
     cxLabel3: TcxLabel;
     dxLayout1Group4: TdxLayoutGroup;
+    EditBig: TcxLabel;
+    dxLayout1Item11: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditSalesManPropertiesChange(Sender: TObject);
@@ -51,6 +53,7 @@ type
       AButtonIndex: Integer);
     procedure EditNameKeyPress(Sender: TObject; var Key: Char);
     procedure BtnOKClick(Sender: TObject);
+    procedure EditMoneyPropertiesChange(Sender: TObject);
   protected
     { Private declarations }
     FTransportPayment: Boolean;
@@ -313,6 +316,14 @@ begin
 
   ModalResult := mrOk;
   ShowMsg('回款操作成功', sHint);
+end;
+
+procedure TfFormPayment.EditMoneyPropertiesChange(Sender: TObject);
+begin
+  inherited;
+  if IsNumber(EditMoney.Text, True) then
+       EditBig.Caption := '金额大写:' + SmallTOBig(StrToFloat(EditMoney.Text))
+  else EditBig.Caption := '金额大写:';
 end;
 
 initialization

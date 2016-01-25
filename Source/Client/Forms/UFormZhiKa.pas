@@ -236,8 +236,6 @@ begin
   EditName.Text := '±ê×¼¶©µ¥';
   FZhiKa.FContract := '';
   FZhiKa.FIsValid := False;
-  //EditPrice.Properties.ReadOnly := nID<>'';
-  //EditValue.Properties.ReadOnly := nID<>'';
   SetLength(FStockList, 0);
 
   if EditPayment.Properties.Items.Count < 1 then
@@ -457,8 +455,6 @@ begin
     end;
 
     EditPName.Text := FieldByName('C_Project').AsString;
-    
-    //EditPName.Properties.ReadOnly := not FZhiKa.FIsXuNi;
     EditSMan.Properties.ReadOnly := not FZhiKa.FIsXuNi;
     EditCustom.Properties.ReadOnly := not FZhiKa.FIsXuNi;
 

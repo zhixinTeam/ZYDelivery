@@ -78,7 +78,7 @@ uses
 
 procedure WriteLog(const nEvent: string);
 begin
-  gSysLoger.AddLog(TfMainForm, '系统主模块', nEvent);
+  gSysLoger.AddLog(TfMainForm, '系统主模块', nEvent); 
 end;
 
 //------------------------------------------------------------------------------

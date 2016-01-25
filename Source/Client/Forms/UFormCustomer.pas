@@ -423,17 +423,6 @@ begin
     end;
     //水泥款账户
 
-    nSQL := 'Select Count(*) From %s Where A_CID=''%s''';
-    nSQL := Format(nSQL, [sTable_TransAccount, nID]);
-
-    if FDM.QueryTemp(nSQL).Fields[0].AsInteger < 1 then
-    begin
-      nSQL := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-      nSQL := Format(nSQL, [sTable_TransAccount, nID, FDM.SQLServerNow]);
-      FDM.ExecuteSQL(nSQL);
-    end;
-    //运费账户
-
     if FCustomerID <> '' then
     begin
       nSQL := 'Delete From %s Where I_Group=''%s'' and I_ItemID=''%s''';

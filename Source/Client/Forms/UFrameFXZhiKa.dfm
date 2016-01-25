@@ -195,6 +195,10 @@ inherited fFrameFXZhiKa: TfFrameFXZhiKa
       Caption = #36861#21152#38480#39069
       OnClick = N1Click
     end
+    object N11: TMenuItem
+      Caption = #38477#20302#38480#39069
+      OnClick = N11Click
+    end
     object N2: TMenuItem
       Caption = '**'#30913#21345#31649#29702'**'
       Enabled = False
@@ -209,6 +213,24 @@ inherited fFrameFXZhiKa: TfFrameFXZhiKa
     end
     object N7: TMenuItem
       Caption = #20572#29992#35746#21333
+    end
+    object N5: TMenuItem
+      Caption = '**'#35746#21333#26597#35810'**'
+      Enabled = False
+    end
+    object N8: TMenuItem
+      Caption = #26080#25928#35746#21333
+      OnClick = N8Click
+    end
+    object N9: TMenuItem
+      Tag = 1
+      Caption = #26377#25928#35746#21333
+      OnClick = N8Click
+    end
+    object N10: TMenuItem
+      Tag = 2
+      Caption = #26597#35810#20840#37096
+      OnClick = N8Click
     end
   end
 end

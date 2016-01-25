@@ -280,10 +280,24 @@ begin
   //to verify credit
 
   SetLength(gStockList, 0);
-  if gInfo.FZKType = sFlag_BillSZ then
+  if (gInfo.FZKType = sFlag_BillSZ) or
+     (gInfo.FZKType = sFlag_BillMY) or
+     (gInfo.FZKType = sFlag_BillFL) then
   begin
-    nStr := 'Select * From %s Where D_ZID=''%s''';
-    nStr := Format(nStr, [sTable_ZhiKaDtl, gInfo.FZhiKa]);
+    if gInfo.FZKType = sFlag_BillMY then
+         nStr := 'Select * From $ZD zd ' +
+                 'Left Join $MYZ my On my.M_FID=D_ZID ' +
+                 'Where my.M_ID=''$ID'''
+    else
+
+    if gInfo.FZKType = sFlag_BillFL then
+         nStr := 'Select * From $FLZ Where D_ZID=''$ID'''
+
+    else nStr := 'Select * From $ZD Where D_ZID=''$ID''';
+
+    nStr := MacroValue(nStr, [MI('$ZD', sTable_ZhiKaDtl),
+            MI('$FLZ', sTable_FLZhiKaDtl),
+            MI('$ID', gInfo.FZhiKa), MI('$MYZ', sTable_MYZhiKa)]);
 
     with FDM.QueryTemp(nStr) do
     if RecordCount > 0 then
@@ -333,7 +347,10 @@ begin
       if not BtnOK.Enabled then Exit;
 
       nStr := 'Update %s Set Z_TJStatus=Null Where Z_ID=''%s''';
-      nStr := Format(nStr, [sTable_ZhiKa, gInfo.FZhiKa]);
+
+      if gInfo.FZKType = sFlag_BillFL then
+           nStr := Format(nStr, [sTable_FLZhiKa, gInfo.FZhiKa])
+      else nStr := Format(nStr, [sTable_ZhiKa, gInfo.FZhiKa]);
       FDM.ExecuteSQL(nStr);
     end;
   end else
@@ -394,12 +411,7 @@ begin
       nStr := Format(nStr, [sTable_FXZhiKa, gInfo.FZhiKa]);
       FDM.ExecuteSQL(nStr);
     end;
-  end else
-
-  if gInfo.FZKType = sFlag_BillFL then
-  begin
-    Exit;
-  end;  
+  end;
 
   LoadStockList;
   //load stock into window

@@ -4752,7 +4752,7 @@ begin
     with nBills[nIdx] do
     if (FType = sFlag_San) and (FKZValue > 0) then //É¢×°Ðè
     begin
-      m := Float2Float(-FKZValue * FPrice, cPrecision, False);
+      m := -Float2Float(FKZValue * FPrice, cPrecision, False);
 
       if FZKType=sFlag_BillSZ then
       begin

@@ -53,12 +53,12 @@ type
     dxLayout1Group3: TdxLayoutGroup;
     dxLayout1Group6: TdxLayoutGroup;
     dxLayout1Group9: TdxLayoutGroup;
-    EditMemo: TcxMemo;
-    dxLayout1Item17: TdxLayoutItem;
     EditPDate: TcxDateEdit;
     dxLayout1Item18: TdxLayoutItem;
     EditMDate: TcxDateEdit;
     dxLayout1Item19: TdxLayoutItem;
+    EditMemo: TcxMemo;
+    dxLayout1Item17: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditStockPropertiesChange(Sender: TObject);
@@ -297,10 +297,24 @@ begin
   //to verify credit
 
   SetLength(gStockList, 0);
-  if gInfo.FZKType = sFlag_BillSZ then
+  if (gInfo.FZKType = sFlag_BillSZ) or
+     (gInfo.FZKType = sFlag_BillMY) or
+     (gInfo.FZKType = sFlag_BillFL) then
   begin
-    nStr := 'Select * From %s Where D_ZID=''%s''';
-    nStr := Format(nStr, [sTable_ZhiKaDtl, gInfo.FZhiKa]);
+    if gInfo.FZKType = sFlag_BillMY then
+         nStr := 'Select * From $ZD zd ' +
+                 'Left Join $MYZ my On my.M_FID=D_ZID ' +
+                 'Where my.M_ID=''$ID'''
+    else
+
+    if gInfo.FZKType = sFlag_BillFL then
+         nStr := 'Select * From $FLZ Where D_ZID=''$ID'''
+
+    else nStr := 'Select * From $ZD Where D_ZID=''$ID''';
+
+    nStr := MacroValue(nStr, [MI('$ZD', sTable_ZhiKaDtl),
+            MI('$FLZ', sTable_FLZhiKaDtl),
+            MI('$ID', gInfo.FZhiKa), MI('$MYZ', sTable_MYZhiKa)]);
 
     with FDM.QueryTemp(nStr) do
     if RecordCount > 0 then
@@ -350,7 +364,10 @@ begin
       if not BtnOK.Enabled then Exit;
 
       nStr := 'Update %s Set Z_TJStatus=Null Where Z_ID=''%s''';
-      nStr := Format(nStr, [sTable_ZhiKa, gInfo.FZhiKa]);
+
+      if gInfo.FZKType = sFlag_BillFL then
+           nStr := Format(nStr, [sTable_FLZhiKa, gInfo.FZhiKa])
+      else nStr := Format(nStr, [sTable_ZhiKa, gInfo.FZhiKa]);
       FDM.ExecuteSQL(nStr);
     end;
   end else
@@ -411,12 +428,7 @@ begin
       nStr := Format(nStr, [sTable_FXZhiKa, gInfo.FZhiKa]);
       FDM.ExecuteSQL(nStr);
     end;
-  end else
-
-  if gInfo.FZKType = sFlag_BillFL then
-  begin
-    Exit;
-  end;  
+  end;
 
   LoadStockList;
   //load stock into window
@@ -556,7 +568,7 @@ begin
     begin
       Result := IsNumber(EditMValue.Text, True) and (StrToFloat(EditMValue.Text)>0);
       nHint := '请填写有效的毛重,单位：吨';
-    end;  
+    end; 
   end;  
 end;
 
@@ -610,7 +622,7 @@ end;
 //Desc: 保存
 procedure TfFormBillAdditional.BtnOKClick(Sender: TObject);
 var nIdx: Integer;
-    nVal: Double;
+    nVal, f: Double;
     nPrint: Boolean;
     nList,nTmp,nStocks: TStrings;
 begin
@@ -638,6 +650,7 @@ begin
     LoadSysDictItem(sFlag_PrintBill, nStocks);
     //需打印品种
 
+    nVal := 0;
     for nIdx:=Low(gStockList) to High(gStockList) do
     with gStockList[nIdx],nTmp do
     begin
@@ -657,7 +670,17 @@ begin
       if (not nPrint) and (FBuDanFlag <> sFlag_Yes) then
         nPrint := nStocks.IndexOf(FStockNO) >= 0;
       //xxxxx
+
+      nVal := FValue + nVal;
+      //Verify Value;
     end;
+
+    f := Float2Float(StrToFloat(EditMValue.Text) - StrToFloat(EditPValue.Text),
+         cPrecision, False);
+    if (not FloatRelation(f, nVal, rtEqual)) and (FBuDanFlag = sFlag_Yes) then
+    begin
+      ShowMsg('办理量与过磅净重不符', sHint); Exit;
+    end;      
 
     with nList do
     begin

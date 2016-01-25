@@ -16,12 +16,12 @@ inherited fFormGetProvider: TfFormGetProvider
       Left = 358
       Top = 238
       Caption = #30830#23450
-      TabOrder = 3
+      TabOrder = 4
     end
     inherited BtnExit: TButton
       Left = 428
       Top = 238
-      TabOrder = 4
+      TabOrder = 5
     end
     object EditProvider: TcxButtonEdit [2]
       Left = 69
@@ -52,7 +52,7 @@ inherited fFormGetProvider: TfFormGetProvider
           Width = 100
         end
         item
-          Caption = #36741#21161#32534#21495
+          Caption = #20379#24212#21830#31867#22411
           Width = 70
         end
         item
@@ -76,6 +76,13 @@ inherited fFormGetProvider: TfFormGetProvider
       ParentFont = False
       Transparent = True
     end
+    object cxLabel2: TcxLabel [5]
+      Left = 11
+      Top = 238
+      Caption = #20379#24212#21830#31867#22411':Z'#12289#36164#28304#31867';F'#12289#38750#36164#28304#31867
+      ParentFont = False
+      Transparent = True
+    end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
         Caption = #26597#35810#26465#20214
@@ -96,6 +103,14 @@ inherited fFormGetProvider: TfFormGetProvider
           Caption = #26597#35810#32467#26524':'
           ShowCaption = False
           Control = ListProvider
+          ControlOptions.ShowBorder = False
+        end
+      end
+      inherited dxLayout1Group1: TdxLayoutGroup
+        object dxLayout1Item3: TdxLayoutItem [0]
+          Caption = 'cxLabel2'
+          ShowCaption = False
+          Control = cxLabel2
           ControlOptions.ShowBorder = False
         end
       end
