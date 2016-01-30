@@ -69,6 +69,7 @@ const
   cFI_FrameQueryOrderTotal        = $0063;           //发货回单
   cFI_FrameQueryBillTotal         = $0064;
   cFI_FrameTruckJieSuan           = $0065;           //运费结算单
+  cFI_FrameQueryTransTotal        = $0066;
 
   cFI_FrameTrucks       = $0070;                     //车辆档案
   cFI_FrameTruckLogs    = $0071;                     //车辆档案
@@ -381,6 +382,7 @@ begin
   AddMenuModuleItem('MAIN_L20', cFI_FrameQueryOrderTotal);
   AddMenuModuleItem('MAIN_L21', cFI_FrameQueryBillTotal);
   AddMenuModuleItem('MAIN_L22', cFI_FrameTruckJieSuan);
+  AddMenuModuleItem('MAIN_L23', cFI_FrameQueryTransTotal);
 
   AddMenuModuleItem('MAIN_M01', cFI_FrameProvider);
   AddMenuModuleItem('MAIN_M02', cFI_FrameMaterails);

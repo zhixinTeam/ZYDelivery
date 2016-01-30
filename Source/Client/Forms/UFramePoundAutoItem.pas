@@ -852,7 +852,6 @@ begin
   try
     Timer_SaveFail.Enabled := False;
     FLastCardDone := GetTickCount;
-    FLastCard     := '';
 
     gPoundTunnelManager.ClosePort(FPoundTunnel.FID);
     //¹Ø±Õ±íÍ·

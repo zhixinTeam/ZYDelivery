@@ -1,4 +1,4 @@
-unit UFrameQueryBillTotal;
+unit UFrameQueryTransTotal;
 
 interface
 
@@ -11,20 +11,16 @@ uses
 
 type
   TRecordInfo = record
-    FICCard   : string;     //IC卡编号
-    FCName    : string;     //客户名称
-    FSName    : string;     //销售经理
+    FStockName: string;
+    FProName  : string;
+    FFlagT    : string;
+    FCount    : Integer;
 
-    FStockName: string;     //存货名称
-    FSeal     : string;     //规格型号
-    FType     : string;     //包装类型
+    FKZValue  : Double;
+    FValue    : Double;
 
-    FLading   : string;     //提货方式
-    FFlagT    : string;     //发退货标记
-    FCount    : Integer;    //发货车数
-    FValue    : Double;     //发货数量
-    FPrice    : Double;     //发货价格
-    FMoney    : Double;     //发货金额
+    FPrice    : Double;
+    FMoney    : Double;
   end;
   TRecords = array of TRecordInfo;
 
@@ -39,7 +35,7 @@ type
   end;
   TGroups = array of TGroupInfo;
 
-  TfFrameQueryBillTotal = class(TBaseFrame)
+  TfFrameQueryTransTotal = class(TBaseFrame)
     TitlePanel1: TZnBitmapPanel;
     TitleBar: TcxLabel;
     ToolBar1: TToolBar;
@@ -52,12 +48,17 @@ type
     S3: TToolButton;
     BtnExit: TToolButton;
     dxLayout1: TdxLayoutControl;
+    cxtxtdt1: TcxTextEdit;
     EditDate: TcxButtonEdit;
     EditCustomer: TcxButtonEdit;
+    cxtxtdt4: TcxTextEdit;
     dxGroup1: TdxLayoutGroup;
     GroupSearch1: TdxLayoutGroup;
     dxLayout1Item8: TdxLayoutItem;
     dxLayout1Item6: TdxLayoutItem;
+    GroupDetail1: TdxLayoutGroup;
+    dxLayout1Item3: TdxLayoutItem;
+    dxLayout1Item5: TdxLayoutItem;
     cxSplitter1: TcxSplitter;
     ZnBitmapPanel1: TZnBitmapPanel;
     ReportGrid: TStringGrid;
@@ -70,9 +71,9 @@ type
     procedure ReportGridDrawCell(Sender: TObject; ACol, ARow: Integer;
       Rect: TRect; State: TGridDrawState);
     procedure BtnExportClick(Sender: TObject);
+    procedure OnCtrlKeyPress(Sender: TObject; var Key: Char);
     procedure EditCustomerPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
-    procedure OnCtrlKeyPress(Sender: TObject; var Key: Char);
     {*按键处理*}
   private
     { Private declarations }
@@ -94,7 +95,7 @@ type
   end;
 
 var
-  fFrameQueryBillTotal: TfFrameQueryBillTotal;
+  fFrameQueryTransTotal: TfFrameQueryTransTotal;
 
 implementation
 
@@ -103,12 +104,12 @@ implementation
 uses USysConst, ULibFun, UFormDateFilter, UMgrControl, USysDB,
      USysPopedom, UDataModule, USysBusiness;
 
-class function TfFrameQueryBillTotal.FrameID: integer;
+class function TfFrameQueryTransTotal.FrameID: integer;
 begin
-  Result := cFI_FrameQueryBillTotal;
+  Result := cFI_FrameQueryTransTotal;
 end;
 
-procedure TfFrameQueryBillTotal.OnCreateFrame;
+procedure TfFrameQueryTransTotal.OnCreateFrame;
 begin
   inherited;
   FTimeS := Str2DateTime(Date2Str(Now) + ' 00:00:00');
@@ -122,17 +123,17 @@ begin
   QueryData(FWhere);
 end;
 
-procedure TfFrameQueryBillTotal.OnDestroyFrame;
+procedure TfFrameQueryTransTotal.OnDestroyFrame;
 begin
   inherited;
 end;
 
-function TfFrameQueryBillTotal.FrameTitle: string;
+function TfFrameQueryTransTotal.FrameTitle: string;
 begin
   Result := TitleBar.Caption;
-end;
+end;   
 
-procedure TfFrameQueryBillTotal.OnCtrlKeyPress(Sender: TObject; var Key: Char);
+procedure TfFrameQueryTransTotal.OnCtrlKeyPress(Sender: TObject; var Key: Char);
 begin
   if Key = #13 then
   begin
@@ -147,34 +148,36 @@ begin
   end;
 end;
 
-procedure TfFrameQueryBillTotal.LoadDataToReportGrid(nSQL: string);
-var nStr: string;
-    nRecord: TRecordInfo;
+procedure TfFrameQueryTransTotal.LoadDataToReportGrid(nSQL: string);
+var nRecord: TRecordInfo;
     nIdx, nJdx, nInt: Integer;
     nSumValue, nSumKValue, nSumMomey: Double;
 begin
   ReportGrid.RowCount := 1;
-  ReportGrid.ColCount := 12;   //总共8列
+  ReportGrid.ColCount := 8;   //总共8列
   with ReportGrid do
   begin
-    DefaultColWidth := 60;
-
     ColWidths[0] := 80;
-    ColWidths[1] := 220;
-    ColWidths[3] := 220;
-    Cells[0, RowCount-1] := 'IC卡编号';
-    Cells[1, RowCount-1] := '客户名称';
-    Cells[2, RowCount-1] := '销售经理';
+    ColWidths[1] := 120;
+    Cells[0, RowCount-1] := '客户名称';
+    Cells[1, RowCount-1] := '销售经理';
+    Cells[2, RowCount-1] := '提货方式';
     Cells[3, RowCount-1] := '存货名称';
     Cells[4, RowCount-1] := '规格型号';
     Cells[5, RowCount-1] := '包装类型';
-    Cells[6, RowCount-1] := '提货方式';
-    Cells[7, RowCount-1] := '单价';
-    Cells[8, RowCount-1] := '发货数量';
-    Cells[9, RowCount-1] := '金额';
-    Cells[10, RowCount-1] := '发货车数';
-    Cells[11, RowCount-1] := '发退货标记';
-  end;
+    Cells[6, RowCount-1] := '司机运价';
+    Cells[7, RowCount-1] := '发货数量';
+    Cells[8, RowCount-1] := '司机金额';
+    Cells[9, RowCount-1] := '发货次数';
+
+    Cells[10, RowCount-1] := '卸货地址';
+    Cells[11, RowCount-1] := '客户运价';
+    Cells[12, RowCount-1] := '客户金额';
+    Cells[13, RowCount-1] := '节约运费';
+    Cells[14, RowCount-1] := '车主';
+    Cells[15, RowCount-1] := '车次';
+    Cells[16, RowCount-1] := '送货方式';
+  end;  
 
   SetLength(FGroups, 0);
   with FDM.QuerySQL(nSQL) do
@@ -186,25 +189,22 @@ begin
     try
       with nRecord do
       begin
-        FICCard    := FieldByName('L_ICC').AsString;
-        FCName     := FieldByName('L_CusName').AsString;
-        FSName     := FieldByName('L_SaleMan').AsString;
-              
-        FStockName := FieldByName('P_Name').AsString;
-        FSeal      := FieldByName('P_Qlevel').AsString;
-        FType      := FieldByName('L_Type').AsString;
-              
-        FLading    := '';
-        FFlagT     := '发货';
+        FStockName := FieldByName('O_StockName').AsString;
+        FProName   := FieldByName('O_ProName').AsString;
+        FFlagT     := '收货';
+
         FCount     := FieldByName('T_Count').AsInteger;
+
+        FKZValue   := FieldByName('T_KZValue').AsFloat;
         FValue     := FieldByName('T_Value').AsFloat;
-        FPrice     := FieldByName('L_Price').AsFloat;
-        FMoney     := FieldByName('T_Money').AsFloat;
+
+        FPrice     := 0;
+        FMoney     := 0;
       end;
 
       nInt := -1;
       for nIdx := Low(FGroups) to High(FGroups) do
-      if FGroups[nIdx].FGroupName = nRecord.FICCard then
+      if FGroups[nIdx].FGroupName = nRecord.FStockName then
       begin
         nInt := nIdx;
         Break;
@@ -215,7 +215,7 @@ begin
         nInt := Length(FGroups);
         SetLength(FGroups, nInt+1);
         SetLength(FGroups[nInt].FRecords, 0);
-        FGroups[nInt].FGroupName := nRecord.FICCard;
+        FGroups[nInt].FGroupName := nRecord.FStockName;
       end;
 
       with FGroups[nInt] do
@@ -223,9 +223,10 @@ begin
         nIdx := Length(FRecords);
         SetLength(FRecords, Length(FRecords)+1);
         FRecords[nIdx] := nRecord;
-        //Move(nRecord, FRecords[nIdx], 1);
 
         FSumValue   := FSumValue + FRecords[nIdx].FValue;
+        FSumKZValue := FSumKZValue + FRecords[nIdx].FKZValue;
+
         FSumCount   := FSumCount + FRecords[nIdx].FCount;
         FSumMoney   := FSumMoney + FRecords[nIdx].FMoney;
       end;  
@@ -242,37 +243,25 @@ begin
     begin
       RowCount := RowCount + 1;
 
-      if FType = sFlag_San then
-            nStr := '散装'
-      else  nStr := '袋装';
-
-      Cells[0, RowCount-1] := FICCard;
-      Cells[1, RowCount-1] := FCName;
-      Cells[2, RowCount-1] := FSName;
-      Cells[3, RowCount-1] := FStockName + '(' + nStr + ')';
-      Cells[4, RowCount-1] := FSeal;
-      Cells[5, RowCount-1] := nStr;
-      Cells[6, RowCount-1] := '';
-      Cells[7, RowCount-1] := Format('%.2f', [FPrice]);
-      Cells[8, RowCount-1] := Format('%.2f', [FValue]);
-      Cells[9, RowCount-1] := Format('%.2f', [FMoney]);
-      Cells[10, RowCount-1] := IntToStr(FCount);
-      Cells[11, RowCount-1] := FFlagT;
+      Cells[0, RowCount-1] := FStockName;
+      Cells[1, RowCount-1] := FProName;
+      Cells[2, RowCount-1] := Format('%.2f', [FValue]);
+      Cells[3, RowCount-1] := IntToStr(FCount);
+      Cells[4, RowCount-1] := FFlagT;
+      Cells[5, RowCount-1] := Format('%.2f', [FKZValue]);
+      Cells[6, RowCount-1] := Format('%.2f', [FPrice]);
+      Cells[7, RowCount-1] := Format('%.2f', [FMoney]);
     end;
-    {
-    RowCount := RowCount + 1;
+
+    {RowCount := RowCount + 1;
     Cells[0, RowCount-1] := '小计';
     Cells[1, RowCount-1] := '';
-    Cells[2, RowCount-1] := '';
-    Cells[3, RowCount-1] := '';
+    Cells[2, RowCount-1] := Format('%.2f', [FSumValue]);
+    Cells[3, RowCount-1] := IntToStr(FSumCount);
     Cells[4, RowCount-1] := '';
-    Cells[5, RowCount-1] := '';
-    Cells[6, RowCount-1] := '';
-    Cells[7, RowCount-1] := '';
-    Cells[8, RowCount-1] := Format('%.2f', [FSumValue]);
-    Cells[9, RowCount-1] := Format('%.2f', [FSumMoney]);
-    Cells[10, RowCount-1] := IntToStr(FSumCount);
-    Cells[11, RowCount-1] := ''; }
+    Cells[5, RowCount-1] := Format('%.2f', [FSumKZValue]);
+    Cells[6, RowCount-1] := Format('%.2f', [0.00]);
+    Cells[7, RowCount-1] := Format('%.2f', [FSumMoney]);     }
   end;
 
   nInt      := 0;
@@ -292,39 +281,46 @@ begin
   with ReportGrid do
   begin
     RowCount := RowCount + 1;
-
     Cells[0, RowCount-1] := '合计';
     Cells[1, RowCount-1] := '';
-    Cells[2, RowCount-1] := '';
-    Cells[3, RowCount-1] := '';
+    Cells[2, RowCount-1] := Format('%.2f', [nSumValue]);
+    Cells[3, RowCount-1] := IntToStr(nInt);
     Cells[4, RowCount-1] := '';
-    Cells[5, RowCount-1] := '';
-    Cells[6, RowCount-1] := '';
-    Cells[7, RowCount-1] := '';
-    Cells[8, RowCount-1] := Format('%.2f', [nSumValue]);
-    Cells[9, RowCount-1] := Format('%.2f', [nSumMomey]);
-    Cells[10, RowCount-1] := IntToStr(nInt);
-    Cells[11, RowCount-1] := '';
+    Cells[5, RowCount-1] := Format('%.2f', [nSumKValue]);
+    Cells[6, RowCount-1] := Format('%.2f', [0.00]);
+    Cells[7, RowCount-1] := Format('%.2f', [nSumMomey]);
   end;  
 end;  
 
-procedure TfFrameQueryBillTotal.QueryData(const nWhere: string);
+procedure TfFrameQueryTransTotal.QueryData(const nWhere: string);
 var nSQL: string;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
-  nSQL := 'Select L_ICC, L_CusName, L_SaleMan, P_Qlevel, L_Price, L_Type, ' +
-	        'P_Name, Sum(L_Money) As T_Money, Sum(L_Value) As T_Value, ' +
-          'Count(L_ID) As T_Count ' +
-          'From (' +
-          'Select L_ICC,L_CusName,L_SaleMan,L_Value,L_Price,L_Type,L_CusPY, ' +
-          'L_OutFact,L_CusType,(L_Value*L_Price) as L_Money,P_Name,P_Qlevel, ' +
-          'L_ID From $Bill b Left Join $TP sp on b.L_StockNo=sp.P_ID' +
-          ') bb ';
+  nSQL := 'Select Sum(D_Value) As T_Value, Sum(D_KZValue) As T_KZValue, ' +
+          'Count(O_Truck) As T_Count, O_ProName, O_StockName ' +
+          'From $OD od Inner Join $OO oo on od.D_OID=oo.O_ID ';
   //xxxxxx
+  {
+  Result := 'Select *,T_CusMoney-T_DrvMoney As JieSheng From $Con ';
+  //xxxxx
+
+  if nWhere = '' then
+       Result := Result + ' Where (IsNull(T_Enabled, '''')<>''$NO'')'
+  else Result := Result + ' Where (' + nWhere + ')';
+
+  nSettle := SelectSettleFlag;
+  Result := Result + ' And ' + '(IsNull(T_Settle, ''$No'') = ''$Sel'')';
+
+  if FUseDate then
+    Result := Result + ' And ' + '(T_Date>=''$ST'' and T_Date <''$End'')';
+
+  Result := MacroValue(Result, [MI('$Con', sTable_TransContract),
+            MI('$Yes', sFlag_Yes), MI('$NO', sFlag_NO), MI('$Sel', nSettle),
+            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
 
   if FJBWhere = '' then
   begin
-    nSQL := nSQL + ' Where (L_OutFact>=''$S'' and L_OutFact <''$End'')';
+    nSQL := nSQL + 'Where (T_Date>=''$S'' and T_Date <''$End'')';
 
     if nWhere <> '' then
       nSQL := nSQL + ' And (' + nWhere + ')';
@@ -334,33 +330,28 @@ begin
     nSQL := nSQL + ' Where (' + FJBWhere + ')';
   end;
 
-  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
-       nSQL := nSQL + ''
-  else nSQL := nSQL + ' And L_CusType=''$ZY''';
+  nSQL := nSQL + 'Group By T_CusName,T_SaleMan, Order By O_StockName ';
 
-  nSQL := nSQL + ' Group By L_ICC,L_CusName,L_SaleMan,P_Qlevel,P_Name,L_Type,L_Price ';
-  //nSQL := nSQL + ' Order By P_Name, L_CusName';
-
-  nSQL := MacroValue(nSQL, [MI('$Bill', sTable_Bill),MI('$TP', sTable_StockParam),
+  nSQL := MacroValue(nSQL, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
             MI('$ZY', sFlag_CusZYF), MI('$S', Date2Str(FStart)),
             MI('$End', Date2Str(FEnd + 1))]);
-
+  }
   LoadDataToReportGrid(nSQL);
 end;
 
-procedure TfFrameQueryBillTotal.BtnExitClick(Sender: TObject);
+procedure TfFrameQueryTransTotal.BtnExitClick(Sender: TObject);
 begin
   inherited;
   if not FIsBusy then Close;
 end;
 
-procedure TfFrameQueryBillTotal.BtnRefreshClick(Sender: TObject);
+procedure TfFrameQueryTransTotal.BtnRefreshClick(Sender: TObject);
 begin
   inherited;
   QueryData('');
 end;
 
-procedure TfFrameQueryBillTotal.ReportGridKeyDown(Sender: TObject;
+procedure TfFrameQueryTransTotal.ReportGridKeyDown(Sender: TObject;
   var Key: Word; Shift: TShiftState);
 begin
   inherited;
@@ -372,14 +363,14 @@ begin
   end;
 end;
 
-procedure TfFrameQueryBillTotal.EditDatePropertiesButtonClick(
+procedure TfFrameQueryTransTotal.EditDatePropertiesButtonClick(
   Sender: TObject; AButtonIndex: Integer);
 begin
   inherited;
   if ShowDateFilterForm(FStart, FEnd) then QueryData(FWhere);
 end;
 
-procedure TfFrameQueryBillTotal.ReportGridDrawCell(Sender: TObject; ACol,
+procedure TfFrameQueryTransTotal.ReportGridDrawCell(Sender: TObject; ACol,
   ARow: Integer; Rect: TRect; State: TGridDrawState);
 var
    HCell: Integer;
@@ -394,13 +385,13 @@ begin
      ReportGrid.RowHeights[ARow] := HCell;
 end;
 
-procedure TfFrameQueryBillTotal.BtnExportClick(Sender: TObject);
+procedure TfFrameQueryTransTotal.BtnExportClick(Sender: TObject);
 begin
   inherited;
   StringGridExportToExcel(ReportGrid, TitleBar.Caption);
 end;
 
-procedure TfFrameQueryBillTotal.EditCustomerPropertiesButtonClick(
+procedure TfFrameQueryTransTotal.EditCustomerPropertiesButtonClick(
   Sender: TObject; AButtonIndex: Integer);
 begin
   inherited;
@@ -409,12 +400,12 @@ begin
     EditCustomer.Text := Trim(EditCustomer.Text);
     if EditCustomer.Text = '' then Exit;
 
-    FWhere := 'L_CusPY like ''%%%s%%'' Or L_CusName like ''%%%s%%''';
+    FWhere := 'D_ProPY like ''%%%s%%'' Or D_ProName like ''%%%s%%''';
     FWhere := Format(FWhere, [EditCustomer.Text, EditCustomer.Text]);
     QueryData(FWhere);
   end;
 end;
 
 initialization
-  gControlManager.RegCtrl(TfFrameQueryBillTotal, TfFrameQueryBillTotal.FrameID);
+  gControlManager.RegCtrl(TfFrameQueryTransTotal, TfFrameQueryTransTotal.FrameID);
 end.

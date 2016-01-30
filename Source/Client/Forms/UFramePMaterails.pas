@@ -166,7 +166,7 @@ begin
     if Sender = N4 then
     begin
       nSQL := 'Insert Into %s (D_Name, D_Value, D_Desc, D_Memo) ' +
-              'Values(%s, %s, %s, %s)';
+              'Values(''%s'', ''%s'', ''%s'', ''%s'')';
       nSQL := Format(nSQL, [sTable_SysDict, sFlag_NFStock, nStr,
               '现场不验收', SQLQuery.FieldByName('M_Name').AsString]);
 

@@ -22,6 +22,7 @@ uses
   UFormFLPayment, UFrameFLPayment, UFormFLZhiKa, UFrameFLZhiKa,
   UFrameTransContract, UFormTransContract, UFrameTransPayment,UFrameTransCredit,
   UFrameTransAccount, UFrameTransInOutMoney, UFrameTruckLogs, UFrameTruckJieSuan,
+  UFrameQueryTransTotal,
   UFrameSaleContract, UFormSaleContract, UFormGetContract,
   UFormFXZhiKa, UFrameFXZhiKa, UFormGetFXZhiKa, UFormReadICCard,
   UFormGetFactZhiKa, UFormFactZhiKaBind,
