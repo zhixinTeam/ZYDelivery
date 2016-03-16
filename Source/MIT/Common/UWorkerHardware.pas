@@ -460,6 +460,8 @@ begin
 
       {$IFDEF SHXZY}
       nStr := FieldByName('L_ID').AsString;
+
+      nIDLen := Length(nStr);
       nCode:= Copy(nStr, nPrefixLen + 1, 6);
       nCode:= nCode + '$CODE' + FieldByName('L_Seal').AsString;
       nCode := nCode + Copy(nStr, nPrefixLen + 7, nIDLen-nPreFixLen-6);

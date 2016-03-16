@@ -302,7 +302,7 @@ begin
       if nZKType = sFlag_BillFX then
       begin
         nCID := GetVal(nIdx, 'L_ZhiKa');
-        nStr := 'Update %s Set I_OutMoney=I_OutMoney-%s Where I_ZID=''%s''';
+        nStr := 'Update %s Set I_OutMoney=I_OutMoney-%s Where I_ID=''%s''';
         nStr := Format(nStr, [sTable_FXZhiKa, FloatToStr(nPMon), nCID]);
         nListSQL.Add(nStr);
 
@@ -311,7 +311,7 @@ begin
                 FloatToStr(nPPrice), nLID]);
         nListSQL.Add(nStr);
 
-        nStr := 'Update %s Set I_OutMoney=I_OutMoney+%s Where I_ZID=''%s''';
+        nStr := 'Update %s Set I_OutMoney=I_OutMoney+%s Where I_ID=''%s''';
         nStr := Format(nStr, [sTable_FXZhiKa, FloatToStr(nNMon), nCID]);
         nListSQL.Add(nStr);
       end else

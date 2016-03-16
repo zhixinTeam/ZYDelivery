@@ -90,6 +90,8 @@ type
     //获取订单可用金
     function GetFLValidMoney(var nData: string): Boolean;
     //获取返利订单可用金
+    function GetCompensateMoney(var nData: string): Boolean;
+    //获取返利账户可用金
     function CustomerHasMoney(var nData: string): Boolean;
     //验证客户是否有钱
     function SaveTruck(var nData: string): Boolean;
@@ -443,6 +445,7 @@ begin
    cBC_AdjustCustomerMoney : Result := AdjustCustomerMoney(nData);
    cBC_GetZhiKaMoney       : Result := GetZhiKaValidMoney(nData);
    cBC_GetFLMoney          : Result := GetFLValidMoney(nData);
+   cBC_GetCompensateMoney  : Result := GetCompensateMoney(nData);
    cBC_GetTransportMoney   : Result := GetTransportValidMoney(nData);
    cBC_CustomerHasMoney    : Result := CustomerHasMoney(nData);
    cBC_SaveTruckInfo       : Result := SaveTruck(nData);
@@ -1007,6 +1010,47 @@ begin
 
   Result := True;
   //获取IC卡限提金额
+end;
+
+//Date: 2015/11/28
+//Parm: 
+//Desc: 获取指定客户的运费可用金额
+function TWorkerBusinessCommander.GetCompensateMoney(var nData: string): Boolean;
+var nStr: string;
+    nVal,nCredit: Double;
+begin
+  nStr := 'Select * From %s Where A_CID=''%s''';
+  nStr := Format(nStr, [sTable_CompensateAccount, FIn.FData]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := '编号为[ %s ]的客户账户不存在.';
+      nData := Format(nData, [FIn.FData]);
+
+      Result := False;
+      Exit;
+    end;
+
+    nVal := FieldByName('A_BeginBalance').AsFloat +
+            FieldByName('A_InMoney').AsFloat -
+            FieldByName('A_OutMoney').AsFloat -
+            FieldByName('A_Compensation').AsFloat -
+            FieldByName('A_FreezeMoney').AsFloat;
+    //xxxxx
+
+    nCredit := FieldByName('A_CreditLimit').AsFloat;
+    nCredit := Float2PInt(nCredit, cPrecision, False) / cPrecision;
+
+    if FIn.FExtParam = sFlag_Yes then
+      nVal := nVal + nCredit;
+    nVal := Float2PInt(nVal, cPrecision, False) / cPrecision;
+
+    FOut.FData := FloatToStr(nVal);
+    FOut.FExtParam := FloatToStr(nCredit);
+    Result := True;
+  end;
 end;
 
 //Date: 2015/11/28

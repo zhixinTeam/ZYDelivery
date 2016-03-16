@@ -49,7 +49,6 @@ inherited fFrameSaleDetailQuery: TfFrameSaleDetailQuery
     inherited cxView1: TcxGridDBTableView
       PopupMenu = pmPMenu1
       DataController.Summary.Options = [soNullIgnore]
-      OptionsSelection.MultiSelect = True
     end
   end
   inherited dxLayout1: TdxLayoutControl

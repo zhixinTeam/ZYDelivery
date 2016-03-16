@@ -103,7 +103,7 @@ begin
 
   if FJBWhere = '' then
   begin
-    Result := Result + 'Where (D_OutFact>=''$S'' and D_OutFact <''$End'')';
+    Result := Result + 'Where (D_PDate>=''$S'' and D_PDate <''$End'') And D_MDate Is Not NULL';
 
     if nWhere <> '' then
       Result := Result + ' And (' + nWhere + ')';

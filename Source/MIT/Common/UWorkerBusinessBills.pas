@@ -1204,6 +1204,7 @@ begin
                 SF('L_MMan', FListA.Values['MMan']),
                 SF('L_OutFact', FListA.Values['MDate']),
                 SF('L_OutMan', FIn.FBase.FFrom.FUser),
+                SF('L_Date', FListA.Values['PDate']),
                 SF('L_Card', '')
                 ], sTable_Bill, SF('L_ID', nBills[nIdx].FID), False);
         FListD.Add(nSQL);

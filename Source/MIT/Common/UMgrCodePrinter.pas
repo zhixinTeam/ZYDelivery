@@ -953,8 +953,9 @@ begin
   nData := nHead + nData + Char(nCrc.FL) + Char(nCrc.FH) + Char($FD);
   FClient.Socket.Write(nData, Indy8BitEncoding);
 
-  SetLength(nBuf, 0);
-  FClient.Socket.ReadBytes(nBuf, 3, False);
+  //Sleep(500);
+  //SetLength(nBuf, 0);
+  //FClient.Socket.ReadBytes(nBuf, 3, False);
   //FE 00 FD ÅçÂë³É¹¦
 
   Result := True;

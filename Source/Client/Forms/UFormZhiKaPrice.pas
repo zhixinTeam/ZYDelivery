@@ -184,7 +184,7 @@ begin
 
       nStr := 'Update %s Set I_Price=%.2f,I_PPrice=%s ' +
               'Where I_ZID=''%s'' And I_StockNo=''%s'''  ;
-      nStr := Format(nStr, [sTable_FXZhiKa, nVal, nList[1], nList[2], nList[4]]);
+      nStr := Format(nStr, [sTable_FXZhiKa, nVal, nList[1], nList[2], nList[3]]);
       FDM.ExecuteSQL(nStr);
       //修改所有生成对应物料编号的分销订单
 
