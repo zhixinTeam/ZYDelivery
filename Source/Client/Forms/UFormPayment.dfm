@@ -27,6 +27,7 @@ inherited fFormPayment: TfFormPayment
       Properties.IncrementalSearch = False
       Properties.ItemHeight = 18
       Properties.MaxLength = 20
+      Properties.OnChange = EditTypePropertiesChange
       TabOrder = 8
       Width = 105
     end

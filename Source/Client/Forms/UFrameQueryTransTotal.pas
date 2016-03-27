@@ -11,16 +11,27 @@ uses
 
 type
   TRecordInfo = record
+    FCusName  : string;
+    FSaleMan  : string;
+    FPayMent  : string;
+
+    FDelivery : string;
     FStockName: string;
-    FProName  : string;
-    FFlagT    : string;
+    FStockType: string;
+    FQevel    : string;
+
+    FDriver   : string;
+    FSendType : string;
+
     FCount    : Integer;
-
-    FKZValue  : Double;
     FValue    : Double;
+    FJYMoney  : Double;
 
-    FPrice    : Double;
-    FMoney    : Double;
+    FDrvPrice : Double;
+    FDrvMoney : Double;
+
+    FCusPrice : Double;
+    FCusMoney : Double;
   end;
   TRecords = array of TRecordInfo;
 
@@ -28,7 +39,10 @@ type
     FGroupName: string;
     FSumValue : Double;
     FSumCount : Integer;
-    FSumKZValue: Double;
+
+    FSumCusMoney: Double;
+    FSumDrvMoney: Double;
+    FSumJYMoney : Double;
     FSumMoney : Double;
 
     FRecords  : TRecords;
@@ -79,7 +93,6 @@ type
     { Private declarations }
   protected
     FStart,FEnd: TDate;
-    FTimeS,FTimeE: TDate;
     //时间区间
     FWhere,FJBWhere: string;
     //查询条件
@@ -112,11 +125,8 @@ end;
 procedure TfFrameQueryTransTotal.OnCreateFrame;
 begin
   inherited;
-  FTimeS := Str2DateTime(Date2Str(Now) + ' 00:00:00');
-  FTimeE := Str2DateTime(Date2Str(Now) + ' 00:00:00');
-
-  FStart := FTimeS;
-  FEnd   := FTimeE;
+  FStart := Str2DateTime(Date2Str(Now) + ' 00:00:00');
+  FEnd   := Str2DateTime(Date2Str(Now) + ' 00:00:00');
 
   FWhere := '';
   FJBWhere := '';
@@ -151,14 +161,14 @@ end;
 procedure TfFrameQueryTransTotal.LoadDataToReportGrid(nSQL: string);
 var nRecord: TRecordInfo;
     nIdx, nJdx, nInt: Integer;
-    nSumValue, nSumKValue, nSumMomey: Double;
+    nSumValue, nSumDrvMoney, nSumCusMoney, nSumJYMoney: Double;
 begin
   ReportGrid.RowCount := 1;
-  ReportGrid.ColCount := 8;   //总共8列
+  ReportGrid.ColCount := 16;   //总共16列
   with ReportGrid do
   begin
-    ColWidths[0] := 80;
-    ColWidths[1] := 120;
+    ColWidths[0] := 180;
+    ColWidths[1] := 80;
     Cells[0, RowCount-1] := '客户名称';
     Cells[1, RowCount-1] := '销售经理';
     Cells[2, RowCount-1] := '提货方式';
@@ -175,8 +185,7 @@ begin
     Cells[12, RowCount-1] := '客户金额';
     Cells[13, RowCount-1] := '节约运费';
     Cells[14, RowCount-1] := '车主';
-    Cells[15, RowCount-1] := '车次';
-    Cells[16, RowCount-1] := '送货方式';
+    Cells[15, RowCount-1] := '送货方式';
   end;  
 
   SetLength(FGroups, 0);
@@ -184,22 +193,34 @@ begin
   if RecordCount > 0 then
   begin
     First;
-
     while not Eof do
     try
       with nRecord do
       begin
-        FStockName := FieldByName('O_StockName').AsString;
-        FProName   := FieldByName('O_ProName').AsString;
-        FFlagT     := '收货';
+        FCusName  := FieldByName('T_CusName').AsString;
+        FSaleMan  := FieldByName('T_SaleMan').AsString;
+        FPayMent  := FieldByName('T_PayMent').AsString;
+           
+        FDelivery := FieldByName('T_Delivery').AsString;
+        FStockName:= FieldByName('T_StockName').AsString;
 
-        FCount     := FieldByName('T_Count').AsInteger;
+        if FieldByName('L_Type').AsString=sFlag_Dai then
+             FStockType:= '袋装'
+        else FStockType:= '散装';
+        FQevel    := FieldByName('P_Qlevel').AsString;
+           
+        FDriver   := FieldByName('T_Driver').AsString;
+        FSendType := '';
+           
+        FCount    := FieldByName('T_Count').AsInteger;
+        FValue    := FieldByName('T_Value').AsFloat;
+        FJYMoney  := FieldByName('JieSheng').AsFloat;
 
-        FKZValue   := FieldByName('T_KZValue').AsFloat;
-        FValue     := FieldByName('T_Value').AsFloat;
-
-        FPrice     := 0;
-        FMoney     := 0;
+        FDrvPrice := FieldByName('T_DPrice').AsFloat;
+        FDrvMoney := FieldByName('T_DrvMoneyT').AsFloat;
+           
+        FCusPrice := FieldByName('T_CPrice').AsFloat;
+        FCusMoney := FieldByName('T_CusMoneyT').AsFloat;
       end;
 
       nInt := -1;
@@ -225,10 +246,11 @@ begin
         FRecords[nIdx] := nRecord;
 
         FSumValue   := FSumValue + FRecords[nIdx].FValue;
-        FSumKZValue := FSumKZValue + FRecords[nIdx].FKZValue;
-
         FSumCount   := FSumCount + FRecords[nIdx].FCount;
-        FSumMoney   := FSumMoney + FRecords[nIdx].FMoney;
+
+        FSumCusMoney   := FSumCusMoney + FRecords[nIdx].FCusMoney;
+        FSumDrvMoney   := FSumDrvMoney + FRecords[nIdx].FDrvMoney;
+        FSumJYMoney    := FSumJYMoney + FRecords[nIdx].FJYMoney;
       end;  
     finally
       Next;
@@ -243,15 +265,25 @@ begin
     begin
       RowCount := RowCount + 1;
 
-      Cells[0, RowCount-1] := FStockName;
-      Cells[1, RowCount-1] := FProName;
-      Cells[2, RowCount-1] := Format('%.2f', [FValue]);
-      Cells[3, RowCount-1] := IntToStr(FCount);
-      Cells[4, RowCount-1] := FFlagT;
-      Cells[5, RowCount-1] := Format('%.2f', [FKZValue]);
-      Cells[6, RowCount-1] := Format('%.2f', [FPrice]);
-      Cells[7, RowCount-1] := Format('%.2f', [FMoney]);
+      Cells[0, RowCount-1] := FCusName;
+      Cells[1, RowCount-1] := FSaleMan;
+      Cells[2, RowCount-1] := FPayMent;
+      Cells[3, RowCount-1] := FStockName;
+      Cells[4, RowCount-1] := FQevel;
+      Cells[5, RowCount-1] := FStockType;
+      Cells[6, RowCount-1] := Format('%.2f', [FDrvPrice]);
+      Cells[7, RowCount-1] := Format('%.2f', [FValue]);
+      Cells[8, RowCount-1] := Format('%.2f', [FDrvMoney]);
+      Cells[9, RowCount-1] := Format('%d',   [FCount]);
+
+      Cells[10, RowCount-1] := FDelivery;
+      Cells[11, RowCount-1] := Format('%.2f', [FCusPrice]);
+      Cells[12, RowCount-1] := Format('%.2f', [FCusMoney]);
+      Cells[13, RowCount-1] := Format('%.2f', [FJYMoney]);
+      Cells[14, RowCount-1] := FDriver;
+      Cells[15, RowCount-1] := FSendType;
     end;
+
 
     {RowCount := RowCount + 1;
     Cells[0, RowCount-1] := '小计';
@@ -266,29 +298,42 @@ begin
 
   nInt      := 0;
   nSumValue := 0;
-  nSumKValue:= 0;
-  nSumMomey := 0;
+  nSumDrvMoney := 0;
+  nSumCusMoney := 0;
+  nSumJYMoney  := 0;
 
   for nIdx:=Low(FGroups) to High(FGroups) do
   with FGroups[nIdx] do
   begin
     nInt      := nInt + FSumCount;
-    nSumMomey := nSumMomey + FSumMoney;
     nSumValue := nSumValue + FSumValue;
-    nSumKValue:= nSumKValue + FSumKZValue;
+
+    nSumDrvMoney := nSumDrvMoney + FSumDrvMoney;
+    nSumCusMoney := nSumCusMoney + FSumCusMoney;
+    nSumJYMoney  := nSumJYMoney  + FSumJYMoney;
   end;
 
   with ReportGrid do
   begin
     RowCount := RowCount + 1;
+
     Cells[0, RowCount-1] := '合计';
     Cells[1, RowCount-1] := '';
-    Cells[2, RowCount-1] := Format('%.2f', [nSumValue]);
-    Cells[3, RowCount-1] := IntToStr(nInt);
+    Cells[2, RowCount-1] := '';
+    Cells[3, RowCount-1] := '';
     Cells[4, RowCount-1] := '';
-    Cells[5, RowCount-1] := Format('%.2f', [nSumKValue]);
-    Cells[6, RowCount-1] := Format('%.2f', [0.00]);
-    Cells[7, RowCount-1] := Format('%.2f', [nSumMomey]);
+    Cells[5, RowCount-1] := '';
+    Cells[6, RowCount-1] := '';
+    Cells[7, RowCount-1] := Format('%.2f', [nSumValue]);
+    Cells[8, RowCount-1] := Format('%.2f', [nSumDrvMoney]);
+    Cells[9, RowCount-1] := Format('%d',   [nInt]);
+
+    Cells[10, RowCount-1] := '';
+    Cells[11, RowCount-1] := '';
+    Cells[12, RowCount-1] := Format('%.2f', [nSumCusMoney]);
+    Cells[13, RowCount-1] := Format('%.2f', [nSumJYMoney]);
+    Cells[14, RowCount-1] := '';
+    Cells[15, RowCount-1] := '';
   end;  
 end;  
 
@@ -296,46 +341,39 @@ procedure TfFrameQueryTransTotal.QueryData(const nWhere: string);
 var nSQL: string;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
-  nSQL := 'Select Sum(D_Value) As T_Value, Sum(D_KZValue) As T_KZValue, ' +
-          'Count(O_Truck) As T_Count, O_ProName, O_StockName ' +
-          'From $OD od Inner Join $OO oo on od.D_OID=oo.O_ID ';
-  //xxxxxx
-  {
-  Result := 'Select *,T_CusMoney-T_DrvMoney As JieSheng From $Con ';
+
+  nSQL := 'Select T_CusName,T_SaleMan,T_PayMent,T_StockName,' +
+          'P_Qlevel,L_Type,T_DPrice,T_CPrice, T_Delivery, T_Driver,' +
+          'Sum(T_CusMoney-T_DrvMoney) As JieSheng, ' +
+          'Sum(T_DrvMoney) As T_DrvMoneyT, ' +
+          'Sum(T_CusMoney) As T_CusMoneyT, ' +
+          'Sum(T_WeiValue) As T_Value, Count(T_Truck) As T_Count ' +
+          ' From $Con con Left Join $Bill b on b.L_ID=con.T_LID ' +
+          ' Left Join $Stock s on b.L_StockNo=s.P_ID ' +
+          ' Where (IsNull(T_Enabled, '''')<>''$NO'') ';
   //xxxxx
-
-  if nWhere = '' then
-       Result := Result + ' Where (IsNull(T_Enabled, '''')<>''$NO'')'
-  else Result := Result + ' Where (' + nWhere + ')';
-
-  nSettle := SelectSettleFlag;
-  Result := Result + ' And ' + '(IsNull(T_Settle, ''$No'') = ''$Sel'')';
-
-  if FUseDate then
-    Result := Result + ' And ' + '(T_Date>=''$ST'' and T_Date <''$End'')';
-
-  Result := MacroValue(Result, [MI('$Con', sTable_TransContract),
-            MI('$Yes', sFlag_Yes), MI('$NO', sFlag_NO), MI('$Sel', nSettle),
-            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
 
   if FJBWhere = '' then
   begin
-    nSQL := nSQL + 'Where (T_Date>=''$S'' and T_Date <''$End'')';
+    nSQL := nSQL + ' And (T_Date>=''$ST'' and T_Date <''$End'')';
 
     if nWhere <> '' then
       nSQL := nSQL + ' And (' + nWhere + ')';
     //xxxxx
   end else
   begin
-    nSQL := nSQL + ' Where (' + FJBWhere + ')';
+    nSQL := nSQL + ' And (' + FJBWhere + ')';
   end;
 
-  nSQL := nSQL + 'Group By T_CusName,T_SaleMan, Order By O_StockName ';
+  nSQL := nSQL + ' Group By T_CusName,T_SaleMan,T_PayMent,T_StockName,' +
+          'P_Qlevel,L_Type,T_DPrice,T_CPrice, T_Delivery, T_Driver ';
 
-  nSQL := MacroValue(nSQL, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
-            MI('$ZY', sFlag_CusZYF), MI('$S', Date2Str(FStart)),
-            MI('$End', Date2Str(FEnd + 1))]);
-  }
+  nSQL := MacroValue(nSQL, [MI('$Con', sTable_TransContract),
+            MI('$Bill', sTable_Bill),
+            MI('$Stock', sTable_StockParam),
+            MI('$Yes', sFlag_Yes), MI('$NO', sFlag_NO),
+            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
+  //xxxxxx
   LoadDataToReportGrid(nSQL);
 end;
 

@@ -73,33 +73,14 @@ end;
 function TfFrameCusAccount.InitFormDataSQL(const nWhere: string): string;
 var nSQL, nWh: string;
 begin
-  {Result := 'Select ca.*,cus.*,S_Name as C_SaleName,' +
-            '(A_InMoney-A_OutMoney-A_Compensation-A_FreezeMoney-A_CardUseMoney)' +
-            ' As A_YuE From $CA ca ' +
-            ' Left Join $Cus cus On cus.C_ID=ca.A_CID ' +
-            ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ';
-  Result := 'Select cus.*,S_Name as C_SaleName,' +
-            'isnull(I_YuE, 0) As I_YuE, A_YuE,' +
-            '(isnull(I_YuE, 0) + A_YuE) As YuE, ca.* ' +
-            ' From $CA ca ' +
-            ' Left Join ( ' +
-            ' Select Sum(I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney) As I_YuE,' +
-            ' I_Customer From $FX Group By I_Customer ' +
-            ' ) fx on fx.I_Customer=ca.A_CID ' +
-            ' Left Join ( ' +
-            ' Select (A_InMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney) As A_YuE,' +
-            '  A_CID As A_Customer From $CA) fb on fb.A_Customer=ca.A_CID ' +
-            ' Left Join $Cus cus On cus.C_ID=ca.A_CID ' +
-            ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan '; }
-  //xxxxx
-
   nSQL := 'Select IsNull(I_YuE, 0) As I_YuE, $YU As YuE, '+
           'Abs($YU) As YingShow, 0 As YingFu, tt.*, ' +
           'cus.*,S_Name as C_SaleName ' +
           'From (' +
           'Select ($AY) As A_YuE, * From $CA ca ' +
-          ' Left Join (Select Sum($IU) As I_YuE, I_Customer ' +
-          ' From $FX Group By I_Customer ) fx on fx.I_Customer=ca.A_CID) As tt'+
+          ' Left Join (Select Sum($IU) As I_YuE, I_Customer, I_Paytype ' +
+          ' From $FX Group By I_Customer, I_Paytype ) fx ' +
+          'on fx.I_Customer=ca.A_CID And fx.I_Paytype=ca.A_Type) As tt'+
           ' Left Join $Cus cus On cus.C_ID=tt.A_CID ' +
           ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ' +
           ' Where $YU<0 $Where ' +
@@ -109,8 +90,9 @@ begin
           'cus.*,S_Name as C_SaleName ' +
           'From (' +
           'Select ($AY) As A_YuE, * From $CA ca ' +
-          ' Left Join (Select Sum($IU) As I_YuE, I_Customer ' +
-          ' From $FX Group By I_Customer ) fx on fx.I_Customer=ca.A_CID) As tt'+
+          ' Left Join (Select Sum($IU) As I_YuE, I_Customer, I_Paytype ' +
+          ' From $FX Group By I_Customer, I_Paytype ) fx ' +
+          'on fx.I_Customer=ca.A_CID And fx.I_Paytype=ca.A_Type) As tt'+
           ' Left Join $Cus cus On cus.C_ID=tt.A_CID ' +
           ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ' +
           ' Where $YU>=0 $Where ';
@@ -119,7 +101,7 @@ begin
        nWh := ' And IsNull(C_XuNi, '''')<>''$Yes'''
   else nWh := ' And (' + nWhere + ')';
 
-  Result := MacroValue(nSQL, [MI('$CA', sTable_CusAccount),
+  Result := MacroValue(nSQL, [MI('$CA', sTable_CusAccDetail),
             MI('$FX', sTable_FXZhiKa), MI('$Cus', sTable_Customer),
             MI('$SM', sTable_Salesman), MI('$Where', nWh),
             MI('$YU', gYuE), MI('$AY', gA_YuE), MI('$IU', gI_YuE),
@@ -179,7 +161,8 @@ var nStr: string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
-    nStr := SQLQuery.FieldByName('A_CID').AsString;
+    {nStr := SQLQuery.FieldByName('A_CID').AsString + sFlag_Delimater +
+            SQLQuery.FieldByName('A_Type').AsString;
     nVal := GetCustomerValidMoney(nStr, False, @nCredit);
 
     nStr := '客户当前可用金额如下:' + #13#10#13#10 +
@@ -187,7 +170,7 @@ begin
             '*.资金余额: %.2f 元' + #13#10 +
             '*.信用金额: %.2f 元' + #13#10;
     nStr := Format(nStr, [SQLQuery.FieldByName('C_Name').AsString, nVal, nCredit]);
-    ShowDlg(nStr, sHint);
+    ShowDlg(nStr, sHint);}
   end;
 end;
 
@@ -197,7 +180,7 @@ var nStr,nCID: string;
     nVal: Double;
 begin
   if cxView1.DataController.GetSelectedCount < 1 then Exit;
-  nCID := SQLQuery.FieldByName('A_CID').AsString;
+  {nCID := SQLQuery.FieldByName('A_CID').AsString;
 
   nStr := 'Select Sum(L_Money) from (' +
           '  select L_Value * L_Price as L_Money from %s' +
@@ -226,7 +209,7 @@ begin
   end;
 
   InitFormData(FWhere);
-  ShowMsg('校正完毕', sHint);
+  ShowMsg('校正完毕', sHint); }
 end;
 
 initialization

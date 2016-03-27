@@ -193,8 +193,8 @@ begin
         FStockName := FieldByName('P_Name').AsString;
         FSeal      := FieldByName('P_Qlevel').AsString;
         FType      := FieldByName('L_Type').AsString;
-              
-        FLading    := '';
+
+        FLading    := FieldByName('L_PayMent').AsString;
         FFlagT     := '∑¢ªı';
         FCount     := FieldByName('T_Count').AsInteger;
         FValue     := FieldByName('T_Value').AsFloat;
@@ -252,7 +252,7 @@ begin
       Cells[3, RowCount-1] := FStockName + '(' + nStr + ')';
       Cells[4, RowCount-1] := FSeal;
       Cells[5, RowCount-1] := nStr;
-      Cells[6, RowCount-1] := '';
+      Cells[6, RowCount-1] := FLading;
       Cells[7, RowCount-1] := Format('%.2f', [FPrice]);
       Cells[8, RowCount-1] := Format('%.2f', [FValue]);
       Cells[9, RowCount-1] := Format('%.2f', [FMoney]);
@@ -312,12 +312,12 @@ procedure TfFrameQueryBillTotal.QueryData(const nWhere: string);
 var nSQL: string;
 begin
   EditDate.Text := Format('%s ÷¡ %s', [Date2Str(FStart), Date2Str(FEnd)]);
-  nSQL := 'Select L_ICC, L_CusName, L_SaleMan, P_Qlevel, L_Price, L_Type, ' +
+  nSQL := 'Select L_ICC, L_CusName, L_SaleMan, P_Qlevel, L_Price, L_Type,L_PayMent,' +
 	        'P_Name, Sum(L_Money) As T_Money, Sum(L_Value) As T_Value, ' +
           'Count(L_ID) As T_Count ' +
           'From (' +
           'Select L_ICC,L_CusName,L_SaleMan,L_Value,L_Price,L_Type,L_CusPY, ' +
-          'L_OutFact,L_CusType,(L_Value*L_Price) as L_Money,P_Name,P_Qlevel, ' +
+          'L_OutFact,L_CusType,L_PayMent,(L_Value*L_Price) as L_Money,P_Name,P_Qlevel, ' +
           'L_ID From $Bill b Left Join $TP sp on b.L_StockNo=sp.P_ID' +
           ') bb ';
   //xxxxxx
@@ -338,8 +338,8 @@ begin
        nSQL := nSQL + ''
   else nSQL := nSQL + ' And L_CusType=''$ZY''';
 
-  nSQL := nSQL + ' Group By L_ICC,L_CusName,L_SaleMan,P_Qlevel,P_Name,L_Type,L_Price ';
-  //nSQL := nSQL + ' Order By P_Name, L_CusName';
+  nSQL := nSQL + ' Group By L_ICC,L_CusName,L_SaleMan,P_Qlevel,' +
+          'L_PayMent,P_Name,L_Type,L_Price ';
 
   nSQL := MacroValue(nSQL, [MI('$Bill', sTable_Bill),MI('$TP', sTable_StockParam),
             MI('$ZY', sFlag_CusZYF), MI('$S', Date2Str(FStart)),

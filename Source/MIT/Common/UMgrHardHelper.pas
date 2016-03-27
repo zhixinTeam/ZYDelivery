@@ -545,6 +545,7 @@ begin
       nBuf := RawToBytes(nPBase^, cSizeHHBase);
       AppendBytes(nBuf, nTmp);
       FClient.Socket.Write(nBuf);
+      Sleep(500);
     end;
   end;
 end;

@@ -157,6 +157,7 @@ type
 
     FYSValid    : string;          //验收结果，Y验收成功；N拒收；
     FKZValue    : Double;          //供应扣除
+    FPayType    : String;          //付款方式
     FMemo       : string;          //动作备注
   end;
 
@@ -291,6 +292,7 @@ begin
         else FKZValue := 0;
 
         FYSValid:= Values['YSValid'];
+        FPayType:= Values['PayType'];
         FMemo := Values['Memo'];
       end;
 
@@ -372,6 +374,7 @@ begin
 
         Values['KZValue']    := FloatToStr(FKZValue);
         Values['YSValid']    := FYSValid;
+        Values['Paytype']    := FPayType;
         Values['Memo']       := FMemo;
       end;
 

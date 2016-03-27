@@ -10,7 +10,7 @@ uses
   Windows, DB, Classes, Controls, SysUtils, UBusinessPacker, UBusinessWorker,
   UBusinessConst, ULibFun, UAdjustForm, UFormCtrl, UDataModule, UDataReport,
   UFormBase, cxMCListBox, UMgrPoundTunnels, USysConst, HKVNetSDK, Forms,
-  USysDB, USysLoger, ADODB, Grids, Clipbrd, ComObj, Dialogs;
+  USysDB, USysLoger, ADODB, Grids, Clipbrd, ComObj, Dialogs, Messages;
 
 type
   TLadingStockItem = record
@@ -117,7 +117,8 @@ function SaveCustomerPayment(const nCusID,nCusName,nSaleMan: string;
  const nCredit: Boolean = True; const nTransAccount: Boolean=False): Boolean;
 //保存回款记录
 function SaveCustomerCredit(const nCusID,nMemo: string; const nCredit: Double;
- const nEndTime: TDateTime; const nTransCredit: Boolean=False): Boolean;
+ const nEndTime: TDateTime; const nTransCredit: Boolean=False;
+ const nType: string= ''): Boolean;
 //保存信用记录
 function SaveCustomerFLPayment(const nCusID,nCusName,nSaleMan: string;
  const nType,nMemo: string; const nMoney: Double): Boolean;
@@ -878,10 +879,6 @@ begin
     nStr := Format(nStr, [sTable_Customer, Result, nID]);
     FDM.ExecuteSQL(nStr);
 
-    nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-    nStr := Format(nStr, [sTable_CusAccount, Result, FDM.SQLServerNow]);
-    FDM.ExecuteSQL(nStr);
-
     if not nBool then
       FDM.ADOConn.CommitTrans;
     //commit if need
@@ -911,8 +908,9 @@ function SaveCustomerPayment(const nCusID,nCusName,nSaleMan: string;
  const nType,nPayment,nMemo: string; const nMoney: Double;
  const nCredit: Boolean; const nTransAccount: Boolean): Boolean;
 var nStr, nInOutTable, nAccountTable: string;
-    nBool: Boolean;
     nVal,nLimit: Double;
+    nBool: Boolean;
+    nInt: Integer;
 begin
   Result := False;
   nVal := Float2Float(nMoney, cPrecision, False);
@@ -926,14 +924,14 @@ begin
   else
   begin
     nInOutTable  := sTable_InOutMoney;
-    nAccountTable:= sTable_CusAccount;
+    nAccountTable:= sTable_CusAccDetail;
   end;
 
   if nVal < 0 then
   begin
     if nTransAccount then
          nLimit := GetTransportValidMoney(nCusID, False)
-    else nLimit := GetCustomerValidMoney(nCusID, False);
+    else nLimit := GetCustomerValidMoney(nCusID + sFlag_Delimater + nType, False);
     //get money value
     
     if (nLimit <= 0) or (nLimit < -nVal) then
@@ -955,6 +953,8 @@ begin
     nStr := 'Select A_CreditLimit From %s Where A_CID=''%s''';
     nStr := Format(nStr, [nAccountTable, nCusID]);
 
+    if not nTransAccount then nStr := nStr + ' And A_Type=''' + nType + '''';
+
     with FDM.QueryTemp(nStr) do
     if (RecordCount > 0) and (Fields[0].AsFloat > 0) then
     begin
@@ -975,18 +975,33 @@ begin
   nBool := FDM.ADOConn.InTransaction;
   if not nBool then FDM.ADOConn.BeginTrans;
   try
-    nStr := 'Select A_CID From %s Where A_CID=''%s''';
-    nStr := Format(nStr, [nAccountTable, nCusID]);
-    if FDM.QuerySQL(nStr).RecordCount < 1 then
+    if nTransAccount then
     begin
-      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-      nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow]);
-      FDM.ExecuteSQL(nStr);
+      nStr := 'Update %s Set A_InMoney=A_InMoney+%.2f Where A_CID=''%s''';
+      nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
+      nInt := FDM.ExecuteSQL(nStr);
+      if nInt < 1 then
+      begin
+        nStr := 'Insert Into %s(A_CID,A_InMoney,A_Date) ' +
+                'Values(''%s'', %.2f, %s)';
+        nStr := Format(nStr, [nAccountTable, nCusID, nVal, FDM.SQLServerNow]);
+        FDM.ExecuteSQL(nStr);
+      end;
+    end else
+    begin
+      nStr := 'Update %s Set A_InMoney=A_InMoney+%.2f Where A_CID=''%s''' +
+              ' And A_Type=''%s''';
+      nStr := Format(nStr, [nAccountTable, nVal, nCusID, nType]);
+      nInt := FDM.ExecuteSQL(nStr);
+      if nInt < 1 then
+      begin
+        nStr := 'Insert Into %s(A_CID,A_Type,A_InMoney,A_Date) ' +
+                'Values(''%s'', ''%s'', %.2f, %s)';
+        nStr := Format(nStr, [nAccountTable, nCusID, nType,
+                nVal, FDM.SQLServerNow]);
+        FDM.ExecuteSQL(nStr);
+      end;
     end;
-
-    nStr := 'Update %s Set A_InMoney=A_InMoney+%.2f Where A_CID=''%s''';
-    nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
-    FDM.ExecuteSQL(nStr);
 
     nStr := 'Insert Into %s(M_SaleMan,M_CusID,M_CusName,' +
             'M_Type,M_Payment,M_Money,M_Date,M_Man,M_Memo) ' +
@@ -996,7 +1011,8 @@ begin
     FDM.ExecuteSQL(nStr);
 
     if (nLimit > 0) and (
-       not SaveCustomerCredit(nCusID, '回款时冲减', -nLimit, Now, nTransAccount)) then
+       not SaveCustomerCredit(nCusID, '回款时冲减', -nLimit, Now,
+       nTransAccount, nType)) then
     begin
       nStr := '发生未知错误,导致冲减客户[ %s ]信用操作失败.' + #13#10 +
               '请手动调整该客户信用额度.';
@@ -1017,7 +1033,7 @@ end;
 //Desc: 删除回款RID记录
 function DeleteCustomerPayment(const nRID: string;
     const nTransAccount: Boolean): Boolean;
-var nStr, nCID, nCName, nInOutTable, nAccountTable: string;
+var nStr, nCID, nCName, nInOutTable, nAccountTable, nType: string;
     nBool: Boolean;
     nVal: Double;
 begin
@@ -1031,10 +1047,10 @@ begin
   else
   begin
     nInOutTable  := sTable_InOutMoney;
-    nAccountTable:= sTable_CusAccount;
+    nAccountTable:= sTable_CusAccDetail;
   end;
 
-  nStr := 'Select M_CusID, M_CusName, M_Money From %s Where R_ID=%s';
+  nStr := 'Select M_CusID, M_Type, M_CusName, M_Money From %s Where R_ID=%s';
   nStr := Format(nStr, [nInOutTable, nRID]);
   with FDM.QuerySQL(nStr) do
   begin
@@ -1048,24 +1064,25 @@ begin
 
     nCID := FieldByName('M_CusID').AsString;
     nVal := Float2Float(FieldByName('M_Money').AsFloat, cPrecision, True);
+    nType:= FieldByName('M_Type').AsString;
     nCName := FieldByName('M_CusName').AsString;
   end;  
 
   nBool := FDM.ADOConn.InTransaction;
   if not nBool then FDM.ADOConn.BeginTrans;
   try
-    nStr := 'Select A_CID From %s Where A_CID=''%s''';
-    nStr := Format(nStr, [nAccountTable, nCID]);
-    if FDM.QuerySQL(nStr).RecordCount < 1 then
+    if nTransAccount then
     begin
-      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-      nStr := Format(nStr, [nAccountTable, nCID, FDM.SQLServerNow]);
+      nStr := 'Update %s Set A_InMoney=A_InMoney-%.2f Where A_CID=''%s''';
+      nStr := Format(nStr, [nAccountTable, nVal, nCID]);
       FDM.ExecuteSQL(nStr);
-    end;
-
-    nStr := 'Update %s Set A_InMoney=A_InMoney-%.2f Where A_CID=''%s''';
-    nStr := Format(nStr, [nAccountTable, nVal, nCID]);
-    FDM.ExecuteSQL(nStr);
+    end  else
+    begin
+      nStr := 'Update %s Set A_InMoney=A_InMoney-%.2f ' +
+              'Where A_CID=''%s'' And A_Type=''%s''';
+      nStr := Format(nStr, [nAccountTable, nVal, nCID, nType]);
+      FDM.ExecuteSQL(nStr);
+    end;     
 
     nStr := 'Delete From %s Where R_ID=%s';
     nStr := Format(nStr, [nInOutTable, nRID]);
@@ -1086,7 +1103,7 @@ end;
 
 //Desc: 保存nCusID的一次授信记录
 function SaveCustomerCredit(const nCusID,nMemo: string; const nCredit: Double;
- const nEndTime: TDateTime; const nTransCredit: Boolean): Boolean;
+ const nEndTime: TDateTime; const nTransCredit: Boolean; const nType: string): Boolean;
 var nStr, nSaleMan, nCreditTable, nAccountTable: string;
     nVal, nSaleCredit, nUsedCredit: Double;
     nBool: Boolean;
@@ -1102,16 +1119,7 @@ begin
     else
     begin
       nCreditTable := sTable_CusCredit;
-      nAccountTable:= sTable_CusAccount;
-    end;
-
-    nStr := 'Select A_CID From %s Where A_CID=''%s''';
-    nStr := Format(nStr, [nAccountTable, nCusID]);
-    if FDM.QuerySQL(nStr).RecordCount < 1 then
-    begin
-      nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-      nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow]);
-      FDM.ExecuteSQL(nStr);
+      nAccountTable:= sTable_CusAccDetail;
     end;
 
     nStr := 'Select S_ID, S_Credit From $SM sm, $CM cm ' +
@@ -1157,20 +1165,42 @@ begin
           Exit;
         end;  
       end;  
-    end;   
+    end;
 
     nVal := Float2Float(nCredit, cPrecision, False);
     //adjust float value
 
-    nStr := 'Insert Into %s(C_CusID,C_Money,C_Man,C_Date,C_End,C_Memo) ' +
-            'Values(''%s'', %.2f, ''%s'', %s, ''%s'', ''%s'')';
+    nStr := 'Insert Into %s(C_CusID,C_Money,C_Man,C_Date,C_End,C_Memo, C_Type) ' +
+            'Values(''%s'', %.2f, ''%s'', %s, ''%s'', ''%s'', ''%s'')';
     nStr := Format(nStr, [nCreditTable, nCusID, nVal, gSysParam.FUserID,
-            FDM.SQLServerNow, DateTime2Str(nEndTime), nMemo]);
-    FDM.ExecuteSQL(nStr);
-
-    nStr := 'Update %s Set A_CreditLimit=A_CreditLimit+%.2f Where A_CID=''%s''';
-    nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
-    FDM.ExecuteSQL(nStr);
+            FDM.SQLServerNow, DateTime2Str(nEndTime), nMemo, nType]);
+    FDM.ExecuteSQL(nStr); 
+    
+    if nTransCredit then
+    begin
+      nStr := 'Update %s Set A_CreditLimit=A_CreditLimit+%.2f ' +
+              'Where A_CID=''%s''' ;
+      nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
+      if FDM.ExecuteSQL(nStr) < 1 then
+      begin
+        nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
+        nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow]);
+        FDM.ExecuteSQL(nStr);
+      end;
+    end else
+    begin
+      nStr := 'Update %s Set A_CreditLimit=A_CreditLimit+%.2f ' +
+              'Where A_CID=''%s'' And A_Type=''%s''' ;
+      nStr := Format(nStr, [nAccountTable, nVal, nCusID, nType]);
+      if FDM.ExecuteSQL(nStr) < 1 then
+      begin
+        nStr := 'Insert Into %s(A_CID,A_Date,A_CreditLimit,A_Type) ' +
+                'Values(''%s'', %s, %.2f, ''%s'')';
+        nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow, nVal,
+                nType]);
+        FDM.ExecuteSQL(nStr);
+      end;
+    end;
 
     if not nBool then
       FDM.ADOConn.CommitTrans;
@@ -3090,8 +3120,19 @@ end;
 //Parm: 
 //Desc: 全选内容
 procedure SelectAllOfGrid(nStringGrid: TStringGrid);
+//var nIdx, nJdx: Integer;
 begin
   if not Assigned(nStringGrid) then Exit;
+
+  {for nIdx:= 0 to nStringGrid.RowCount-1 do
+  begin
+    //第一列没有数据，不用
+    for nJdx:=0 to nStringGrid.ColCount-1 do
+    begin
+      SendMessage(nStringGrid.Handle, WM_LBUTTONDOWN, 0, MAKELONG(nIdx, nJdx));
+      SendMessage(nStringGrid.Handle, WM_LBUTTONUP, 0, MAKELONG(nIdx, nJdx));
+    end;  
+  end; }
 
   {with nStringGrid do
   begin

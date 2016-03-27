@@ -164,6 +164,10 @@ begin
     nSQL := 'Delete From %s Where A_CID=''%s''';
     nSQL := Format(nSQL, [sTable_CusAccount, nStr]);
     FDM.ExecuteSQL(nSQL);
+    
+    nSQL := 'Delete From %s Where A_CID=''%s''';
+    nSQL := Format(nSQL, [sTable_CusAccDetail, nStr]);
+    FDM.ExecuteSQL(nSQL);
 
     nSQL := 'Delete From %s Where A_CID=''%s''';
     nSQL := Format(nSQL, [sTable_TransAccount, nStr]);

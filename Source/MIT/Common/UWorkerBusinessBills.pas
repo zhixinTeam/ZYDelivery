@@ -445,7 +445,7 @@ begin
     end;
 
     nStr := FieldByName('Z_TJStatus').AsString;
-    if nStr  <> '' then
+    if (nStr  <> '') and (FListA.Values['ZKType'] = sFlag_BillSZ) then
     begin
       if nStr = sFlag_TJOver then
            nData := '订单[ %s ]已调价,请重新开单.'
@@ -484,6 +484,8 @@ begin
     Values['SaleID'] := FieldByName('Z_SaleMan').AsString;
     Values['SaleMan'] := FieldByName('S_Name').AsString;
     Values['ZKMoney'] := FieldByName('Z_OnlyMoney').AsString;
+    Values['PayType'] := FieldByName('Z_Paytype').AsString;
+    Values['Payment'] := FieldByName('Z_Payment').AsString;
   end;
 
   Result := True;
@@ -532,6 +534,7 @@ begin
           SF('Z_SaleMan', FListB.Values['Z_SaleMan']),
           SF('Z_CID', FListB.Values['Z_CID']),
 
+          SF('Z_Paytype', FListB.Values['Z_Paytype']),
           SF('Z_Payment', FListB.Values['Z_Payment']),
           SF('Z_Lading', FListB.Values['Z_Lading']),
 
@@ -1174,6 +1177,9 @@ begin
               SF('L_ICC', FListA.Values['ICCard']),
               SF('L_ICCT', FListA.Values['ICCardType']),
 
+              SF('L_Paytype', FListA.Values['Paytype']),
+              SF('L_Payment', FListA.Values['Payment']),
+
               SF('L_Seal', FListC.Values['Seal']),
               SF('L_Type', FListC.Values['Type']),
               SF('L_StockNo', FListC.Values['StockNO']),
@@ -1199,7 +1205,7 @@ begin
                 SF('L_PValue', StrToFloat(FListA.Values['PValue']), sfVal),
                 SF('L_PDate', FListA.Values['PDate']),
                 SF('L_PMan', FListA.Values['PMan']),
-                SF('L_MValue', FListC.Values['MValue'], sfVal),
+                SF('L_MValue', FListA.Values['MValue'], sfVal),
                 SF('L_MDate', FListA.Values['MDate']),
                 SF('L_MMan', FListA.Values['MMan']),
                 SF('L_OutFact', FListA.Values['MDate']),
@@ -1240,7 +1246,7 @@ begin
                 SF('P_PDate', FListA.Values['PDate']),
 
                 SF('P_MMan', FListA.Values['MMan']),
-                SF('P_MValue', FListC.Values['MValue'], sfVal),
+                SF('P_MValue', FListA.Values['MValue'], sfVal),
                 SF('P_MDate', FListA.Values['MDate']),
 
                 SF('P_Direction', '出厂'),
@@ -1308,9 +1314,10 @@ begin
       if (FListA.Values['ZKType'] = sFlag_BillSZ) or
          (FListA.Values['ZKType'] = sFlag_BillMY) then
       begin
-        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+%s Where A_CID=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccount, FloatToStr(nVal),
-                FListA.Values['CusID']]);
+        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+%s ' +
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
+                FListA.Values['CusID'], FListA.Values['Paytype']]);
       end else
 
       if FListA.Values['ZKType'] = sFlag_BillFX then
@@ -1335,9 +1342,10 @@ begin
       if (FListA.Values['ZKType'] = sFlag_BillSZ) or
          (FListA.Values['ZKType'] = sFlag_BillMY) then
       begin
-        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+%s Where A_CID=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccount, FloatToStr(nVal),
-                FListA.Values['CusID']]);
+        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+%s ' +
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
+                FListA.Values['CusID'], FListA.Values['Paytype']]);
       end  else
 
       if FListA.Values['ZKType'] = sFlag_BillFX then
@@ -1396,23 +1404,6 @@ begin
     FDBConn.FConn.RollbackTrans;
     raise;
   end;
-
-  {$IFDEF XAZL}
-  if FListA.Values['BuDan'] = sFlag_Yes then //补单
-  try
-    nSQL := AdjustListStrFormat(FOut.FData, '''', True, ',', False);
-    //bill list
-
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncStockBill, nSQL, '', @nOut) then
-      raise Exception.Create(nOut.FData);
-    //xxxxx
-  except
-    nStr := 'Delete From %s Where L_ID In (%s)';
-    nStr := Format(nStr, [sTable_Bill, nSQL]);
-    gDBConnManager.WorkerExec(FDBConn, nStr);
-    raise;
-  end;
-  {$ENDIF}
 
   {$IFDEF SHXZY}
   if FListA.Values['BuDan'] = sFlag_Yes then //补单
@@ -1557,7 +1548,8 @@ begin
 
   //----------------------------------------------------------------------------
   nStr := 'Select L_CusID,L_StockNo,L_StockName,L_Value,L_Price,L_ZhiKa,' +
-          'L_ZKType, L_ZKMoney,L_OutFact From %s Where L_ID=''%s''';
+          'L_ZKType, L_ZKMoney,L_OutFact,L_Paytype,L_Payment ' +
+          'From %s Where L_ID=''%s''';
   nStr := Format(nStr, [sTable_Bill, FIn.FData]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
@@ -1583,6 +1575,8 @@ begin
       Values['ZhiKa'] := FieldByName('L_ZhiKa').AsString;
       Values['ZKType']:= FieldByName('L_ZKType').AsString;
       Values['ZKMoney'] := FieldByName('L_ZKMoney').AsString;
+      Values['Paytype'] := FieldByName('L_Paytype').AsString;
+      Values['Payment'] := FieldByName('L_Payment').AsString;
     end;
 
     nVal      := FieldByName('L_Value').AsFloat;
@@ -1655,6 +1649,8 @@ begin
         Values['SaleMan'] := FieldByName('S_Name').AsString;
         Values['Card']    := FieldByName('Z_CardNO').AsString;
         Values['ZKMoney'] := FieldByName('Z_OnlyMoney').AsString;
+        Values['Paytype'] := FieldByName('Z_Paytype').AsString;
+        Values['Payment'] := FieldByName('Z_Payment').AsString;
       end;
     end;
 
@@ -1727,6 +1723,8 @@ begin
         Values['Card']    := FieldByName('I_CardNO').AsString;
         Values['ZKMoney'] := FieldByName('Z_OnlyMoney').AsString;
         Values['StockNo'] := FieldByName('I_StockNo').AsString;
+        Values['Paytype'] := FieldByName('Z_Paytype').AsString;
+        Values['Payment'] := FieldByName('Z_Payment').AsString;
 
         nNewPrice := FieldByName('I_Price').AsFloat;
       end;
@@ -1788,6 +1786,8 @@ begin
         Values['SaleMan'] := FieldByName('S_Name').AsString;
         Values['Card']    := FieldByName('Z_CardNO').AsString;
         Values['ZKMoney'] := FieldByName('Z_OnlyMoney').AsString;
+        Values['Paytype'] := FieldByName('Z_Paytype').AsString;
+        Values['Payment'] := FieldByName('Z_Payment').AsString;
       end;
     end;
 
@@ -1841,8 +1841,10 @@ begin
   if FListB.Values['ZKType'] = sFlag_BillSZ then
   begin
 
-    nStr := 'Update %s Set A_OutMoney=A_OutMoney-(%.2f) Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_CusAccount, nOldMon, FListB.Values['CusID']]);
+    nStr := 'Update %s Set A_OutMoney=A_OutMoney-(%.2f) ' +
+            'Where A_CID=''%s'' And A_Type=''%s''';
+    nStr := Format(nStr, [sTable_CusAccDetail, nOldMon,
+            FListB.Values['CusID'], FListB.Values['Paytype']]);
     FListC.Add(nStr); //还原提货方出金
 
     if FListB.Values['ZKMoney'] = sFlag_Yes then
@@ -1889,8 +1891,10 @@ begin
   if nNewZKType = sFlag_BillSZ then
   begin
 
-    nStr := 'Update %s Set A_OutMoney=A_OutMoney+(%.2f) Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_CusAccount, nNewMon, FListA.Values['CusID']]);
+    nStr := 'Update %s Set A_OutMoney=A_OutMoney+(%.2f) ' +
+            'Where A_CID=''%s'' And A_Type=''%s''';
+    nStr := Format(nStr, [sTable_CusAccDetail, nNewMon,
+            FListA.Values['CusID'], FListA.Values['Paytype']]);
     FListC.Add(nStr); //增加调拨方出金
 
     if FListA.Values['ZKMoney'] = sFlag_Yes then
@@ -1936,6 +1940,9 @@ begin
           SF('L_ICC', FListA.Values['Card']),
           SF('L_ICCT', nICType),
 
+          SF('L_Paytype', FListA.Values['Paytype']),
+          SF('L_Payment', FListA.Values['Payment']),
+
           SF('L_CusID', FListA.Values['CusID']),
           SF('L_CusName', FListA.Values['CusName']),
           SF('L_CusPY', FListA.Values['CusPY']),
@@ -1969,7 +1976,7 @@ var nIdx: Integer;
     nHasOut,nD: Boolean;
     nVal,nMoney: Double;
     nOut: TWorkerBusinessCommand;
-    nStr,nP,nFix,nRID,nCus,nBill,nCType,nZK,nZKType: string;
+    nStr,nP,nFix,nRID,nCus,nBill,nCType,nZK,nZKType, nPaytype: string;
 begin
   Result := False;
   //init
@@ -1981,7 +1988,7 @@ begin
   if RecordCount > 0 then nD := Fields[0].AsString = sFlag_Yes;
 
   nStr := 'Select L_ZhiKa,L_Value,L_Price,L_CusID,L_OutFact,L_ZKMoney,' +
-          'L_CusType,L_ICCT,L_ICC,L_Seal,L_ZKType ' +
+          'L_CusType,L_ICCT,L_ICC,L_Seal,L_ZKType,L_Paytype ' +
           'From %s Where L_ID=''%s''';
   nStr := Format(nStr, [sTable_Bill, FIn.FData]);
 
@@ -2014,6 +2021,7 @@ begin
 
     nP      := FieldByName('L_Seal').AsString; 
     nZKType := FieldByName('L_ZKType').AsString;
+    nPaytype:= FieldByName('L_Paytype').AsString;
   end;
                    
   nStr := 'Select R_ID,T_HKBills,T_Bill From %s ' +
@@ -2084,8 +2092,9 @@ begin
     begin
       if (nZKType = sFlag_BillSZ) or (nZKType = sFlag_BillMY) then
       begin
-        nStr := 'Update %s Set A_OutMoney=A_OutMoney-(%.2f) Where A_CID=''%s''';
-        nStr := Format(nStr, [sTable_CusAccount, nMoney, nCus]);
+        nStr := 'Update %s Set A_OutMoney=A_OutMoney-(%.2f) ' +
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nStr := Format(nStr, [sTable_CusAccDetail, nMoney, nCus, nPaytype]);
       end else
 
       if nZKType = sFlag_BillFX then
@@ -2108,8 +2117,8 @@ begin
       if (nZKType = sFlag_BillSZ) or (nZKType = sFlag_BillMY) then
       begin
         nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
-                'Where A_CID=''%s''';
-        nStr := Format(nStr, [sTable_CusAccount, nMoney, nCus]);
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nStr := Format(nStr, [sTable_CusAccDetail, nMoney, nCus, nPaytype]);
       end else
 
       if nZKType = sFlag_BillFX then
@@ -2422,7 +2431,8 @@ begin
 
   nStr := 'Select L_ID,L_ZhiKa,L_CusID,L_CusType,L_CusName,L_Type,' +
           'L_StockNo,L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
-          'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_Seal,L_ZKType ' +
+          'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_Seal,L_ZKType,' +
+          'L_Paytype, L_Payment ' +
           ' From $Bill b ';
   //xxxxx
 
@@ -2471,6 +2481,7 @@ begin
       FCard       := FieldByName('L_Card').AsString;
       FIsVIP      := FieldByName('L_IsVIP').AsString;
       FStatus     := FieldByName('L_Status').AsString;
+      FPayType    := FieldByName('L_Paytype').AsString;
       FNextStatus := FieldByName('L_NextStatus').AsString;
 
       if FIsVIP = sFlag_TypeShip then
@@ -2782,8 +2793,8 @@ begin
       if (FZKType=sFlag_BillSZ) or (FZKType=sFlag_BillMY) then
       begin
         nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%.2f) ' +
-                'Where A_CID=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccount, m, FCusID]);
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nSQL := Format(nSQL, [sTable_CusAccDetail, m, FCusID, FPayType]);
         FListA.Add(nSQL); //更新纸卡冻结
       end else
 
@@ -2965,8 +2976,8 @@ begin
       begin
         nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%.2f),' +
                 'A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
-                'Where A_CID=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccount, nVal, nVal, FCusID]);
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nSQL := Format(nSQL, [sTable_CusAccDetail, nVal, nVal, FCusID, FPayType]);
         FListA.Add(nSQL); //更新客户资金(可能不同客户)
       end else
 

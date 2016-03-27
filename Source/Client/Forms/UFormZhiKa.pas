@@ -107,9 +107,6 @@ type
     //水泥列表
     procedure LoadSaleContract(const nCID: string);
     //载入合同
-    function checkYFMoneyValid(const nCusID: string;
-      const nYFMoney: Double): Boolean;
-    //校验客户可用金
   public
     { Public declarations }
     class function CreateForm(const nPopedom: string = '';
@@ -237,12 +234,22 @@ begin
   FZhiKa.FContract := '';
   FZhiKa.FIsValid := False;
   SetLength(FStockList, 0);
-
+  {
   if EditPayment.Properties.Items.Count < 1 then
   begin
     EditPayment.Clear;
     EditPayment.Text := '预付款';
     LoadSysDictItem(sFlag_PaymentItem, EditPayment.Properties.Items);
+  end; }
+
+  if EditPayment.Properties.Items.Count < 1 then
+  begin
+    nStr := 'D_Memo=Select D_Memo,D_Value From %s Where D_Name=''%s''';
+    nStr := Format(nStr, [sTable_SysDict, sFlag_PaymentItem]);
+
+    FDM.FillStringsData(EditPayment.Properties.Items, nStr, 1, '.');
+    AdjustCXComboBoxItem(EditPayment, False);
+    if EditPayment.Properties.Items.Count>0 then EditPayment.ItemIndex := 0;
   end;
 
   if nID <> '' then
@@ -275,7 +282,7 @@ begin
       
       nDStr[0] := FieldByName('Z_Project').AsString;
       nDStr[1] := FieldByName('Z_Lading').AsString;
-      nDStr[2] := FieldByName('Z_Payment').AsString;
+      nDStr[2] := FieldByName('Z_PayType').AsString;
 
       EditMoney.Text := FieldByName('Z_YFMoney').AsString;
       //预付金
@@ -337,7 +344,8 @@ begin
       end;
 
       SetCtrlData(EditLading, nDStr[1]);
-      EditPayment.Text := nDStr[2];
+      //EditPayment.Text := nDStr[2];
+      SetCtrlData(EditPayment, nDStr[2]);
 
       for nIdx:=Low(nItem) to High(nItem) do
       begin
@@ -675,7 +683,6 @@ end;
 
 //Desc: 验证Sender控件
 function TfFormZhiKa.OnVerifyCtrl(Sender: TObject; var nHint: string): Boolean;
-var nIdx, nInt: Integer;
 begin
   Result := True;
   if Sender = EditCID then
@@ -694,7 +701,21 @@ begin
   begin
     Result := (not FZhiKa.FIsXuNi) or (EditCustom.Text <> '');
     nHint := '请选择有效的客户';
+  end else
+
+  if Sender = EditPayment then
+  begin
+    Result := EditPayment.ItemIndex >= 0;
+    nHint := '请选择有效的付款方式';
   end;
+end;
+
+//Desc: 保存数据
+procedure TfFormZhiKa.BtnOKClick(Sender: TObject);
+var nIdx, nInt: integer;
+    nStr,nZID,nCID,nSID,nPayment: string;
+begin
+  if not IsDataValid then Exit;
 
   nInt := 0;
   for nIdx:=Low(FStockList) to High(FStockList) do
@@ -707,63 +728,12 @@ begin
 
   if nInt<1 then
   begin
-    Result := False;
-    nHint := '请选择物料类型';
-  end;   
-end;
-
-//Desc: 获取nCusID的当前可用金额
-function GetCustomValidMoney(const nCusID: string): string;
-var nStr: string;
-    nVal: Double;
-begin
-  nStr := 'Select Sum(Z_FixedMoney) From %s ' +
-          'Where Z_Customer=''%s'' and Z_OnlyMoney=''%s''';
-  //限制可用金
-  nStr := Format(nStr, [sTable_ZhiKa, nCusID, sFlag_Yes]);
-  nVal := FDM.QueryTemp(nStr).Fields[0].AsFloat;
-
-  nVal := GetCustomerValidMoney(nCusID) - nVal;
-  
-  if nVal < 0 then
-       Result := '0'
-  else Result := Format('%.2f', [nVal]);
-end;
-
-function TfFormZhiKa.checkYFMoneyValid(const nCusID: string;
-  const nYFMoney: Double): Boolean;
-var nVal, f: Double;
-    nStr: string;
-begin
-  Result := False;
-  nVal := StrToFloat(GetCustomValidMoney(nCusID));
-  //可用金额
-
-  if FloatRelation(nVal, nYFMoney, rtGE, cPrecision) then  Result := True
-  else
-  begin
-    f := Float2Float(nYFMoney - nVal, cPrecision, True);
-    //超出金额
-
-    nStr := '客户可用余额不足，详细信息如下:' + #13#10 +
-            '※.客户编号:%s' + #13#10 +
-            '※.客户名称:%s' + #13#10 +
-            '※.可用金额:%.2f 元' + #13#10 +
-            '※.预付金额:%.2f 元' + #13#10 +
-            '※.超出金额:%.2f 元' + #13#10 +
-            '请减少订单量，或者至财务处补交水泥款。';
-    nStr := Format(nStr, [nCusID, EditCustom.Text,nVal,nYFMoney,f]);
-
-    ShowDlg(nStr, sHint);
+    ShowMsg('请选择物料类型', sHint);
+    Exit;
   end;
-end;
 
-//Desc: 保存数据
-procedure TfFormZhiKa.BtnOKClick(Sender: TObject);
-var nIdx: integer;
-    nStr,nZID,nCID,nSID: string;
-begin
-  if not IsDataValid then Exit;
+  nPayment := EditPayment.Text;
+  System.Delete(nPayment, 1, Length(GetCtrlData(EditPayment)) + 1);
 
   if FZhiKa.FIsXuNi then
   begin
@@ -787,7 +757,8 @@ begin
     Values['Z_Customer']  := nCID;
     Values['Z_SaleMan']   := nSID;
 
-    Values['Z_Payment']   := Trim(EditPayment.Text);
+    Values['Z_PayType']   := GetCtrlData(EditPayment);
+    Values['Z_Payment']   := nPayment;
     Values['Z_Lading']    := GetCtrlData(EditLading);
     Values['Z_YFMoney']   := Trim(EditMoney.Text);
 

@@ -295,7 +295,7 @@ begin
 
   if FJBWhere = '' then
   begin
-    nSQL := nSQL + 'Where (D_PDate>=''$S'' and D_PDate <''$End'') And D_MDate Is Not NULL';
+    nSQL := nSQL + 'Where (D_PDate>=''$S'' and D_PDate <''$End'') And D_MDate Is Not NULL ';
 
     if nWhere <> '' then
       nSQL := nSQL + ' And (' + nWhere + ')';

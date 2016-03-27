@@ -179,7 +179,7 @@ begin
     EditTruck.Text := Trim(EditTruck.Text);
     if EditTruck.Text = '' then Exit;
 
-    FWhere := 'b.L_Truck like ''%%%s%%''';
+    FWhere := 'L_Truck like ''%%%s%%''';
     FWhere := Format(FWhere, [EditTruck.Text]);
     InitFormData(FWhere);
   end;
@@ -189,7 +189,7 @@ begin
     EditBill.Text := Trim(EditBill.Text);
     if EditBill.Text = '' then Exit;
 
-    FWhere := 'b.L_ID like ''%%%s%%''';
+    FWhere := 'L_ID like ''%%%s%%''';
     FWhere := Format(FWhere, [EditBill.Text]);
     InitFormData(FWhere);
   end;
@@ -285,8 +285,10 @@ begin
       if nZKType = sFlag_BillSZ then
       begin
         nCID := GetVal(nIdx, 'L_CusID');
-        nStr := 'Update %s Set A_OutMoney=A_OutMoney-%s Where A_CID=''%s''';
-        nStr := Format(nStr, [sTable_CusAccount, FloatToStr(nPMon), nCID]);
+        nStr := 'Update %s Set A_OutMoney=A_OutMoney-%s ' +
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nPMon),
+                nCID, GetVal(nIdx, 'L_Paytype')]);
         nListSQL.Add(nStr);
 
         nStr := 'Update %s Set L_Price=%s, L_PPrice=%s Where L_ID=''%s''';
@@ -294,8 +296,10 @@ begin
                 FloatToStr(nPPrice), nLID]);
         nListSQL.Add(nStr);
 
-        nStr := 'Update %s Set A_OutMoney=A_OutMoney+%s Where A_CID=''%s''';
-        nStr := Format(nStr, [sTable_CusAccount, FloatToStr(nNMon), nCID]);
+        nStr := 'Update %s Set A_OutMoney=A_OutMoney+%s ' +
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nNMon),
+                nCID, GetVal(nIdx, 'L_Paytype')]);
         nListSQL.Add(nStr);
       end else
 

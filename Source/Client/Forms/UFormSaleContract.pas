@@ -197,6 +197,7 @@ begin
     nIni.Free;
   end;
 
+  AdjustCtrlData(Self);
   EditDate.Text := DateTime2Str(Now);
   ResetHintAllForm(Self, 'T', sTable_SaleContract);
   //÷ÿ÷√±Ì√˚≥∆
@@ -282,7 +283,7 @@ procedure TfFormSaleContract.InitFormData(const nID: string);
 var nStr: string;
     nArray: TDynamicStrArray;
 begin
-  if EditPayment.Properties.Items.Count < 1 then
+  {if EditPayment.Properties.Items.Count < 1 then
   begin
     EditPayment.Clear;
     nStr := MacroValue(sQuery_SysDict, [MI('$Table', sTable_SysDict),
@@ -300,6 +301,16 @@ begin
         Next;
       end;
     end;
+  end;  }
+
+  if EditPayment.Properties.Items.Count < 1 then
+  begin
+    nStr := 'D_Memo=Select D_Memo,D_Value From %s Where D_Name=''%s''';
+    nStr := Format(nStr, [sTable_SysDict, sFlag_PaymentItem]);
+
+    FDM.FillStringsData(EditPayment.Properties.Items, nStr, 1, '.');
+    AdjustCXComboBoxItem(EditPayment, False);
+    if EditPayment.Properties.Items.Count>0 then EditPayment.ItemIndex := 0;
   end;
 
   if EditSalesMan.Properties.Items.Count < 1 then
@@ -497,7 +508,15 @@ begin
     if Check1.Checked then
          nStr := 'C_XuNi=''$Y'''
     else nStr := 'C_XuNi=''$N''';
-    nList.Text := MacroValue(nStr, [MI('$Y', sFlag_Yes), MI('$N', sFlag_No)]); 
+    nList.Text := MacroValue(nStr, [MI('$Y', sFlag_Yes), MI('$N', sFlag_No)]);
+
+    nStr := 'C_PayType=''' + GetCtrlData(EditPayment)+ '''';
+    nList.Add(nStr);
+
+    nStr := EditPayment.Text;
+    System.Delete(nStr, 1, Length(GetCtrlData(EditPayment)) + 1);
+    nStr := 'C_Payment=''' + nStr + '''';
+    nList.Add(nStr);
 
     if FContractID = '' then
     begin

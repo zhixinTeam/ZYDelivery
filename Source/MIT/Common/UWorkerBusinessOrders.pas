@@ -503,8 +503,11 @@ begin
   end;
 
   //----------------------------------------------------------------------------
+  nStr := AdjustListStrFormat2(FListB, '''', True, ',', False);
+  //´Å¿¨ÁĞ±í
+
   nSQL := 'Select O_ID,O_Truck From %s Where O_Card In (%s)';
-  nSQL := Format(nSQL, [sTable_Order, FIn.FExtParam]);
+  nSQL := Format(nSQL, [sTable_Order, nStr]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
   if RecordCount > 0 then

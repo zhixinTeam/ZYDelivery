@@ -54,6 +54,7 @@ type
     procedure EditNameKeyPress(Sender: TObject; var Key: Char);
     procedure BtnOKClick(Sender: TObject);
     procedure EditMoneyPropertiesChange(Sender: TObject);
+    procedure EditTypePropertiesChange(Sender: TObject);
   protected
     { Private declarations }
     FTransportPayment: Boolean;
@@ -126,6 +127,7 @@ end;
 procedure TfFormPayment.FormCreate(Sender: TObject);
 begin
   LoadFormConfig(Self);
+  AdjustCtrlData(Self);
 end;
 
 procedure TfFormPayment.FormClose(Sender: TObject;
@@ -137,13 +139,21 @@ end;
 
 //------------------------------------------------------------------------------
 procedure TfFormPayment.InitFormData(const nID: string);
+var nStr: String;
 begin
   FillChar(gInfo, SizeOf(gInfo), #0);
   LoadSaleMan(EditSalesMan.Properties.Items);
 
-  LoadSysDictItem(sFlag_PaymentItem2, EditType.Properties.Items);
-  EditType.ItemIndex := 0;
-  
+  //LoadSysDictItem(sFlag_PaymentItem2, EditType.Properties.Items);
+  //EditType.ItemIndex := 0;
+
+  nStr := 'D_Memo=Select D_Memo,D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_PaymentItem]);
+
+  FDM.FillStringsData(EditType.Properties.Items, nStr, 1, '.');
+  AdjustCXComboBoxItem(EditType, False);
+  if EditType.Properties.Items.Count>0 then EditType.ItemIndex := 0;
+
   if nID <> '' then
   begin
     ActiveControl := EditMoney;
@@ -198,7 +208,13 @@ begin
   nStr := 'Select * From %s Where A_CID=''%s''';
   if FTransportPayment then
        nStr:= Format(nStr, [sTable_TransAccount, nID])
-  else nStr:= Format(nStr, [sTable_CusAccount, nID]);
+  else nStr:= Format(nStr, [sTable_CusAccDetail, nID]);
+
+  if not FTransportPayment then
+  begin
+    nStr := nStr + ' And A_Type=''%s''';
+    nStr := Format(nStr, [GetCtrlData(EditType)]);
+  end;  
 
   with FDM.QueryTemp(nStr) do
   if RecordCount > 0 then
@@ -294,25 +310,17 @@ end;
 
 procedure TfFormPayment.BtnOKClick(Sender: TObject);
 var nP: TFormCommandParam;
+    nType: string;
 begin
+  nType := EditType.Text;
+  System.Delete(nType, 1, Length(GetCtrlData(EditType)) + 1);
   if not IsDataValid then Exit;
   if not SaveCustomerPayment(gInfo.FCusID, gInfo.FCusName,
-     GetCtrlData(EditSalesMan), sFlag_MoneyHuiKuan, EditType.Text, EditDesc.Text,
+     GetCtrlData(EditSalesMan), GetCtrlData(EditType), nType, EditDesc.Text,
      StrToFloat(EditMoney.Text), True, FTransportPayment) then
   begin
     ShowMsg('回款操作失败', sError); Exit;
   end;
-
-  {$IFNDEF SHXZY}
-  if StrToFloat(EditMoney.Text) > 0 then
-  begin
-    nP.FCommand := cCmd_AddData;
-    nP.FParamA := gInfo.FCusName;
-    nP.FParamB := '销售回款或预付款';
-    nP.FParamC := EditMoney.Text;
-    CreateBaseFormItem(cFI_FormShouJu, '', @nP);
-  end;
-  {$ENDIF}
 
   ModalResult := mrOk;
   ShowMsg('回款操作成功', sHint);
@@ -324,6 +332,24 @@ begin
   if IsNumber(EditMoney.Text, True) then
        EditBig.Caption := '金额大写:' + SmallTOBig(StrToFloat(EditMoney.Text))
   else EditBig.Caption := '金额大写:';
+end;
+
+procedure TfFormPayment.EditTypePropertiesChange(Sender: TObject);
+var nStr: string;
+begin
+  inherited;
+  if (not FTransportPayment) and EditType.IsFocused then
+  begin
+    nStr := 'Select * From %s Where A_CID=''%s''  And A_Type=''%s''';
+    nStr:= Format(nStr, [sTable_CusAccDetail, EditID.Text, GetCtrlData(EditType)]);
+
+    with FDM.QueryTemp(nStr) do
+    if RecordCount > 0 then
+    begin
+      EditIn.Text := Format('%.2f', [FieldByName('A_InMoney').AsFloat]);
+      EditOut.Text := Format('%.2f', [FieldByName('A_OutMoney').AsFloat]);
+    end;
+  end;  
 end;
 
 initialization

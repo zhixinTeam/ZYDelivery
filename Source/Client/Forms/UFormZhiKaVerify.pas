@@ -61,6 +61,7 @@ type
     FSaleMan: string;
     FCusID: string;
     FCusName: string;
+    FPayType: string;
 
     FDtlNum: integer;
     FDtlMoney: Double;
@@ -147,8 +148,9 @@ begin
   gInfo.FSaleMan := nDS.FieldByName('Z_SaleMan').AsString;
   gInfo.FCusID := nDS.FieldByName('Z_Customer').AsString;
   gInfo.FCusName := nDS.FieldByName('C_Name').AsString;
+  gInfo.FPayType := nDS.FieldByName('Z_Paytype').AsString;
 
-  LoadSysDictItem(sFlag_PaymentItem2, EditType.Properties.Items);
+  LoadSysDictItem(sFlag_PaymentItem, EditType.Properties.Items);
   EditType.ItemIndex := 0;
 
   nStr := 'Select D_Price,D_Value From %s Where D_ZID=''%s''';
@@ -221,8 +223,10 @@ begin
   nStr := Format(nStr, [sTable_ZhiKa, sFlag_Yes, gInfo.FZhiKa]);
   nList.Add(nStr);
 
-  nStr := 'Update %s Set A_InMoney=A_InMoney+%s Where A_CID=''%s''';
-  nStr := Format(nStr, [sTable_CusAccount, EditMoney.Text, gInfo.FCusID]);
+  nStr := 'Update %s Set A_InMoney=A_InMoney+%s ' +
+          'Where A_CID=''%s'' And A_Type=''%s''';
+  nStr := Format(nStr, [sTable_CusAccDetail, EditMoney.Text,
+          gInfo.FCusID,gInfo.FPayType]);
   nList.Add(nStr);
 
   EditDesc.Text := Trim(EditDesc.Text);

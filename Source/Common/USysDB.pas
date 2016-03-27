@@ -91,6 +91,7 @@ ResourceString
   sFlag_NotMatter     = '@';                         //无关编号(任意编号都可)
   sFlag_ForceDone     = '#';                         //强制完成(未完成前不换)
   sFlag_FixedNo       = '$';                         //指定编号(使用相同编号)
+  sFlag_Delimater     = '@';                         //分隔符
 
   sFlag_Provide       = 'P';                         //供应
   sFlag_Sale          = 'S';                         //销售
@@ -278,6 +279,7 @@ ResourceString
   sTable_WorkePC      = 'Sys_WorkePC';               //验证授权
 
   sTable_CusAccount   = 'Sys_CustomerAccount';       //客户账户
+  sTable_CusAccDetail = 'Sys_CustomerAccountDetail'; //客户账户分类明细
   sTable_InOutMoney   = 'Sys_CustomerInOutMoney';    //资金明细
   sTable_CusCredit    = 'Sys_CustomerCredit';        //客户信用
   sTable_SysShouJu    = 'Sys_ShouJu';                //收据记录
@@ -557,6 +559,44 @@ ResourceString
      消费总额 = 出金 + 欠款 + 已冻结 + 倒卖金额
   -----------------------------------------------------------------------------}
 
+    sSQL_NewCusAccDetial = 'Create Table $Table(R_ID $Inc, A_CID varChar(15),' +
+       'A_Used Char(1), A_Type Char(1), A_InMoney Decimal(15,5) Default 0,' +
+       'A_OutMoney Decimal(15,5) Default 0, A_DebtMoney Decimal(15,5) Default 0,' +
+       'A_Compensation Decimal(15,5) Default 0,' +
+       'A_CardUseMoney Decimal(15,5) Default 0,' +
+       'A_FreezeMoney Decimal(15,5) Default 0,' +
+       'A_BeginBalance Decimal(15,5) Default 0,' +
+       'A_CreditLimit Decimal(15,5) Default 0, A_Date DateTime)';
+  {-----------------------------------------------------------------------------
+   客户账户:CustomerAccountDetail
+   *.R_ID:记录编号
+   *.A_CID:客户号
+   *.A_Used:用途(供应,销售,运输)
+   *.A_Type:账户类型(现金、卡片、承兑、预付款)
+   *.A_InMoney:入金
+   *.A_OutMoney:出金
+   *.A_DebtMoney:欠款
+   *.A_Compensation:补偿金
+   *.A_CardUseMoney:倒卖金额
+   *.A_FreezeMoney:冻结资金
+   *.A_CreditLimit:信用额度
+   *.A_BeginBalance:期初，用于系统导入对账
+   *.A_Date:创建日期
+
+   *.水泥销售账中
+     A_InMoney:客户存入账户的金额
+     A_OutMoney:客户实际花费的金额
+     A_DebtMoney:还未支付的金额
+     A_Compensation:由于差价退还给客户的金额
+     A_CardUseMoney:办理副卡倒卖金额
+     A_BeginBalance:期初余额，
+     A_FreezeMoney:已办纸卡(订单)但未进厂提货的金额
+     A_CreditLimit:授信给用户的最高可欠款金额
+
+     可用余额 = 入金 + 信用额 + 期初 + - 出金 - 补偿金 - 已冻结 - 倒卖金额
+     消费总额 = 出金 + 欠款 + 已冻结 + 倒卖金额
+  -----------------------------------------------------------------------------}
+
   sSQL_NewInOutMoney = 'Create Table $Table(R_ID $Inc, M_SaleMan varChar(15),' +
        'M_CusID varChar(15), M_CusName varChar(80), ' +
        'M_Type Char(1), M_Payment varChar(20),' +
@@ -598,7 +638,7 @@ ResourceString
   -----------------------------------------------------------------------------}
 
   sSQL_NewCusCredit = 'Create Table $Table(R_ID $Inc ,C_CusID varChar(15),' +
-       'C_Money Decimal(15,5), C_Man varChar(32),' +
+       'C_Money Decimal(15,5), C_Man varChar(32), C_Type Char(1),' +
        'C_Date DateTime, C_End DateTime, C_Memo varChar(50))';
   {-----------------------------------------------------------------------------
    信用明细:CustomerCredit
@@ -608,13 +648,15 @@ ResourceString
    *.C_Man:操作人
    *.C_Date:日期
    *.C_End: 有效期
+   *.C_Type: 账户类型
    *.C_Memo:备注
   -----------------------------------------------------------------------------}
 
   sSQL_NewSaleContract = 'Create Table $Table(R_ID $Inc, C_ID varChar(15),' +
        'C_Project varChar(100),C_SaleMan varChar(15), C_Customer varChar(15),' +
        'C_Date varChar(20), C_Area varChar(50), C_Addr varChar(50),' +
-       'C_Delivery varChar(50), C_Payment varChar(20), C_Approval varChar(30),' +
+       'C_Delivery varChar(50), C_Paytype Char(1), C_Payment varChar(20), ' +
+       'C_Approval varChar(30),' +
        'C_ZKDays Integer, C_XuNi Char(1), C_Freeze Char(1), C_Memo varChar(50))';
   {-----------------------------------------------------------------------------
    销售合同: SalesContract
@@ -626,6 +668,7 @@ ResourceString
    *.C_Area: 所属区域
    *.C_Addr: 签订地点
    *.C_Delivery: 交货地
+   *.C_Paytype: 付款方式
    *.C_Payment: 付款方式
    *.C_Approval: 批准人
    *.C_ZKDays: 纸卡(订单)有效期
@@ -708,12 +751,12 @@ ResourceString
   sSQL_NewZhiKa = 'Create Table $Table(R_ID $Inc,Z_ID varChar(15),' +
        'Z_Name varChar(100),Z_Card varChar(64),Z_CardNO varChar(64),' +
        'Z_CID varChar(15), Z_Project varChar(100), Z_Customer varChar(15),' +
-       'Z_SaleMan varChar(15), Z_Payment varChar(20), Z_Lading Char(1),' +
+       'Z_SaleMan varChar(15), Z_Paytype Char(1), Z_Payment varChar(20), ' +
        'Z_ValidDays DateTime, Z_Password varChar(16), Z_OnlyPwd Char(1),' +
        'Z_Verified Char(1), Z_InValid Char(1), Z_Freeze Char(1),' +
        'Z_YFMoney $Float,Z_FixedMoney $Float, Z_OnlyMoney Char(1),' +
        'Z_TJStatus Char(1), Z_Memo varChar(200), Z_Man varChar(32),' +
-       'Z_Date DateTime)';
+       'Z_Lading Char(1), Z_Date DateTime)';
   {-----------------------------------------------------------------------------
    纸卡(订单)办理: ZhiKa
    *.R_ID:记录编号
@@ -725,6 +768,7 @@ ResourceString
    *.Z_Project:项目名称
    *.Z_Customer:客户编号
    *.Z_SaleMan:业务员
+   *.Z_Paytype:付款方式
    *.Z_Payment:付款方式
    *.Z_Lading:提货方式(自提,送货)
    *.Z_ValidDays:有效期
@@ -777,6 +821,7 @@ ResourceString
 			 'I_ZID varChar(15), I_Password varChar(64), I_CardType Char(1),' +
        'I_Card varChar(64), I_ParentCard varChar(64), I_CardNO varChar(64),' +
        'I_StockType Char(1), I_StockNo varChar(20), I_StockName varChar(80),' +
+       'I_Paytype Char(1), I_Payment varChar(20), ' +
        'I_Customer varChar(15),I_SaleMan varChar(15),' +
        'I_Price $Float, I_Value $Float, I_Money $Float,' +
        'I_OutMoney $Float Default 0, I_FreezeMoney $Float Default 0, ' +
@@ -793,6 +838,8 @@ ResourceString
    *.I_Card:IC卡号
    *.I_CardNO: 卡序列号
    *.I_ParentCard: 父卡号
+   *.I_Paytype:付款方式
+   *.I_Payment:付款方式 (延用主卡)
    *.I_StockType:类型(袋,散)
    *.I_StockNo,I_StockName:水泥名称
    *.I_Customer:客户编号
@@ -835,25 +882,26 @@ ResourceString
    *.M_VerifyDate:修改时间
   -----------------------------------------------------------------------------}
 
-  sSQL_NewBill = 'Create Table $Table(R_ID $Inc, L_ID varChar(20),' +
-       'L_Card varChar(16), L_ZhiKa varChar(15), L_Project varChar(100),' +
-       'L_ICC varChar(64), L_ICCT Char(1), L_ZKType Char(1),' +
-       'L_Area varChar(50), L_CusType Char(1),' +
-       'L_CusID varChar(15), L_CusName varChar(80), L_CusPY varChar(80),' +
-       'L_SaleID varChar(15), L_SaleMan varChar(32),' +
-       'L_Type Char(1), L_StockNo varChar(20), L_StockName varChar(80),' +
-       'L_Value $Float, L_Price $Float, L_PPrice $Float, L_ZKMoney Char(1),' +
-       'L_Truck varChar(15), L_Status Char(1), L_NextStatus Char(1),' +
-       'L_InTime DateTime, L_InMan varChar(32),' +
-       'L_PValue $Float, L_PDate DateTime, L_PMan varChar(32),' +
-       'L_MValue $Float, L_MDate DateTime, L_MMan varChar(32),' +
-       'L_LadeTime DateTime, L_LadeMan varChar(32), ' +
-       'L_LadeLine varChar(15), L_LineName varChar(32), ' +
-       'L_DaiTotal Integer , L_DaiNormal Integer, L_DaiBuCha Integer,' +
-       'L_OutFact DateTime, L_OutMan varChar(32),' +
-       'L_Lading Char(1), L_IsVIP varChar(1), L_Seal varChar(100),' +
-       'L_HYDan varChar(15), L_Man varChar(32), L_Date DateTime, ' +
-       'L_DelMan varChar(32), L_DelDate DateTime)';
+  sSQL_NewBill = 'Create Table $Table(R_ID $Inc,L_ID varChar(20),' +
+       'L_Card varChar(16),L_ZhiKa varChar(15),L_Project varChar(100),' +
+       'L_ICC varChar(64),L_ICCT Char(1),L_ZKType Char(1),' +
+       'L_Area varChar(50),L_CusType Char(1),' +
+       'L_CusID varChar(15),L_CusName varChar(80),L_CusPY varChar(80),' +
+       'L_SaleID varChar(15),L_SaleMan varChar(32),' +
+       'L_Type Char(1),L_StockNo varChar(20),L_StockName varChar(80),' +
+       'L_Value $Float,L_Price $Float,L_PPrice $Float,L_ZKMoney Char(1),' +
+       'L_Truck varChar(15),L_Status Char(1),L_NextStatus Char(1),' +
+       'L_InTime DateTime,L_InMan varChar(32),' +
+       'L_PValue $Float,L_PDate DateTime,L_PMan varChar(32),' +
+       'L_MValue $Float,L_MDate DateTime,L_MMan varChar(32),' +
+       'L_LadeTime DateTime,L_LadeMan varChar(32), ' +
+       'L_LadeLine varChar(15),L_LineName varChar(32), ' +
+       'L_DaiTotal Integer,L_DaiNormal Integer,L_DaiBuCha Integer,' +
+       'L_OutFact DateTime,L_OutMan varChar(32),' +
+       'L_Lading Char(1),L_IsVIP varChar(1),L_Seal varChar(100),' +
+       'L_HYDan varChar(15),L_Man varChar(32),L_Date DateTime, ' +
+       'L_Paytype Char(1),L_Payment varChar(20),' +
+       'L_DelMan varChar(32),L_DelDate DateTime)';
   {-----------------------------------------------------------------------------
    交货单表: Bill
    *.R_ID: 编号
@@ -885,6 +933,8 @@ ResourceString
    *.L_HYDan:化验单
    *.L_Man:操作人
    *.L_Date:创建时间
+   *.L_Paytype:付款方式
+   *.L_Payment:付款方式 (延用主卡)
    *.L_DelMan: 交货单删除人员
    *.L_DelDate: 交货单删除时间
    *.L_Memo: 动作备注
@@ -1572,6 +1622,7 @@ begin
   AddSysTableItem(sTable_CompensateAccount, sSQL_NewCusAccount);
   AddSysTableItem(sTable_CompensateInOutMoney, sSQL_NewInOutMoney);
   AddSysTableItem(sTable_SysShouJu, sSQL_NewSysShouJu);
+  AddSysTableItem(sTable_CusAccDetail, sSQL_NewCusAccDetial);
   //客户帐户信息与销售合同
 
   AddSysTableItem(sTable_Card, sSQL_NewCard);

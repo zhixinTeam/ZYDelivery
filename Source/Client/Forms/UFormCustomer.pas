@@ -269,10 +269,8 @@ begin
 
   if nID <> '' then
   begin
-    nStr := 'Select cus.* From %s cus' +
-            ' Left Join %s On A_CID=C_ID ' +
-            'Where C_ID=''%s''';
-    nStr := Format(nStr, [sTable_Customer, sTable_CusAccount, nID]);
+    nStr := 'Select cus.* From %s cus Where C_ID=''%s''';
+    nStr := Format(nStr, [sTable_Customer, nID]);
     LoadDataToCtrl(FDM.QueryTemp(nStr), Self, '', SetData);
 
     if Assigned(FDM.SqlTemp) and Assigned(FDM.SqlTemp.FindField('C_Type')) then
@@ -412,16 +410,6 @@ begin
   FDM.ADOConn.BeginTrans;
   try
     FDM.ExecuteSQL(nSQL);
-    nSQL := 'Select Count(*) From %s Where A_CID=''%s''';
-    nSQL := Format(nSQL, [sTable_CusAccount, nID]);
-
-    if FDM.QueryTemp(nSQL).Fields[0].AsInteger < 1 then
-    begin
-      nSQL := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-      nSQL := Format(nSQL, [sTable_CusAccount, nID, FDM.SQLServerNow]);
-      FDM.ExecuteSQL(nSQL);
-    end;
-    //Ë®Äà¿îÕË»§
 
     if FCustomerID <> '' then
     begin

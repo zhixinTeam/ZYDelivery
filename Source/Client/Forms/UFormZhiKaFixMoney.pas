@@ -64,6 +64,7 @@ type
     FZhiKa: string;
     FCusID: string;
     FFixMoney: Double;
+    FPayType: string;
   end;
 
 var
@@ -138,6 +139,7 @@ begin
   if Assigned(nDB) then
   begin
     gInfo.FCusID := nDB.FieldByName('Z_Customer').AsString;
+    gInfo.FPayType  := nDB.FieldByName('Z_Paytype').AsString;
     gInfo.FFixMoney := nDB.FieldByName('Z_FixedMoney').AsFloat;
 
     EditMoney.Text := Format('%.2f', [nDB.FieldByName('Z_FixedMoney').AsFloat]);
@@ -147,8 +149,8 @@ begin
     ShowMsg(nStr, sHint); Exit;
   end;
 
-  nStr := 'Select * From %s Where A_CID=''%s''';
-  nStr := Format(nStr, [sTable_CusAccount, gInfo.FCusID]);
+  nStr := 'Select * From %s Where A_CID=''%s'' And A_Type=''%s''';
+  nStr := Format(nStr, [sTable_CusAccDetail, gInfo.FCusID, gInfo.FPayType]);
 
   with FDM.QueryTemp(nStr) do
   if RecordCount > 0 then

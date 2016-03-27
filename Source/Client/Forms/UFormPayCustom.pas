@@ -129,7 +129,7 @@ begin
   FillChar(gInfo, SizeOf(gInfo), #0);
   LoadSaleMan(EditSalesMan.Properties.Items);
 
-  LoadSysDictItem(sFlag_PaymentItem2, EditType.Properties.Items);
+  LoadSysDictItem(sFlag_PaymentItem, EditType.Properties.Items);
   EditType.ItemIndex := 0;
 
   if nID <> '' then

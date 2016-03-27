@@ -118,7 +118,7 @@ begin
   //xxxxx
   
   nSQL := MacroValue(nSQL, [MI('$Cus', sTable_Customer),
-          MI('$CA', sTable_CusAccount), MI('$SM', sTable_Salesman)]);
+          MI('$CA', sTable_CusAccDetail), MI('$SM', sTable_Salesman)]);
   //xxxxx
   
   if FWhere <> '' then

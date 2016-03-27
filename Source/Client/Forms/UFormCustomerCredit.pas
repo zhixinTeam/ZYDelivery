@@ -34,6 +34,9 @@ type
     dxLayout1Group5: TdxLayoutGroup;
     EditBig: TcxLabel;
     dxLayout1Item10: TdxLayoutItem;
+    EditType: TcxComboBox;
+    dxLayout1Item11: TdxLayoutItem;
+    dxLayout1Group6: TdxLayoutGroup;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditSaleManPropertiesChange(Sender: TObject);
@@ -97,6 +100,7 @@ end;
 procedure TfFormCustomerCredit.FormCreate(Sender: TObject);
 begin
   LoadFormConfig(Self);
+  AdjustCtrlData(Self);
 end;
 
 procedure TfFormCustomerCredit.FormClose(Sender: TObject;
@@ -112,6 +116,13 @@ var nStr: string;
 begin
   EditEnd.Date := Now + 1;
   LoadSaleMan(EditSaleMan.Properties.Items);
+
+  nStr := 'D_Memo=Select D_Memo,D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_PaymentItem]);
+
+  FDM.FillStringsData(EditType.Properties.Items, nStr, 1, '.');
+  AdjustCXComboBoxItem(EditType, False);
+  if EditType.Properties.Items.Count>0 then EditType.ItemIndex := 0;
 
   if nID <> '' then
   begin
@@ -195,7 +206,8 @@ end;
 procedure TfFormCustomerCredit.BtnOKClick(Sender: TObject);
 begin
   if IsDataValid and SaveCustomerCredit(GetCtrlData(EditCus), EditMemo.Text,
-     StrToFloat(EditCredit.Text), EditEnd.Date, FTransportCredit) then
+     StrToFloat(EditCredit.Text), EditEnd.Date, FTransportCredit,
+     GetCtrlData(EditType)) then
   begin
     ModalResult := mrOk;
     ShowMsg('ÊÚÐÅ³É¹¦', sHint);

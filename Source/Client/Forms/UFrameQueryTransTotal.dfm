@@ -12,7 +12,7 @@ inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
       Top = 0
       Align = alClient
       AutoSize = False
-      Caption = #37319#36141#27719#24635#25253#34920#26597#35810
+      Caption = #36816#36153#27719#24635#25253#34920#26597#35810
       ParentFont = False
       Style.BorderStyle = ebsNone
       Style.Edges = [bBottom]

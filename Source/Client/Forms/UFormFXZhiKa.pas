@@ -70,6 +70,8 @@ type
     FCusID: string;
     FCard : string;
     FMoney: Double;
+    FPayType: String;
+    FPayMent: string;
 
     FSaleMan: string;
     FOnlyMoney: Boolean;
@@ -227,6 +229,8 @@ begin
     FCard  := nDB.FieldByName('Z_CardNO').AsString;
     FCusID := nDB.FieldByName('Z_Customer').AsString;
     FSaleMan := nDB.FieldByName('Z_SaleMan').AsString;
+    FPayType := nDB.FieldByName('Z_PayType').AsString;
+    FPayment := nDB.FieldByName('Z_Payment').AsString;
     FPriceChanged := nDB.FieldByName('Z_TJStatus').AsString = sFlag_TJOver;
 
     FMoney := GetZhikaValidMoney(gInfo.FZhiKa, gInfo.FOnlyMoney);
@@ -235,7 +239,7 @@ begin
     ShowMsg(nStr, sHint); Exit;
   end;
 
-  BtnOK.Enabled := IsCustomerCreditValid(gInfo.FCusID);
+  BtnOK.Enabled := IsCustomerCreditValid(gInfo.FCusID + sFlag_Delimater + gInfo.FPayType);
   if not BtnOK.Enabled then Exit;
   //to verify credit
 
@@ -480,6 +484,9 @@ begin
                 SF('I_Customer', gInfo.FCusID),
                 SF('I_SaleMan', gInfo.FSaleMan),
 
+                SF('I_Paytype', gInfo.FPayType),
+                SF('I_Payment', gInfo.FPayMent),
+
                 SF('I_Price', FloatToStr(FPrice), sfVal),
                 SF('I_Value', FloatToStr(FValue), sfVal),
                 SF('I_Money', FloatToStr(nMoney), sfVal),
@@ -520,9 +527,9 @@ begin
       end;
 
       nStr := 'Update %s Set A_CardUseMoney=A_CardUseMoney+%s ' +
-              'Where A_CID=''%s''';
-      nStr := Format(nStr, [sTable_CusAccount, FloatToStr(nMoney),
-              gInfo.FCusID]);
+              'Where A_CID=''%s'' And A_Type=''%s''';
+      nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nMoney),
+              gInfo.FCusID, gInfo.FPayType]);
       FDM.ExecuteSQL(nStr);
     end;
 

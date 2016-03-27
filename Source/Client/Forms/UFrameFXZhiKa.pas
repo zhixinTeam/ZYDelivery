@@ -175,7 +175,7 @@ end;
 
 //Desc: É¾³ý
 procedure TfFrameFXZhiKa.BtnDelClick(Sender: TObject);
-var nStr,nCusID: string;
+var nStr,nCusID,nPayType: string;
     nInMoney,nOutMoney,nBackMoney: Double;
 begin
   if cxView1.DataController.GetSelectedCount < 1 then
@@ -197,11 +197,14 @@ begin
   nStr := Format(nStr, [SQLQuery.FieldByName('I_ID').AsString]);
   if not QueryDlg(nStr, sAsk) then Exit;
 
+
+
   FDM.ADOConn.BeginTrans;
   try
     nCusID := SQLQuery.FieldByName('I_Customer').AsString;
     nInMoney   := SQLQuery.FieldByName('I_Money').AsFloat;
     nOutMoney  := SQLQuery.FieldByName('I_OutMoney').AsFloat;
+    nPayType   := SQLQuery.FieldByName('I_Paytype').AsString;
     nBackMoney := Float2Float(nInMoney-nOutMoney, cPrecision, False);
 
     nStr := 'Update %s Set I_Enabled=''%s'', I_BackMoney=%s ' +
@@ -212,9 +215,9 @@ begin
     FDM.ExecuteSQL(nStr);
 
     nStr := 'Update %s Set A_OutMoney=A_OutMoney+%s,' +
-            'A_CardUseMoney=A_CardUseMoney-%s Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_CusAccount, FloatToStr(nOutMoney),
-            FloatToStr(nInMoney), nCusID]);
+            'A_CardUseMoney=A_CardUseMoney-%s Where A_CID=''%s'' And A_Type=''%s''';
+    nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nOutMoney),
+            FloatToStr(nInMoney), nCusID, nPayType]);
     //xxxxx
     FDM.ExecuteSQL(nStr);
 
@@ -300,7 +303,7 @@ begin
 end;
 
 procedure TfFrameFXZhiKa.N11Click(Sender: TObject);
-var nStr, nStrVal, nRID, nCID: string;
+var nStr, nStrVal, nRID, nCID, nPayType: string;
     nVal, nRest, nPrice, nMoney: Double;
 begin
   inherited;
@@ -342,7 +345,7 @@ begin
   nCID   := SQLQuery.FieldByName('I_Customer').AsString;
   nPrice := SQLQuery.FieldByName('I_Price').AsFloat;
   nMoney := Float2Float(nVal * nPrice, cPrecision, True);
-
+  nPayType := SQLQuery.FieldByName('I_Paytype').AsString;
 
   FDM.ADOConn.BeginTrans;
   try
@@ -357,9 +360,9 @@ begin
     FDM.WriteSysLog(sFlag_ZhiKaItem, nRID, nStr);
 
     nStr := 'Update %s Set A_CardUseMoney=A_CardUseMoney+(-%s) ' +
-            'Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_CusAccount, FloatToStr(nMoney),
-            nCID]);
+            'Where A_CID=''%s'' And A_Type=''%s''';
+    nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nMoney),
+            nCID, nPayType]);
     FDM.ExecuteSQL(nStr);
 
     FDM.ADOConn.CommitTrans;

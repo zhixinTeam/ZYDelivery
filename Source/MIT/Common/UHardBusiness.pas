@@ -487,9 +487,14 @@ begin
     Exit;
   end;
 
+  nIdx := 0;
   if nReader <> '' then
+  while nIdx < 5 do
+  begin
     gHardwareHelper.OpenDoor(nReader);
-  //Ì§¸Ë
+    Inc(nIdx);
+  end;
+  //Ì§¸ËÎå´Î
 
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin

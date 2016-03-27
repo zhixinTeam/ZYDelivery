@@ -158,7 +158,6 @@ inherited fFormSaleContract: TfFormSaleContract
     object EditPayment: TcxComboBox
       Left = 81
       Top = 161
-      Hint = 'T.C_Payment'
       ParentFont = False
       Properties.DropDownRows = 20
       Properties.ImmediateDropDown = False
