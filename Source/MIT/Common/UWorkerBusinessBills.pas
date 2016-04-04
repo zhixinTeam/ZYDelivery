@@ -72,6 +72,8 @@ type
     //删除交货单
     function ChangeBillTruck(var nData: string): Boolean;
     //修改车牌号
+    function ChangeBillValue(var nData: string): Boolean;
+    //修改提货量
     function BillSaleAdjust(var nData: string): Boolean;
     //销售调拨
     function SaveBillCard(var nData: string): Boolean;
@@ -157,6 +159,7 @@ begin
    cBC_SaveICCInfo         : Result := SaveICCard(nData);
    cBC_DeleteICCInfo       : Result := DeleteICCard(nData);
    cBC_ModifyBillTruck     : Result := ChangeBillTruck(nData);
+   cBC_ModifyBillValue     : Result := ChangeBillValue(nData);
    cBC_SaleAdjust          : Result := BillSaleAdjust(nData);
    cBC_SaveBillCard        : Result := SaveBillCard(nData);
    cBC_LogoffCard          : Result := LogoffCard(nData);
@@ -334,7 +337,8 @@ begin
 
     while not Eof do
     begin
-      if (FieldByName('T_Type').AsString = sFlag_San) and (not FSanMultiBill) then
+      if (FieldByName('T_Type').AsString = sFlag_San) and (not FSanMultiBill) And
+         (FieldByName('T_InFact').AsString <> '') then
       begin
         nStr := '车辆[ %s ]在未完成[ %s ]交货单之前禁止开单.';
         nData := Format(nStr, [nTruck, FieldByName('T_Bill').AsString]);
@@ -773,6 +777,10 @@ begin
   nSQL := Format(nSQL, [sTable_FLZhiKaDtl, nZID]);
   FListA.Add(nSQL);
 
+  nSQL := 'Delete From %s Where F_ZID=''%s''';
+  nSQL := Format(nSQL, [sTable_ICCardInfo, nZID]);
+  FListA.Add(nSQL);
+
   nSQL := 'Update %s Set M_ZID=M_ZID+''_d'' Where M_ZID=''%s''';
   nSQL := Format(nSQL, [sTable_CompensateInOutMoney, nZID]);
   FListA.Add(nSQL);
@@ -927,8 +935,8 @@ begin
   begin
 
     nSQL := MacroValue(nSQL, [MI('$Table', sTable_FLZhiKa),
-            MI('$Field1', 'F_Card'), MI('$Field2', 'F_CardNO'),
-            MI('$Field3', 'F_ID'), MI('$ID', nZID)]);
+            MI('$Field1', 'Z_Card'), MI('$Field2', 'Z_CardNO'),
+            MI('$Field3', 'X_ID'), MI('$ID', nZID)]);
 
   end;
   FListA.Add(nSQL);
@@ -1305,7 +1313,7 @@ begin
 
         if FListA.Values['CusType'] = sFlag_CusZY then
           FListD.Add(nSQL);
-        //资源类更新批次  
+        //资源类更新批次
       end;
     end;
 
@@ -1373,7 +1381,7 @@ begin
               nStr, sFlag_BillNew, @nOut) then
           raise Exception.Create(nOut.FData);
         //xxxxx
-      end;  
+      end;
     end;
 
     if nFixMoney = sFlag_Yes then
@@ -1524,6 +1532,144 @@ begin
         //同步合单车牌号
       end;
     end;
+
+    FDBConn.FConn.CommitTrans;
+    Result := True;
+  except
+    FDBConn.FConn.RollbackTrans;
+    raise;
+  end;
+end;
+
+//------------------------------------------------------------------------------
+//Date: 2014-09-16
+//Parm: 交货单[FIn.FData];新提货量[FIn.FExtParam]
+//Desc: 修改指定交货单的提货量
+function TWorkerBusinessBills.ChangeBillValue(var nData: string): Boolean;
+var nIdx: Integer;
+    nStr, nZK, nZKType: string;
+    nOut: TWorkerBusinessCommand;
+    nVal, nPrice, nMon1, nOVal, nMon2: Double;
+begin
+  Result := False;
+  FListA.Clear;
+  //init
+
+  nStr := 'Select * From %s Where L_ID=''%s''';
+  nStr := Format(nStr, [sTable_Bill, FIn.FData]);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount <> 1 then
+    begin
+      nData := '交货单[ %s ]已无效.';
+      nData := Format(nData, [FIn.FData]);
+      Exit;
+    end;
+
+    if FieldByName('L_OutFact').AsString <> '' then
+    begin
+      nData := '提货单[ %s ]已出厂，禁止修改提货量';
+      nData := Format(nData, [FIn.FData]);
+      Exit;
+    end;
+
+    if FieldByName('L_MDate').AsString <> '' then
+    begin
+      nData := '提货单[ %s ]已完成二次过磅，禁止修改提货量';
+      nData := Format(nData, [FIn.FData]);
+      Exit;
+    end;
+
+    if FieldByName('L_ZKType').AsString = sFlag_BillMY then
+    begin
+      nData := '禁止修改贸易公司订单提货量.';
+      Exit;
+    end;
+
+    nVal := Float2Float(StrToFloat(FIn.FExtParam) , cPrecision, True);
+    nOVal:= FieldByName('L_Value').AsFloat;
+    nPrice:= FieldByName('L_Price').AsFloat;
+    //xxxxx
+
+    nZK     := FieldByName('L_ZhiKa').AsString;
+    nZKType := FieldByName('L_ZKType').AsString;
+
+    nVal := nVal - nOVal;
+    nMon1 := Float2Float(nVal * nPrice, cPrecision, True);
+
+    if nMon1 > 0 then
+    begin
+      if not TWorkerBusinessCommander.CallMe(cBC_GetZhiKaMoney, nZK,
+        nZKType, @nOut) then
+      begin
+        nData := nOut.FData;
+        Exit;
+      end;
+
+      nMon2 := StrToFloat(nOut.FData);
+      if FloatRelation(nMon1, nMon2, rtGreater) then
+      begin
+        nData := '订单[ %s ]可用账户余额不足, 详情如下:' + #13#10#13#10 +
+                 '※.剩余金额: %.2f元' + #13#10 +
+                 '※.所需金额: %.2f元' + #13#10 +
+                 '※.须补交金额: %.2f元';
+        nData := Format(nData, [FieldByName('L_ZhiKa').AsString,
+                 nMon2, nMon1, nMon1-nMon2]);
+        Exit;
+      end;
+    end;
+
+    nStr := 'Update %s Set E_Freeze=E_Freeze+(%s) ' +
+            'Where E_ID=(Select R_ExtID From %s Where R_SerialNO=''%s'' ' +
+            ' And Year(R_Date)>=Year(GetDate()))';
+    nStr := Format(nStr, [sTable_StockRecordExt, FloatToStr(nVal),
+            sTable_StockRecord, FieldByName('L_Seal').AsString]);
+
+    if FieldByName('L_CusType').AsString = sFlag_CusZY then
+      FListA.Add(nStr);
+    //资源类更新批次
+
+    nStr := 'Update %s Set L_Value=%s Where L_ID=''%s''';
+    nStr := Format(nStr, [sTable_Bill, FIn.FExtParam, FIn.FData]);
+    FListA.Add(nStr);
+    //更新提货量
+
+    if (nZKType = sFlag_BillSZ) or (nZKType = sFlag_BillMY) then
+    begin
+      nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
+              'Where A_CID=''%s'' And A_Type=''%s''';
+      nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nMon1),
+              FieldByName('L_CusID').AsString, FieldByName('L_PayType').AsString]);
+    end  else
+
+    if nZKType = sFlag_BillFX then
+    begin
+      nStr := 'Update %s Set I_FreezeMoney=I_FreezeMoney+%s Where I_ID=''%s'' ' +
+              'And I_Enabled=''%s''';
+      nStr := Format(nStr, [sTable_FXZhiKa, FloatToStr(nMon1),nZK, sFlag_Yes]);
+    end  else
+
+    if nZKType = sFlag_BillFL then
+    begin
+      nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney+%s Where A_CID=''%s''';
+      nStr := Format(nStr, [sTable_CompensateAccount, FloatToStr(nMon1),
+              FieldByName('L_CusID').AsString]);
+    end;
+
+    FListA.Add(nStr);
+    //更新冻结金额
+
+    nStr := 'Update %s Set T_Value=T_Value+(%s) Where T_HKBills Like ''%s''';
+    nStr := Format(nStr, [sTable_ZTTrucks, FloatToStr(nVal), FIn.FData]);
+    FListA.Add(nStr);
+    //更新队列中提货量
+  end;
+
+  //----------------------------------------------------------------------------
+  FDBConn.FConn.BeginTrans;
+  try
+    for nIdx := 0 to FListA.Count-1 do
+      gDBConnManager.WorkerExec(FDBConn, FListA[nIdx]);
 
     FDBConn.FConn.CommitTrans;
     Result := True;
@@ -2116,23 +2262,23 @@ begin
     begin
       if (nZKType = sFlag_BillSZ) or (nZKType = sFlag_BillMY) then
       begin
-        nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
+        nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%s) ' +
                 'Where A_CID=''%s'' And A_Type=''%s''';
-        nStr := Format(nStr, [sTable_CusAccDetail, nMoney, nCus, nPaytype]);
+        nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nMoney), nCus, nPaytype]);
       end else
 
       if nZKType = sFlag_BillFX then
       begin
-        nStr := 'Update %s Set I_FreezeMoney=I_FreezeMoney-(%.2f) ' +
+        nStr := 'Update %s Set I_FreezeMoney=I_FreezeMoney-(%s) ' +
                 'Where I_ID=''%s''';
-        nStr := Format(nStr, [sTable_FXZhiKa, nMoney, nZK]);
+        nStr := Format(nStr, [sTable_FXZhiKa, FloatToStr(nMoney), nZK]);
       end else
 
       if nZKType = sFlag_BillFL then
       begin
-        nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
+        nStr := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%s) ' +
                 'Where A_CID=''%s''';
-        nStr := Format(nStr, [sTable_CompensateAccount, nMoney, nCus]);
+        nStr := Format(nStr, [sTable_CompensateAccount, FloatToStr(nMoney), nCus]);
       end;
 
       gDBConnManager.WorkerExec(FDBConn, nStr);
@@ -2148,8 +2294,8 @@ begin
 
     if nFix = sFlag_Yes then
     begin
-      nStr := 'Update %s Set Z_FixedMoney=Z_FixedMoney+(%.2f) Where Z_ID=''%s''';
-      nStr := Format(nStr, [sTable_ZhiKa, nMoney, nZK]);
+      nStr := 'Update %s Set Z_FixedMoney=Z_FixedMoney+(%s) Where Z_ID=''%s''';
+      nStr := Format(nStr, [sTable_ZhiKa, FloatToStr(nMoney), nZK]);
       gDBConnManager.WorkerExec(FDBConn, nStr);
       //释放限提金额
     end;
@@ -2312,8 +2458,8 @@ begin
       nStr := AdjustListStrFormat2(FListA, '''', True, ',', False);
       //重新计算列表
 
-      nSQL := 'Update %s Set L_Card=''%s'' Where L_ID In(%s)';
-      nSQL := Format(nSQL, [sTable_Bill, FIn.FExtParam, nStr]);
+      nSQL := 'Update %s Set L_Card=''%s'', L_CDate=%s Where L_ID In(%s)';
+      nSQL := Format(nSQL, [sTable_Bill, FIn.FExtParam, sField_SQLServer_Now, nStr]);
       gDBConnManager.WorkerExec(FDBConn, nSQL);
     end;
 
@@ -2359,7 +2505,7 @@ var nStr: string;
 begin
   FDBConn.FConn.BeginTrans;
   try
-    nStr := 'Update %s Set L_Card=Null Where L_Card=''%s''';
+    nStr := 'Update %s Set L_Card=Null, L_CDate=Null Where L_Card=''%s''';
     nStr := Format(nStr, [sTable_Bill, FIn.FData]);
     gDBConnManager.WorkerExec(FDBConn, nStr);
 
@@ -2432,7 +2578,7 @@ begin
   nStr := 'Select L_ID,L_ZhiKa,L_CusID,L_CusType,L_CusName,L_Type,' +
           'L_StockNo,L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
           'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue,L_Seal,L_ZKType,' +
-          'L_Paytype, L_Payment ' +
+          'L_PDate,L_Paytype, L_Payment ' +
           ' From $Bill b ';
   //xxxxx
 
@@ -2497,6 +2643,7 @@ begin
       end;
 
       FPData.FValue := FieldByName('L_PValue').AsFloat;
+      FPData.FDate  := FieldByName('L_PDate').AsDateTime;
       FMData.FValue := FieldByName('L_MValue').AsFloat;
       FSelected := True;
 
@@ -2776,7 +2923,8 @@ begin
       FValue := FValue - FKZValue;
     end;
 
-    if FloatRelation(nVal, 0, rtGreater, cPrecision) then
+    if (nBills[0].FType = sFlag_San) and
+       (FloatRelation(nVal, 0, rtGreater, cPrecision)) then
     begin
       nData := '车辆[ %s ]已超出开单量[ %s ]吨，请卸货!';
       nData := Format(nData, [nBills[nInt].FTruck,
@@ -2792,25 +2940,25 @@ begin
 
       if (FZKType=sFlag_BillSZ) or (FZKType=sFlag_BillMY) then
       begin
-        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%.2f) ' +
+        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
                 'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, m, FCusID, FPayType]);
+        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(m), FCusID, FPayType]);
         FListA.Add(nSQL); //更新纸卡冻结
       end else
 
       if FZKType=sFlag_BillFX then
       begin
-        nSQL := 'Update %s Set I_FreezeMoney=I_FreezeMoney+(%.2f) ' +
+        nSQL := 'Update %s Set I_FreezeMoney=I_FreezeMoney+(%s) ' +
                 'Where I_ID=''%s'' And I_Enabled=''%s''';
-        nSQL := Format(nSQL, [sTable_FXZhiKa, m, FZhiKa, sFlag_Yes]);
+        nSQL := Format(nSQL, [sTable_FXZhiKa, FloatToStr(m), FZhiKa, sFlag_Yes]);
         FListA.Add(nSQL); //更新纸卡冻结
       end else
 
       if FZKType=sFlag_BillFL then
       begin
-        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%.2f) ' +
+        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
                 'Where A_CID=''%s''';
-        nSQL := Format(nSQL, [sTable_CompensateAccount, m, FCusID]);
+        nSQL := Format(nSQL, [sTable_CompensateAccount, FloatToStr(m), FCusID]);
         FListA.Add(nSQL); //更新纸卡冻结
       end;
 
@@ -2974,28 +3122,28 @@ begin
       //提货金额
       if (FZKType=sFlag_BillSZ) or (FZKType=sFlag_BillMY) then
       begin
-        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%.2f),' +
-                'A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
+        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%s),' +
+                'A_FreezeMoney=A_FreezeMoney-(%s) ' +
                 'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, nVal, nVal, FCusID, FPayType]);
+        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal), FloatToStr(nVal), FCusID, FPayType]);
         FListA.Add(nSQL); //更新客户资金(可能不同客户)
       end else
 
       if FZKType=sFlag_BillFX then
       begin
-        nSQL := 'Update %s Set I_OutMoney=I_OutMoney+(%.2f),' +
-                'I_FreezeMoney=I_FreezeMoney-(%.2f) ' +
+        nSQL := 'Update %s Set I_OutMoney=I_OutMoney+(%s),' +
+                'I_FreezeMoney=I_FreezeMoney-(%s) ' +
                 'Where I_ID=''%s'' And I_Enabled=''%s''';
-        nSQL := Format(nSQL, [sTable_FXZhiKa, nVal, nVal, FZhiKa, sFlag_Yes]);
+        nSQL := Format(nSQL, [sTable_FXZhiKa, FloatToStr(nVal), FloatToStr(nVal), FZhiKa, sFlag_Yes]);
         FListA.Add(nSQL); //更新客户资金(可能不同客户)
       end else
 
       if FZKType=sFlag_BillFL then
       begin
-        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%.2f),' +
-                'A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
+        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%s),' +
+                'A_FreezeMoney=A_FreezeMoney-(%s) ' +
                 'Where A_CID=''%s''';
-        nSQL := Format(nSQL, [sTable_CompensateAccount, nVal, nVal, FCusID]);
+        nSQL := Format(nSQL, [sTable_CompensateAccount, FloatToStr(nVal), FloatToStr(nVal), FCusID]);
         FListA.Add(nSQL); //更新客户资金(可能不同客户)
       end;
 

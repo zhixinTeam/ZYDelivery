@@ -69,6 +69,7 @@ ResourceString
   sPopedom_Export     = 'G';                         //导出   
   sPopedom_ViewPrice  = 'H';                         //查看单价
   sPopedom_ViewCusFZY = 'I';                         //查看资源类型
+  sPopedom_ViewCusXN  = 'J';                         //查看虚拟订单
 
   {*数据库标识*}
   sFlag_DB_K3         = 'King_K3';                   //金蝶数据库
@@ -98,6 +99,7 @@ ResourceString
   sFlag_Returns       = 'R';                         //退货
   sFlag_Tranlation    = 'T';                         //运输
   sFlag_Other         = 'O';                         //其它
+  sFlag_Refund        = 'F';                         //退货
 
   sFlag_CusZY         = 'Z';                         //资源类客户
   sFlag_CusZYF        = 'F';                         //非资源类客户
@@ -202,7 +204,8 @@ ResourceString
   sFlag_PSanWuChaStop = 'PoundSanWuChaStop';         //误差时停止业务
   sFlag_PoundWuCha    = 'PoundWuCha';                //过磅误差分组
   sFlag_PoundIfDai    = 'PoundIFDai';                //袋装是否过磅
-  sFlag_NFStock       = 'NoFaHuoStock';              //现场无需发货
+  sFlag_NFStock       = 'NoFaHuoStock';              //现场无需发货   
+  sFlag_OutOfRefund   = 'OutOfRefund';               //退货时限
 
   sFlag_CommonItem    = 'CommonItem';                //公共信息
   sFlag_CardItem      = 'CardItem';                  //磁卡信息项
@@ -259,6 +262,7 @@ ResourceString
   sFlag_OrderBase     = 'Bus_OrderBase';             //采购申请单号
   sFlag_MYZhiKa       = 'Bus_MYZhiKa';               //贸易公司订单
   sFlag_FLZhiKa       = 'Bus_FLZhiKa';               //返利订单
+  sFlag_RefundNo      = 'Bus_RefundNo';              //退货单号
 
   {*数据表*}
   sTable_Group        = 'Sys_Group';                 //用户组
@@ -315,6 +319,8 @@ ResourceString
   sTable_FLZhiKa      = 'S_FLZhiKa';                 //返利订单
   sTable_MYZhiKa      = 'S_MYZhiKa';                 //贸易订单
   sTable_FLZhiKaDtl   = 'S_FLZhiKaDtl';                 //返利订单
+  sTable_Refund       = 'S_Refund';                  //退货单
+  sTable_RefundBak    = 'S_RefundBak';               //已删除退货单
 
   sTable_Truck        = 'S_Truck';                   //车辆表
   sTable_ZTLines      = 'S_ZTLines';                 //装车道
@@ -529,6 +535,7 @@ ResourceString
        'A_CardUseMoney Decimal(15,5) Default 0,' +
        'A_FreezeMoney Decimal(15,5) Default 0,' +
        'A_BeginBalance Decimal(15,5) Default 0,' +
+       'A_RefundMoney Decimal(15,5) Default 0,' +
        'A_CreditLimit Decimal(15,5) Default 0, A_Date DateTime)';
   {-----------------------------------------------------------------------------
    客户账户:CustomerAccount
@@ -537,6 +544,7 @@ ResourceString
    *.A_Used:用途(供应,销售,运输)
    *.A_InMoney:入金
    *.A_OutMoney:出金
+   *.A_RefundMoney:销售退购
    *.A_DebtMoney:欠款
    *.A_Compensation:补偿金
    *.A_CardUseMoney:倒卖金额
@@ -548,6 +556,7 @@ ResourceString
    *.水泥销售账中
      A_InMoney:客户存入账户的金额
      A_OutMoney:客户实际花费的金额
+     A_RefundMoney:客户退货的金额
      A_DebtMoney:还未支付的金额
      A_Compensation:由于差价退还给客户的金额
      A_CardUseMoney:办理副卡倒卖金额
@@ -566,6 +575,7 @@ ResourceString
        'A_CardUseMoney Decimal(15,5) Default 0,' +
        'A_FreezeMoney Decimal(15,5) Default 0,' +
        'A_BeginBalance Decimal(15,5) Default 0,' +
+       'A_RefundMoney Decimal(15,5) Default 0,' +
        'A_CreditLimit Decimal(15,5) Default 0, A_Date DateTime)';
   {-----------------------------------------------------------------------------
    客户账户:CustomerAccountDetail
@@ -575,6 +585,7 @@ ResourceString
    *.A_Type:账户类型(现金、卡片、承兑、预付款)
    *.A_InMoney:入金
    *.A_OutMoney:出金
+   *.A_RefundMoney:销售退购
    *.A_DebtMoney:欠款
    *.A_Compensation:补偿金
    *.A_CardUseMoney:倒卖金额
@@ -586,6 +597,7 @@ ResourceString
    *.水泥销售账中
      A_InMoney:客户存入账户的金额
      A_OutMoney:客户实际花费的金额
+     A_RefundMoney:客户退货的金额
      A_DebtMoney:还未支付的金额
      A_Compensation:由于差价退还给客户的金额
      A_CardUseMoney:办理副卡倒卖金额
@@ -593,8 +605,8 @@ ResourceString
      A_FreezeMoney:已办纸卡(订单)但未进厂提货的金额
      A_CreditLimit:授信给用户的最高可欠款金额
 
-     可用余额 = 入金 + 信用额 + 期初 + - 出金 - 补偿金 - 已冻结 - 倒卖金额
-     消费总额 = 出金 + 欠款 + 已冻结 + 倒卖金额
+     可用余额 = 入金 + 信用额 + 期初 + 退购 + - 出金 - 补偿金 - 已冻结 - 倒卖金额
+     消费总额 = 出金 + 欠款 + 已冻结 + 倒卖金额 - 退购
   -----------------------------------------------------------------------------}
 
   sSQL_NewInOutMoney = 'Create Table $Table(R_ID $Inc, M_SaleMan varChar(15),' +
@@ -828,6 +840,7 @@ ResourceString
        'I_BackMoney $Float Default 0, I_Enabled Char(1) Default ''Y'',' +
        'I_TJStatus Char(1),I_PPrice $Float, I_TPrice Char(1) Default ''Y'',' +
        'I_Man varChar(32), I_Date DateTime,' +
+       'I_RefundMoney $Float Default 0,' +
        'I_VerifyMan varChar(32), I_VerifyDate DateTime)';
   {-----------------------------------------------------------------------------
    分销订单明细:FXZhiKa
@@ -849,6 +862,7 @@ ResourceString
    *.I_Money:磁卡可用金额
    *.I_OutMoney:已发量金额
    *.I_FreezeMoney:冻结金额
+   *.I_RefundMoney:销售退购
    *.I_BackMoney:冲红
    *.I_Enabled:订单状态
    *.I_TJStatus:调价状态
@@ -883,7 +897,8 @@ ResourceString
   -----------------------------------------------------------------------------}
 
   sSQL_NewBill = 'Create Table $Table(R_ID $Inc,L_ID varChar(20),' +
-       'L_Card varChar(16),L_ZhiKa varChar(15),L_Project varChar(100),' +
+       'L_Card varChar(16),L_CDate DateTime,' +
+       'L_ZhiKa varChar(15),L_Project varChar(100),' +
        'L_ICC varChar(64),L_ICCT Char(1),L_ZKType Char(1),' +
        'L_Area varChar(50),L_CusType Char(1),' +
        'L_CusID varChar(15),L_CusName varChar(80),L_CusPY varChar(80),' +
@@ -895,7 +910,7 @@ ResourceString
        'L_PValue $Float,L_PDate DateTime,L_PMan varChar(32),' +
        'L_MValue $Float,L_MDate DateTime,L_MMan varChar(32),' +
        'L_LadeTime DateTime,L_LadeMan varChar(32), ' +
-       'L_LadeLine varChar(15),L_LineName varChar(32), ' +
+       'L_LadeLine varChar(15),L_LineName varChar(32),' +
        'L_DaiTotal Integer,L_DaiNormal Integer,L_DaiBuCha Integer,' +
        'L_OutFact DateTime,L_OutMan varChar(32),' +
        'L_Lading Char(1),L_IsVIP varChar(1),L_Seal varChar(100),' +
@@ -907,6 +922,7 @@ ResourceString
    *.R_ID: 编号
    *.L_ID: 提单号
    *.L_Card: 磁卡号
+   *.L_CDate: 办理磁卡时间
    *.L_ZhiKa: 订单编号
    *.L_ZKType: 订单类型
    *.L_Area: 区域
@@ -938,6 +954,56 @@ ResourceString
    *.L_DelMan: 交货单删除人员
    *.L_DelDate: 交货单删除时间
    *.L_Memo: 动作备注
+  -----------------------------------------------------------------------------}
+
+    sSQL_NewRefund = 'Create Table $Table(R_ID $Inc, F_ID varChar(20),' +
+       'F_Card varChar(16),F_LID varChar(20),F_LOutFact DateTime,' +
+       'F_CusID varChar(15),F_CusName varChar(80),F_CusPY varChar(80),' +
+       'F_SaleID varChar(15),F_SaleMan varChar(32),' +
+       'F_ZKType Char(1),F_ZhiKa varChar(15),F_CusType Char(1),' +
+       'F_Type Char(1),F_StockNo varChar(20),F_StockName varChar(80),' +
+       'F_LimValue $Float,F_Value $Float,F_Price $Float,' +
+       'F_Truck varChar(15),F_Status Char(1),F_NextStatus Char(1),' +
+       'F_InTime DateTime,F_InMan varChar(32),' +
+       'F_PValue $Float,F_PDate DateTime,F_PMan varChar(32),' +
+       'F_MValue $Float,F_MDate DateTime,F_MMan varChar(32),' +
+       'F_LadeTime DateTime,F_LadeMan varChar(32), ' +
+       'F_LadeLine varChar(15),F_LineName varChar(32),' +
+       'F_OutFact DateTime,F_OutMan varChar(32),' +
+       'F_Man varChar(32),F_Date DateTime,' +
+       'F_Paytype Char(1),F_Payment varChar(20),' +
+       'F_DelMan varChar(32),F_DelDate DateTime)';
+  {-----------------------------------------------------------------------------
+   退货单表: Refund
+   *.R_ID: 编号
+   *.F_ID: 退货单号
+   *.F_Card: 磁卡号
+   *.F_LID: 退货单对应提货单号
+   *.F_LOutFact: 提货出厂时间
+   *.F_CusID,F_CusName,F_CusPY,F_CusType:客户
+   *.F_SaleID,F_SaleMan:业务员
+   *.F_ZhiKa: 订单编号
+   *.F_ZKType: 订单类型
+   *.F_Type: 类型(袋,散)
+   *.F_StockNo: 物料编号
+   *.F_StockName: 物料描述
+   *.F_LimValue: 提货单原始提货量
+   *.F_Value: 退货量
+   *.F_Price: 退货单价
+   *.F_Truck: 车船号
+   *.F_Status,F_NextStatus:状态控制
+   *.F_InTime,F_InMan: 进厂放行
+   *.F_PValue,F_PDate,F_PMan: 称皮重
+   *.F_MValue,F_MDate,F_MMan: 称毛重
+   *.F_LadeTime,F_LadeMan: 卸货时间,卸货人
+   *.F_LadeLine,F_LineName: 卸货通道
+   *.F_OutFact,F_OutMan: 出厂放行
+   *.F_Man:操作人
+   *.F_Date:创建时间
+   *.F_Paytype:付款方式
+   *.F_Payment:付款方式 (延用主卡)
+   *.F_DelMan: 退货单删除人员
+   *.F_DelDate: 退货单删除时间
   -----------------------------------------------------------------------------}
 
     sSQL_NewCard = 'Create Table $Table(R_ID $Inc, C_Card varChar(16),' +
@@ -1372,7 +1438,7 @@ ResourceString
        'B_Value $Float, B_SentValue $Float,B_RestValue $Float,' +
        'B_LimValue $Float, B_WarnValue $Float,B_FreezeValue $Float,' +
        'B_BStatus Char(1),B_Area varChar(50), B_Project varChar(100),' +
-       'B_ProType Char(1), B_ProID varChar(32), ' +
+       'B_ProType Char(1), B_ProID varChar(32), B_XuNi Char(1),' +
        'B_ProName varChar(80), B_ProPY varChar(80),' +
        'B_SaleID varChar(32), B_SaleMan varChar(80), B_SalePY varChar(80),' +
        'B_StockType Char(1), B_StockNo varChar(32), B_StockName varChar(80),' +
@@ -1382,6 +1448,7 @@ ResourceString
    采购申请单表: Order
    *.R_ID: 编号
    *.B_ID: 提单号
+   *.B_XuNi: 虚拟(资源综合利用；非资源综合利用)
    *.B_Value,B_SentValue,B_RestValue:订单量，已发量，剩余量
    *.B_LimValue,B_WarnValue,B_FreezeValue:订单超发上限;订单预警量,订单冻结量
    *.B_BStatus: 订单状态
@@ -1406,7 +1473,7 @@ ResourceString
        'O_SaleID varChar(32), O_SaleMan varChar(80), O_SalePY varChar(80),' +
        'O_Type Char(1), O_StockNo varChar(32), O_StockName varChar(80),' +
        'O_Truck varChar(15), O_OStatus Char(1),' +
-       'O_Man varChar(32), O_Date DateTime,' +
+       'O_Man varChar(32), O_Date DateTime, O_XuNi Char(1),' +
        'O_DelMan varChar(32), O_DelDate DateTime, O_Memo varChar(500))';
   {-----------------------------------------------------------------------------
    采购订单表: Order
@@ -1425,6 +1492,7 @@ ResourceString
    *.O_Truck: 车船号
    *.O_Man:操作人
    *.O_Date:创建时间
+   *.O_XuNi:虚拟订单
    *.O_DelMan: 采购单删除人员
    *.O_DelDate: 采购单删除时间
    *.O_Memo: 动作备注
@@ -1433,7 +1501,7 @@ ResourceString
   sSQL_NewOrderDtl = 'Create Table $Table(R_ID $Inc, D_ID varChar(20),' +
        'D_OID varChar(20), D_PID varChar(20), D_Card varChar(16), ' +
        'D_Area varChar(50), D_Project varChar(100),D_Truck varChar(15), ' +
-       'D_ProType Char(1), D_ProID varChar(32), ' +
+       'D_ProType Char(1), D_ProID varChar(32), D_XuNi Char(1),' +
        'D_ProName varChar(80), D_ProPY varChar(80),' +
        'D_SaleID varChar(32), D_SaleMan varChar(80), D_SalePY varChar(80),' +
        'D_Type Char(1), D_StockNo varChar(32), D_StockName varChar(80),' +
@@ -1456,6 +1524,7 @@ ResourceString
    *.D_DStatus: 订单状态
    *.D_Area,D_Project: 区域,项目
    *.D_ProType,D_ProID,D_ProName,D_ProPY:供应商
+   *.D_XuNi: 虚拟明细
    *.D_SaleID,D_SaleMan:业务员
    *.D_Type: 类型(袋,散)
    *.D_StockNo: 原材料编号
@@ -1532,9 +1601,30 @@ function BillTypeToStr(const nType: string): string;
 //订单类型
 function PostTypeToStr(const nPost: string): string;
 //岗位类型
+function BusinessToStr(const nBus: string): string;
+//交易类型
+{$IFDEF SHXZY}
+function SealToStr(const nSeal, nStockName: string): string;
+//Desc: 将nSeal转为可读内容
+{$ENDIF}
 
 implementation
 
+{$IFDEF SHXZY}
+//Desc: 将nStatus转为可读内容
+function SealToStr(const nSeal, nStockName: string): string;
+var nStr: string;
+    nPos: Integer;
+begin
+  nStr := nSeal;
+  nPos := Pos('-', nSeal);
+  if nPos > 0 then System.Delete(nStr, 1, nPos);
+
+  if Pos('32.5', nStockName) > 0 then Result := 'S' + nStr else
+  if Pos('42.5', nStockName) > 0 then Result := 'O' + nStr else
+  if Pos('52.5', nStockName) > 0 then Result := 'P' + nStr else Result := nSeal;
+end;
+{$ENDIF}
 
 //Desc: 将nStatus转为可读内容
 function CardStatusToStr(const nStatus: string): string;
@@ -1575,6 +1665,16 @@ begin
   if nPost = sFlag_TruckBFM  then Result := '磅房称重' else
   if nPost = sFlag_TruckFH   then Result := '散装放灰' else
   if nPost = sFlag_TruckZT   then Result := '袋装栈台' else Result := '厂外';
+end;
+
+//Desc: 业务类型转为可识别内容
+function BusinessToStr(const nBus: string): string;
+begin
+  if nBus = sFlag_Sale       then Result := '销售' else
+  if nBus = sFlag_Provide    then Result := '供应' else
+  if nBus = sFlag_Returns    then Result := '退货' else
+  if nBus = sFlag_Refund     then Result := '退购' else
+  if nBus = sFlag_Other      then Result := '其它';
 end;
 
 //------------------------------------------------------------------------------
@@ -1636,6 +1736,9 @@ begin
   AddSysTableItem(sTable_FLZhiKaDtl, sSQL_NewZhiKaDtl);
   AddSysTableItem(sTable_ICCardInfo,sSQL_NewICCardInfo);
   //提货单信息
+
+  AddSysTableItem(sTable_Refund, sSQL_NewRefund);
+  AddSysTableItem(sTable_RefundBak, sSQL_NewRefund);
 
   AddSysTableItem(sTable_Truck, sSQL_NewTruck);
   AddSysTableItem(sTable_TruckLog, sSQL_NewTruckLog);

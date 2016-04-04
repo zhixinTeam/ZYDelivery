@@ -79,7 +79,7 @@ begin
     nStr := Trim(nStr);
 
     if nStr = '' then Continue;
-    if GetPurchaseOrders(nStr, sFlag_TruckXH, gBills) then Break;
+    if GetPostItems(nStr, sFlag_TruckXH, gBills) then Break;
   end;
 
   nInt := 0 ;
@@ -181,7 +181,7 @@ begin
   if Selected and Assigned(Item) then
   begin
     nIdx := Integer(Item.Data);
-    LoadOrderItemToMC(gBills[nIdx], ListInfo.Items, ListInfo.Delimiter);
+    LoadBillItemToMC(gBills[nIdx], ListInfo.Items, ListInfo.Delimiter);
 
     with gBills[nIdx] do
     begin
@@ -225,7 +225,7 @@ begin
     else  FYSValid := sFlag_Yes;
   end;
 
-  if SavePurchaseOrders(sFlag_TruckXH, gBills) then
+  if SavePostItems(sFlag_TruckXH, gBills) then
   begin
     ShowMsg('原材料验收成功', sHint);
     ModalResult := mrOk;

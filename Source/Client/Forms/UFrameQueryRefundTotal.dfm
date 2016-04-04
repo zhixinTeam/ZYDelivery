@@ -1,4 +1,4 @@
-inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
+inherited fFrameQueryRefundTotal: TfFrameQueryRefundTotal
   Width = 854
   Height = 317
   object TitlePanel1: TZnBitmapPanel
@@ -12,7 +12,7 @@ inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
       Top = 0
       Align = alClient
       AutoSize = False
-      Caption = #36816#36153#27719#24635#25253#34920#26597#35810
+      Caption = #38144#21806#36864#36141#27719#24635#25253#34920#26597#35810
       ParentFont = False
       Style.BorderStyle = ebsNone
       Style.Edges = [bBottom]
@@ -108,52 +108,20 @@ inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
       OnClick = BtnExitClick
     end
   end
-  object cxSplitter1: TcxSplitter
+  object dxLayout1: TdxLayoutControl
     Left = 0
     Top = 59
     Width = 854
-    Height = 8
-    HotZoneClassName = 'TcxXPTaskBarStyle'
-    AlignSplitter = salTop
-    Control = ToolBar1
-  end
-  object ZnBitmapPanel1: TZnBitmapPanel
-    Left = 0
-    Top = 145
-    Width = 854
-    Height = 172
-    Align = alClient
-    object ReportGrid: TStringGrid
-      Left = 0
-      Top = 0
-      Width = 854
-      Height = 172
-      Align = alClient
-      ColCount = 8
-      FixedCols = 0
-      RowCount = 1
-      FixedRows = 0
-      ParentShowHint = False
-      ShowHint = False
-      TabOrder = 0
-      OnDrawCell = ReportGridDrawCell
-      OnKeyDown = ReportGridKeyDown
-    end
-  end
-  object dxLayout1: TdxLayoutControl
-    Left = 0
-    Top = 67
-    Width = 854
-    Height = 78
+    Height = 70
     Align = alTop
     BevelEdges = [beLeft, beRight, beBottom]
-    TabOrder = 4
+    TabOrder = 2
     TabStop = False
     AutoContentSizes = [acsWidth]
     AutoControlAlignment = False
     LookAndFeel = FDM.dxLayoutWeb1
     object EditDate: TcxButtonEdit
-      Left = 437
+      Left = 259
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -163,7 +131,7 @@ inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
         end>
       Properties.ReadOnly = True
       Properties.OnButtonClick = EditDatePropertiesButtonClick
-      TabOrder = 2
+      TabOrder = 1
       Width = 206
     end
     object EditCustomer: TcxButtonEdit
@@ -180,20 +148,6 @@ inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
       OnKeyPress = OnCtrlKeyPress
       Width = 115
     end
-    object EditSales: TcxButtonEdit
-      Left = 253
-      Top = 36
-      ParentFont = False
-      Properties.Buttons = <
-        item
-          Default = True
-          Kind = bkEllipsis
-        end>
-      Properties.OnButtonClick = EditCustomerPropertiesButtonClick
-      TabOrder = 1
-      OnKeyPress = OnCtrlKeyPress
-      Width = 121
-    end
     object dxGroup1: TdxLayoutGroup
       ShowCaption = False
       Hidden = True
@@ -206,17 +160,50 @@ inherited fFrameQueryTransTotal: TfFrameQueryTransTotal
           Control = EditCustomer
           ControlOptions.ShowBorder = False
         end
-        object dxLayout1Item1: TdxLayoutItem
-          Caption = #19994#21153#32463#29702
-          Control = EditSales
-          ControlOptions.ShowBorder = False
-        end
         object dxLayout1Item6: TdxLayoutItem
           Caption = #26085#26399#31579#36873':'
           Control = EditDate
           ControlOptions.ShowBorder = False
         end
       end
+    end
+  end
+  object cxSplitter1: TcxSplitter
+    Left = 0
+    Top = 129
+    Width = 854
+    Height = 8
+    HotZoneClassName = 'TcxXPTaskBarStyle'
+    AlignSplitter = salTop
+    Control = dxLayout1
+  end
+  object ZnBitmapPanel1: TZnBitmapPanel
+    Left = 0
+    Top = 137
+    Width = 854
+    Height = 180
+    Align = alClient
+    object ReportGrid: TStringGrid
+      Left = 0
+      Top = 0
+      Width = 854
+      Height = 180
+      Align = alClient
+      ColCount = 12
+      FixedCols = 0
+      RowCount = 2
+      PopupMenu = PopupMenu1
+      TabOrder = 0
+      OnDrawCell = ReportGridDrawCell
+      OnKeyDown = ReportGridKeyDown
+    end
+  end
+  object PopupMenu1: TPopupMenu
+    Left = 8
+    Top = 192
+    object N1: TMenuItem
+      Caption = #26102#38388#27573#26597#35810
+      OnClick = N1Click
     end
   end
 end

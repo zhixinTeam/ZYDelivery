@@ -155,6 +155,7 @@ begin
 
             SF('B_Project', FListA.Values['Project']),
             SF('B_Area', FListA.Values['Area']),
+            SF('B_XuNi', FListA.Values['IsXuNi']),
 
             SF('B_Value', StrToFloat(FListA.Values['Value']),sfVal),
             SF('B_RestValue', StrToFloat(FListA.Values['Value']),sfVal),
@@ -346,6 +347,7 @@ begin
             SF('O_CType', FListA.Values['CardType']),
             SF('O_Project', FListA.Values['Project']),
             SF('O_Area', FListA.Values['Area']),
+            SF('O_XuNi', FListA.Values['XuNi']),
 
             SF('O_BID', FListA.Values['SQID']),
             SF('O_Value', nVal,sfVal),
@@ -685,6 +687,7 @@ begin
           SF('O_CType', sFlag_OrderCardG),
           SF('O_Project', FListA.Values['SQ_Project']),
           SF('O_Area', FListA.Values['SQ_Area']),
+          SF('O_XuNi', FListA.Values['SQ_XuNi']),
 
           SF('O_BID', FListA.Values['SQ_ID']),
           SF('O_Value', nVal,sfVal),
@@ -715,6 +718,7 @@ begin
           SF('D_OID', nOrder),
           SF('D_Value', nVal, sfVal),
 
+          SF('D_XuNi', FListA.Values['SQ_XuNi']),
           SF('D_ProID', FListA.Values['SQ_ProID']),
           SF('D_ProName', FListA.Values['SQ_ProName']),
           SF('D_ProType', FListA.Values['SQ_ProType']),
@@ -788,6 +792,7 @@ begin
       gDBConnManager.WorkerExec(FDBConn, FListB[nIdx]);
 
     FDBConn.FConn.CommitTrans;
+    FOut.FData := nDtlID;  //返回打印
     Result := True;
   except
     FDBConn.FConn.RollbackTrans;
@@ -850,7 +855,7 @@ begin
   end;
 
   nStr := 'Select O_ID,O_Card,O_ProType,O_ProID,O_ProName,O_Type,O_StockNo,' +
-          'O_StockName,O_Truck,O_Value ' +
+          'O_StockName,O_Truck,O_Value,O_XuNi ' +
           'From $OO oo ';
   //xxxxx
 
@@ -882,6 +887,7 @@ begin
       Values['O_ProName']    := FieldByName('O_ProName').AsString;
       Values['O_Truck']      := FieldByName('O_Truck').AsString;
 
+      Values['O_XuNi']       := FieldByName('O_XuNi').AsString;
       Values['O_Type']       := FieldByName('O_Type').AsString;
       Values['O_StockNo']    := FieldByName('O_StockNo').AsString;
       Values['O_StockName']  := FieldByName('O_StockName').AsString;
@@ -917,6 +923,7 @@ begin
         FCusName    := Values['O_ProName'];
         FCusType    := Values['O_ProType'];
         FTruck      := Values['O_Truck'];
+        FZKType     := Values['O_XuNi'];
 
         FType       := Values['O_Type'];
         FStockNo    := Values['O_StockNo'];
@@ -1030,6 +1037,7 @@ begin
             SF('D_Card', FCard),
             SF('D_OID', FZhiKa),
 
+            SF('D_XuNi', FZKType), //资源综合利用
             SF('D_ProID', FCusID),
             SF('D_ProName', FCusName),
             SF('D_ProType', FCusType),

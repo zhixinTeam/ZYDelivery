@@ -119,12 +119,14 @@ inherited fFormOrderAdditional: TfFormOrderAdditional
     object EditYSMan: TcxTextEdit [12]
       Left = 81
       Top = 336
+      ParentFont = False
       TabOrder = 15
       Width = 121
     end
     object EditKZValue: TcxTextEdit [13]
       Left = 265
       Top = 336
+      ParentFont = False
       TabOrder = 16
       Text = '0.00'
       Width = 121
@@ -132,6 +134,7 @@ inherited fFormOrderAdditional: TfFormOrderAdditional
     object EditYSDate: TcxDateEdit [14]
       Left = 81
       Top = 361
+      ParentFont = False
       Properties.Kind = ckDateTime
       TabOrder = 17
       Width = 121

@@ -87,7 +87,7 @@ begin
 
   Result := 'Select ca.*,cus.*,S_Name as C_SaleName, ' +
             'IsNull(T_OutMoney, 0) As T_OutMoney, IsNull(M_InMoney, 0) As M_InMoney, ' +
-            '(A_BeginBalance+A_InMoney-A_OutMoney-A_Compensation-' +
+            '(A_BeginBalance+A_InMoney+A_RefundMoney-A_OutMoney-A_Compensation-' +
             'A_FreezeMoney) As A_YuE, ' +
             '(A_BeginBalance + IsNull(M_InMoney, 0)-IsNull(T_OutMoney, 0)) As T_YuE ' +
             'From $CA ca ' +

@@ -209,6 +209,10 @@ begin
     if Check1.Checked then
          nData := sFlag_Yes
     else nData := sFlag_No;
+  end else
+  if Sender = EditCredit then
+  begin
+    nData := FloatToStr(StrToFloatDef(EditCredit.Text, 0.00));
   end;
 end;
 

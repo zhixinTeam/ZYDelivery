@@ -94,7 +94,8 @@ function TfFrameFXZhiKa.InitFormDataSQL(const nWhere: string): string;
 begin
   Result := 'Select *, cast( I_YuE /I_Price as decimal(18, 2))  As I_Rest,' +
             ' sc.C_Name as Cus_Name,sm.S_Name as Sale_Name From(' +
-            'Select zk.*, I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney As I_YuE' +
+            'Select zk.*, I_Money+I_RefundMoney-I_OutMoney-I_FreezeMoney-' +
+            'I_BackMoney As I_YuE' +
             ' From $FXZhiKa zk) fxdtl' +
             ' Left join $SC sc on fxdtl.I_Customer=sc.C_ID ' +
             ' Left Join $SM sm on fxdtl.I_SaleMan=sm.S_ID ';
@@ -176,7 +177,7 @@ end;
 //Desc: É¾³ý
 procedure TfFrameFXZhiKa.BtnDelClick(Sender: TObject);
 var nStr,nCusID,nPayType: string;
-    nInMoney,nOutMoney,nBackMoney: Double;
+    nInMoney,nOutMoney,nRefundMoney,nBackMoney: Double;
 begin
   if cxView1.DataController.GetSelectedCount < 1 then
   begin
@@ -205,7 +206,8 @@ begin
     nInMoney   := SQLQuery.FieldByName('I_Money').AsFloat;
     nOutMoney  := SQLQuery.FieldByName('I_OutMoney').AsFloat;
     nPayType   := SQLQuery.FieldByName('I_Paytype').AsString;
-    nBackMoney := Float2Float(nInMoney-nOutMoney, cPrecision, False);
+    nRefundMoney  := SQLQuery.FieldByName('I_RefundMoney').AsFloat;
+    nBackMoney := Float2Float(nInMoney + nRefundMoney -nOutMoney, cPrecision, False);
 
     nStr := 'Update %s Set I_Enabled=''%s'', I_BackMoney=%s ' +
             'Where I_ID=''%s''';

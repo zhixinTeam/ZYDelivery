@@ -81,6 +81,8 @@ begin
 
     if FParam.FParamC=sFlag_Provide then
          dxLayout1Item3.Caption := '采购单号'
+    else if FParam.FParamC=sFlag_Refund then
+         dxLayout1Item3.Caption := '退购单号'
     else dxLayout1Item3.Caption := '交货单号';
 
     InitFormData;
@@ -208,6 +210,8 @@ begin
 
   if FParam.FParamC = sFlag_Provide then
        nRet := SaveOrderCard(EditBill.Text, EditCard.Text)
+  else if FParam.FParamC = sFlag_Refund then
+       nRet := SaveRefundCard(EditBill.Text, EditCard.Text)
   else nRet := SaveBillCard(EditBill.Text, EditCard.Text);
   if nRet then
     ModalResult := mrOk;

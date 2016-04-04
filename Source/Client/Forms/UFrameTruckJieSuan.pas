@@ -85,7 +85,8 @@ begin
   EditDate.Text := Format('%s жа %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
   Result := 'Select T_StockName, T_Truck, T_Driver, T_CusName, T_Delivery,' +
-            'T_DPrice,Sum(T_WeiValue) As T_Value,Sum(T_DrvMoney) As T_DMoney,' +
+            'T_DPrice,Sum(T_WeiValue-T_TrueValue) As T_Value,' +
+            'Sum(T_DrvMoney) As T_DMoney,' +
             'Count(*) As T_Count, T_DisValue, T_SetDate From $Con ';
   //xxxxx
 

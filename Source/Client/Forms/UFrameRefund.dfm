@@ -1,4 +1,4 @@
-inherited fFrameBill: TfFrameBill
+inherited fFrameRefund: TfFrameRefund
   Width = 1178
   Height = 493
   inherited ToolBar1: TToolBar
@@ -40,7 +40,7 @@ inherited fFrameBill: TfFrameBill
       Width = 125
     end
     object EditCard: TcxButtonEdit [1]
-      Left = 420
+      Left = 432
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -56,7 +56,7 @@ inherited fFrameBill: TfFrameBill
     object cxTextEdit1: TcxTextEdit [2]
       Left = 81
       Top = 94
-      Hint = 'T.L_ID'
+      Hint = 'T.F_ID'
       ParentFont = False
       TabOrder = 6
       Width = 100
@@ -64,7 +64,7 @@ inherited fFrameBill: TfFrameBill
     object cxTextEdit2: TcxTextEdit [3]
       Left = 244
       Top = 94
-      Hint = 'T.L_CusName'
+      Hint = 'T.F_CusName'
       ParentFont = False
       TabOrder = 7
       Width = 125
@@ -72,7 +72,7 @@ inherited fFrameBill: TfFrameBill
     object cxTextEdit4: TcxTextEdit [4]
       Left = 620
       Top = 94
-      Hint = 'T.L_Truck'
+      Hint = 'T.F_Truck'
       ParentFont = False
       TabOrder = 9
       Width = 100
@@ -80,13 +80,13 @@ inherited fFrameBill: TfFrameBill
     object cxTextEdit3: TcxTextEdit [5]
       Left = 795
       Top = 94
-      Hint = 'T.L_Value'
+      Hint = 'T.F_Value'
       ParentFont = False
       TabOrder = 10
       Width = 100
     end
     object EditDate: TcxButtonEdit [6]
-      Left = 792
+      Left = 804
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -115,13 +115,13 @@ inherited fFrameBill: TfFrameBill
     object Edit1: TcxTextEdit [8]
       Left = 432
       Top = 94
-      Hint = 'T.L_StockName'
+      Hint = 'T.F_StockName'
       ParentFont = False
       TabOrder = 8
       Width = 125
     end
     object CheckDelete: TcxCheckBox [9]
-      Left = 973
+      Left = 985
       Top = 36
       Caption = #26597#35810#24050#21024#38500
       ParentFont = False
@@ -131,7 +131,7 @@ inherited fFrameBill: TfFrameBill
       Width = 105
     end
     object EditTruck: TcxButtonEdit [10]
-      Left = 608
+      Left = 620
       Top = 36
       ParentFont = False
       Properties.Buttons = <
@@ -147,7 +147,7 @@ inherited fFrameBill: TfFrameBill
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item8: TdxLayoutItem
-          Caption = #25552#36135#21333#21495':'
+          Caption = #36864#36135#21333#21495':'
           Control = EditLID
           ControlOptions.ShowBorder = False
         end
@@ -157,7 +157,7 @@ inherited fFrameBill: TfFrameBill
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item2: TdxLayoutItem
-          Caption = 'IC'#21345#21495':'
+          Caption = #25552#36135#21333#21495':'
           Control = EditCard
           ControlOptions.ShowBorder = False
         end
@@ -179,7 +179,7 @@ inherited fFrameBill: TfFrameBill
       end
       inherited GroupDetail1: TdxLayoutGroup
         object dxLayout1Item3: TdxLayoutItem
-          Caption = #25552#36135#21333#21495':'
+          Caption = #36864#36135#21333#21495':'
           Control = cxTextEdit1
           ControlOptions.ShowBorder = False
         end
@@ -200,7 +200,7 @@ inherited fFrameBill: TfFrameBill
         end
         object dxLayout1Item5: TdxLayoutItem
           AutoAligns = [aaVertical]
-          Caption = #25552#36135#37327'('#21544'):'
+          Caption = #36864#36135#37327'('#21544'):'
           Control = cxTextEdit3
           ControlOptions.ShowBorder = False
         end
@@ -214,7 +214,7 @@ inherited fFrameBill: TfFrameBill
   inherited TitlePanel1: TZnBitmapPanel
     Width = 1178
     inherited TitleBar: TcxLabel
-      Caption = #24320#25552#36135#21333#35760#24405#26597#35810
+      Caption = #38144#21806#36864#36141#21333#35760#24405#26597#35810
       Style.IsFontAssigned = True
       Width = 1178
       AnchorX = 589
@@ -231,40 +231,21 @@ inherited fFrameBill: TfFrameBill
   end
   object PMenu1: TPopupMenu
     AutoHotkeys = maManual
-    OnPopup = PMenu1Popup
     Left = 4
     Top = 264
     object N1: TMenuItem
-      Caption = #25171#21360#25552#36135#21333
+      Caption = #25171#21360#36864#36135#21333
       OnClick = N1Click
-    end
-    object N10: TMenuItem
-      Caption = #25171#21360#21270#39564#21333
-      OnClick = N10Click
     end
     object N2: TMenuItem
       Caption = '-'
-    end
-    object N12: TMenuItem
-      Caption = #20462#25913#25552#36135#37327
-      OnClick = N12Click
-    end
-    object N5: TMenuItem
-      Caption = #20462#25913#36710#29260#21495
-      OnClick = N5Click
-    end
-    object N7: TMenuItem
-      Caption = #20462#25913#25552#36135
-      OnClick = N7Click
-    end
-    object N6: TMenuItem
-      Caption = '-'
+      Enabled = False
     end
     object N3: TMenuItem
-      Caption = #25552#36135#21333#35843#25320
+      Caption = #21150#29702#30913#21345
       OnClick = N3Click
     end
-    object N8: TMenuItem
+    object N6: TMenuItem
       Caption = '-'
     end
     object N11: TMenuItem

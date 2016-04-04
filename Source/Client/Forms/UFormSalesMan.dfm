@@ -159,6 +159,7 @@ inherited fFormSalesMan: TfFormSalesMan
       Left = 81
       Top = 111
       Hint = 'T.S_Credit'
+      ParentFont = False
       TabOrder = 3
       Text = '0'
       Width = 121

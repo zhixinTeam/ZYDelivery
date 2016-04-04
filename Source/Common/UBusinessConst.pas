@@ -52,6 +52,13 @@ const
   cBC_SaveICCInfo             = $0028;   //保存IC卡信息
   cBC_DeleteICCInfo           = $0029;   //删除纸卡(订单)
 
+  cBC_GetPostBills            = $0030;   //获取岗位交货单
+  cBC_SavePostBills           = $0031;   //保存岗位交货单
+  cBC_SaveFactZhiKa           = $0032;   //保存工厂订单
+  cBC_SaveFLZhiKa             = $0033;   //保存纸卡(订单)
+  cBC_DeleteFLZhiKa           = $0034;   //删除纸卡(订单)
+  cBC_ModifyBillValue         = $0035;   //修改提货量
+
   cBC_SaveOrder               = $0040;
   cBC_DeleteOrder             = $0041;
   cBC_SaveOrderCard           = $0042;
@@ -62,12 +69,6 @@ const
   cBC_DeleteOrderBase         = $0047;   //删除采购申请单
   cBC_GetGYOrderValue         = $0048;   //获取已收货量
   cBC_SaveOrderDtlAdd         = $0049;
-
-  cBC_GetPostBills            = $0030;   //获取岗位交货单
-  cBC_SavePostBills           = $0031;   //保存岗位交货单
-  cBC_SaveFactZhiKa           = $0032;   //保存工厂订单
-  cBC_SaveFLZhiKa             = $0033;   //保存纸卡(订单)
-  cBC_DeleteFLZhiKa           = $0034;   //删除纸卡(订单)
 
   cBC_ChangeDispatchMode      = $0053;   //切换调度模式
   cBC_GetPoundCard            = $0054;   //获取磅站卡号
@@ -101,6 +102,11 @@ const
   cBC_VerifyMYZhiKaMoney      = $0090;   //校验贸易公司客户可用金
   cBC_SaveMYBills             = $0091;   //保存贸易公司交易明细
   cBC_DeleteMYBill            = $0092;   //删除贸易公司交易明细
+
+  cBC_SaveRefund              = $0111;   //保存退货
+  cBC_DeleteRefund            = $0112;   //删除退货单
+  cBC_SaveRefundCard          = $0113;   //退货磁卡
+  cBC_ModifyRefundTruck       = $0114;   //修改退货车牌号
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
@@ -143,6 +149,7 @@ type
     FPrice      : Double;          //提货单价
 
     FCard       : string;          //磁卡号
+    FCardUse    : string;          //磁卡类型
     FIsVIP      : string;          //通道类型
     FStatus     : string;          //当前状态
     FNextStatus : string;          //下一状态
@@ -192,6 +199,7 @@ resourcestring
   sBus_BusinessCommand        = 'Bus_BusinessCommand';  //业务指令
   sBus_HardwareCommand        = 'Bus_HardwareCommand';  //硬件指令
   sBus_BusinessPurchaseOrder  = 'Bus_BusinessPurchaseOrder'; //采购单相关
+  sBus_BusinessRefund         = 'Bus_BusinessRefund';   //退货业务相关
 
   {*client function name*}
   sCLI_ServiceStatus          = 'CLI_ServiceStatus';    //服务状态
@@ -201,6 +209,7 @@ resourcestring
   sCLI_BusinessCommand        = 'CLI_BusinessCommand';  //业务指令
   sCLI_HardwareCommand        = 'CLI_HardwareCommand';  //硬件指令
   sCLI_BusinessPurchaseOrder  = 'CLI_BusinessPurchaseOrder'; //采购单相关
+  sCLI_BusinessRefund         = 'CLI_BusinessRefund';   //退货业务相关
 
 implementation
 
@@ -242,6 +251,7 @@ begin
         FCard       := Values['Card'];
         FIsVIP      := Values['IsVIP'];
         FStatus     := Values['Status'];
+        FCardUse    := Values['CardUse'];
         FNextStatus := Values['NextStatus'];
 
         FFactory    := Values['Factory'];
@@ -346,6 +356,7 @@ begin
         Values['IsVIP']      := FIsVIP;
         Values['Status']     := FStatus;
         Values['NextStatus'] := FNextStatus;
+        Values['CardUse']    := FCardUse;
 
         Values['Factory']    := FFactory;
         Values['PModel']     := FPModel;

@@ -61,21 +61,18 @@ type
     BtnExport: TToolButton;
     S3: TToolButton;
     BtnExit: TToolButton;
+    cxSplitter1: TcxSplitter;
+    ZnBitmapPanel1: TZnBitmapPanel;
+    ReportGrid: TStringGrid;
     dxLayout1: TdxLayoutControl;
-    cxtxtdt1: TcxTextEdit;
     EditDate: TcxButtonEdit;
     EditCustomer: TcxButtonEdit;
-    cxtxtdt4: TcxTextEdit;
     dxGroup1: TdxLayoutGroup;
     GroupSearch1: TdxLayoutGroup;
     dxLayout1Item8: TdxLayoutItem;
     dxLayout1Item6: TdxLayoutItem;
-    GroupDetail1: TdxLayoutGroup;
-    dxLayout1Item3: TdxLayoutItem;
-    dxLayout1Item5: TdxLayoutItem;
-    cxSplitter1: TcxSplitter;
-    ZnBitmapPanel1: TZnBitmapPanel;
-    ReportGrid: TStringGrid;
+    EditSales: TcxButtonEdit;
+    dxLayout1Item1: TdxLayoutItem;
     procedure BtnExitClick(Sender: TObject);
     procedure BtnRefreshClick(Sender: TObject);
     procedure ReportGridKeyDown(Sender: TObject; var Key: Word;
@@ -164,7 +161,7 @@ var nRecord: TRecordInfo;
     nSumValue, nSumDrvMoney, nSumCusMoney, nSumJYMoney: Double;
 begin
   ReportGrid.RowCount := 1;
-  ReportGrid.ColCount := 16;   //总共16列
+  ReportGrid.ColCount := 14;   //总共16列
   with ReportGrid do
   begin
     ColWidths[0] := 180;
@@ -184,8 +181,8 @@ begin
     Cells[11, RowCount-1] := '客户运价';
     Cells[12, RowCount-1] := '客户金额';
     Cells[13, RowCount-1] := '节约运费';
-    Cells[14, RowCount-1] := '车主';
-    Cells[15, RowCount-1] := '送货方式';
+    //Cells[14, RowCount-1] := '车主';
+    //Cells[15, RowCount-1] := '送货方式';
   end;  
 
   SetLength(FGroups, 0);
@@ -209,7 +206,7 @@ begin
         else FStockType:= '散装';
         FQevel    := FieldByName('P_Qlevel').AsString;
            
-        FDriver   := FieldByName('T_Driver').AsString;
+        FDriver   := '';//FieldByName('T_Driver').AsString;
         FSendType := '';
            
         FCount    := FieldByName('T_Count').AsInteger;
@@ -225,7 +222,7 @@ begin
 
       nInt := -1;
       for nIdx := Low(FGroups) to High(FGroups) do
-      if FGroups[nIdx].FGroupName = nRecord.FStockName then
+      if FGroups[nIdx].FGroupName = nRecord.FSaleMan then
       begin
         nInt := nIdx;
         Break;
@@ -236,7 +233,7 @@ begin
         nInt := Length(FGroups);
         SetLength(FGroups, nInt+1);
         SetLength(FGroups[nInt].FRecords, 0);
-        FGroups[nInt].FGroupName := nRecord.FStockName;
+        FGroups[nInt].FGroupName := nRecord.FSaleMan;
       end;
 
       with FGroups[nInt] do
@@ -280,8 +277,8 @@ begin
       Cells[11, RowCount-1] := Format('%.2f', [FCusPrice]);
       Cells[12, RowCount-1] := Format('%.2f', [FCusMoney]);
       Cells[13, RowCount-1] := Format('%.2f', [FJYMoney]);
-      Cells[14, RowCount-1] := FDriver;
-      Cells[15, RowCount-1] := FSendType;
+      //Cells[14, RowCount-1] := FDriver;
+      //Cells[15, RowCount-1] := FSendType;
     end;
 
 
@@ -343,14 +340,15 @@ begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
   nSQL := 'Select T_CusName,T_SaleMan,T_PayMent,T_StockName,' +
-          'P_Qlevel,L_Type,T_DPrice,T_CPrice, T_Delivery, T_Driver,' +
+          'P_Qlevel,L_Type,T_DPrice,T_CPrice, T_Delivery, ' +
           'Sum(T_CusMoney-T_DrvMoney) As JieSheng, ' +
           'Sum(T_DrvMoney) As T_DrvMoneyT, ' +
           'Sum(T_CusMoney) As T_CusMoneyT, ' +
-          'Sum(T_WeiValue) As T_Value, Count(T_Truck) As T_Count ' +
+          'Sum(T_WeiValue-T_TrueValue) As T_Value, Count(T_Truck) As T_Count ' +
           ' From $Con con Left Join $Bill b on b.L_ID=con.T_LID ' +
           ' Left Join $Stock s on b.L_StockNo=s.P_ID ' +
-          ' Where (IsNull(T_Enabled, '''')<>''$NO'') ';
+          ' Where (IsNull(T_Enabled, '''')<>''$NO'') ' +
+          ' And T_PayMent Like ''%%回厂%%''';
   //xxxxx
 
   if FJBWhere = '' then
@@ -365,8 +363,9 @@ begin
     nSQL := nSQL + ' And (' + FJBWhere + ')';
   end;
 
-  nSQL := nSQL + ' Group By T_CusName,T_SaleMan,T_PayMent,T_StockName,' +
-          'P_Qlevel,L_Type,T_DPrice,T_CPrice, T_Delivery, T_Driver ';
+  nSQL := nSQL + ' Group By T_SaleMan,T_CusName,T_PayMent,T_StockName,' +
+          'P_Qlevel,L_Type,T_DPrice,T_CPrice, T_Delivery ';
+  nSQL := nSQL + ' Order By T_SaleMan,T_CusName ';
 
   nSQL := MacroValue(nSQL, [MI('$Con', sTable_TransContract),
             MI('$Bill', sTable_Bill),
@@ -374,6 +373,7 @@ begin
             MI('$Yes', sFlag_Yes), MI('$NO', sFlag_NO),
             MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxxx
+
   LoadDataToReportGrid(nSQL);
 end;
 
@@ -438,8 +438,18 @@ begin
     EditCustomer.Text := Trim(EditCustomer.Text);
     if EditCustomer.Text = '' then Exit;
 
-    FWhere := 'D_ProPY like ''%%%s%%'' Or D_ProName like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditCustomer.Text, EditCustomer.Text]);
+    FWhere := 'T_CusName like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditCustomer.Text]);
+    QueryData(FWhere);
+  end else
+
+  if Sender = EditSales then
+  begin
+    EditSales.Text := Trim(EditSales.Text);
+    if EditSales.Text = '' then Exit;
+
+    FWhere := 'T_SaleMan like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditSales.Text]);
     QueryData(FWhere);
   end;
 end;

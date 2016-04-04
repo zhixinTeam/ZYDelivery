@@ -112,7 +112,8 @@ var nSettle: String;
 begin
   EditDate.Text := Format('%s жа %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
-  Result := 'Select *,T_CusMoney-T_DrvMoney As JieSheng From $Con ';
+  Result := 'Select *,T_CusMoney-T_DrvMoney As JieSheng, ' +
+            'T_WeiValue-T_TrueValue As T_Value From $Con ';
   //xxxxx
 
   if nWhere = '' then

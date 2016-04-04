@@ -58,6 +58,11 @@
 
 {$IFDEF MYGS}
   {$DEFINE SHXZY}
+  //山西卓越
+  {$DEFINE EnableBackupDB}
+  //备用数据库支持
+  {$DEFINE EnableDoubleDB}
+  //双数据库支持
 {$ENDIF}
 
 //如东海鑫

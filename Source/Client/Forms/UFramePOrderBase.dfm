@@ -18,6 +18,7 @@ inherited fFramePOrderBase: TfFramePOrderBase
     Top = 202
     Width = 957
     Height = 234
+    PopupMenu = PMenu1
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
       OnDblClick = cxView1DblClick
@@ -199,18 +200,13 @@ inherited fFramePOrderBase: TfFramePOrderBase
     Left = 4
     Top = 264
     object N1: TMenuItem
-      Caption = #21150#29702#30913#21345
+      Tag = 1
+      Caption = #25913#20026#36164#28304#32508#21512#21033#29992
       Visible = False
+      OnClick = N1Click
     end
     object N2: TMenuItem
-      Caption = #27880#38144#30913#21345
-      Visible = False
-    end
-    object N6: TMenuItem
-      Caption = '-'
-    end
-    object N3: TMenuItem
-      Caption = #20462#25913#36710#29260#21495
+      Caption = #25913#20026#38750#32508#21512#21033#29992
       Visible = False
     end
   end

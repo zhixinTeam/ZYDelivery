@@ -406,7 +406,7 @@ inherited fFormTransContract: TfFormTransContract
               ControlOptions.ShowBorder = False
             end
             object dxLayoutControl1Item23: TdxLayoutItem
-              Caption = #30830#35748#25910#36135':'
+              Caption = #36864' '#36135' '#37327':'
               Control = EditTValue
               ControlOptions.ShowBorder = False
             end

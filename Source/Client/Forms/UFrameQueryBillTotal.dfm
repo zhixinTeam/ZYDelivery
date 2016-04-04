@@ -192,9 +192,18 @@ inherited fFrameQueryBillTotal: TfFrameQueryBillTotal
       ColCount = 12
       FixedCols = 0
       RowCount = 2
+      PopupMenu = PopupMenu1
       TabOrder = 0
       OnDrawCell = ReportGridDrawCell
       OnKeyDown = ReportGridKeyDown
+    end
+  end
+  object PopupMenu1: TPopupMenu
+    Left = 8
+    Top = 192
+    object N1: TMenuItem
+      Caption = #26102#38388#27573#26597#35810
+      OnClick = N1Click
     end
   end
 end

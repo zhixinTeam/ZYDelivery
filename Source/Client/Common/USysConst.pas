@@ -23,10 +23,10 @@ const
   cFI_FrameViewLog      = $0002;                     //本地日志
   cFI_FrameAuthorize    = $0003;                     //系统授权
 
-  cFI_FrameCustomer     = $0007;                     //客户管理
-  cFI_FrameSalesMan     = $0008;                     //业务员
-  cFI_FrameSaleContract = $0009;                     //销售合同
-  cFI_FrameTransContract= $0019;                     //销售合同
+  cFI_FrameCustomer     = $0004;                     //客户管理
+  cFI_FrameSalesMan     = $0005;                     //业务员
+  cFI_FrameSaleContract = $0006;                     //销售合同
+  cFI_FrameTransContract= $0007;                     //销售合同
 
   cFI_FrameZhiKa        = $0010;                     //办理纸卡(订单)
   cFI_FrameZhiKaVerify  = $0011;                     //纸卡(订单)审核
@@ -34,6 +34,7 @@ const
   cFI_FrameFXZhiKa      = $0016;                     //办提货卡
   cFI_FrameBillQuery    = $0017;                     //开单查询
   cFI_FrameMakeOCard    = $0018;                     //办理采购磁卡
+  cFI_FrameRefund       = $0019;                     //办退货单
 
   cFI_FrameMakeCard     = $0020;                     //办理磁卡
   cFI_FrameShouJu       = $0021;                     //收据查询
@@ -70,6 +71,8 @@ const
   cFI_FrameQueryBillTotal         = $0064;
   cFI_FrameTruckJieSuan           = $0065;           //运费结算单
   cFI_FrameQueryTransTotal        = $0066;
+  cFI_FrameRefundTotalQuery       = $0067;           //退购汇总
+  cFI_FrameRefundDetailQuery      = $0068;           //退购明细
 
   cFI_FrameTrucks       = $0070;                     //车辆档案
   cFI_FrameTruckLogs    = $0071;                     //车辆档案
@@ -104,22 +107,24 @@ const
   cFI_FormCustomer      = $1007;                     //客户资料
   cFI_FormSaleMan       = $1008;                     //业务员
   cFI_FormSaleContract  = $1009;                     //销售合同
-  cFI_FormTransContract = $1019;                     //销售合同
+  cFI_FormTransContract = $1010;                     //销售合同
 
-  cFI_FormZhiKa         = $1010;                     //纸卡(订单)办理
-  cFI_FormZhiKaVerify   = $1011;                     //纸卡(订单)审核
-  cFI_FormZhiKaAdjust   = $1012;                     //纸卡(订单)调整
-  cFI_FormZhiKaFixMoney = $1013;                     //限提金额
-  cFI_FormZhiKaParam    = $1014;                     //纸卡(订单)参数
-  cFI_FormBill          = $1015;                     //开提货单
-  cFI_FormFXZhiKa       = $1016;                     //分销订单
-  cFI_FormBillAdditional= $1017;                     //补提货单
-  cFI_FormFactZhiKaBind = $1018;                     //绑定订单
+  cFI_FormZhiKa         = $1011;                     //纸卡(订单)办理
+  cFI_FormZhiKaVerify   = $1012;                     //纸卡(订单)审核
+  cFI_FormZhiKaAdjust   = $1013;                     //纸卡(订单)调整
+  cFI_FormZhiKaFixMoney = $1014;                     //限提金额
+  cFI_FormZhiKaParam    = $1015;                     //纸卡(订单)参数
+  cFI_FormBill          = $1016;                     //开提货单
+  cFI_FormFXZhiKa       = $1017;                     //分销订单
+  cFI_FormBillAdditional= $1018;                     //补提货单
+  cFI_FormFactZhiKaBind = $1019;                     //绑定订单
+  cFI_FormRefund        = $1020;                     //开退货单
+  cFI_FormRefundNew     = $1021;                     //开退货单
 
-  cFI_FormMakeCard      = $1020;                     //办理磁卡
-  cFI_FormReadICCard    = $1023;                     //办理磁卡
-  cFI_FormMakeRFIDCard  = $1021;                     //办理电子标签
-  cFI_FormShouJu        = $1022;                     //开收据
+  cFI_FormMakeRFIDCard  = $1022;                     //办理电子标签
+  cFI_FormShouJu        = $1023;                     //开收据
+  cFI_FormReadICCard    = $1024;                     //办理磁卡
+  cFI_FormMakeCard      = $1025;                     //办理磁卡
 
   cFI_FormCusAddr       = $1040;                     //送货地址管理
   cFI_FormTransTruck    = $1044;                     //送货车辆管理
@@ -332,8 +337,10 @@ begin
   AddMenuModuleItem('MAIN_D04', cFI_FormBillAdditional, mtForm);
   AddMenuModuleItem('MAIN_D05', cFI_FrameZhiKa);
   AddMenuModuleItem('MAIN_D06', cFI_FrameBill);
-  AddMenuModuleItem('MAIN_D09', cFI_FrameFXZhiKa);
   AddMenuModuleItem('MAIN_D08', cFI_FormFXZhiKa, mtForm);
+  AddMenuModuleItem('MAIN_D09', cFI_FrameFXZhiKa);
+  AddMenuModuleItem('MAIN_D10', cFI_FormRefund, mtForm);
+  AddMenuModuleItem('MAIN_D11', cFI_FrameRefund);
 
   AddMenuModuleItem('MAIN_E01', cFI_FramePoundManual);
   AddMenuModuleItem('MAIN_E02', cFI_FramePoundAuto);
@@ -383,6 +390,8 @@ begin
   AddMenuModuleItem('MAIN_L21', cFI_FrameQueryBillTotal);
   AddMenuModuleItem('MAIN_L22', cFI_FrameTruckJieSuan);
   AddMenuModuleItem('MAIN_L23', cFI_FrameQueryTransTotal);
+  AddMenuModuleItem('MAIN_L24', cFI_FrameRefundDetailQuery);
+  AddMenuModuleItem('MAIN_L25', cFI_FrameRefundTotalQuery);
 
   AddMenuModuleItem('MAIN_M01', cFI_FrameProvider);
   AddMenuModuleItem('MAIN_M02', cFI_FrameMaterails);

@@ -65,8 +65,6 @@ type
     procedure Timer_SaveFailTimer(Sender: TObject);
   private
     { Private declarations }
-    FCardUsed, FProNextStatus: string;
-    //卡片类型
     FIsWeighting, FIsSaving: Boolean;
     //称重标识,保存标识
     FPoundTunnel: PPTTunnelItem;
@@ -77,7 +75,7 @@ type
     FUIData,FInnerData: TLadingBillItem;
     //称重数据
     FLastCardDone: Int64;
-    FLastCard: string;
+    FLastCard, FCardTmp: string;
     //上次卡号
     FListA: TStrings;
     FSampleIndex: Integer;
@@ -319,11 +317,12 @@ begin
   nInt := Length(FBillItems);
   if nInt > 0 then
   begin
-    if nInt > 1 then
-         nStr := '销售并单'
-    else nStr := '销售';
-
-    if FCardUsed = sFlag_Provide then nStr := '供应';
+    if FBillItems[0].FCardUse = sFlag_Sale then
+    begin
+      if nInt > 1 then
+           nStr := '销售并单'
+      else nStr := '销售';
+    end else nStr := BusinessToStr(FBillItems[0].FCardUse);
 
     if FUIData.FNextStatus = sFlag_TruckBFP then
     begin
@@ -358,11 +357,7 @@ begin
   nStr := Format('读取到卡号[ %s ],开始执行业务.', [nCard]);
   WriteLog(nStr);
 
-  FCardUsed := GetCardUsed(nCard);
-  if FCardUsed=sFlag_Provide then
-       nRet := GetPurchaseOrders(nCard, sFlag_TruckBFP, nBills)
-  else nRet := GetLadingBills(nCard, sFlag_TruckBFP, nBills);
-
+  nRet := GetPostItems(nCard, sFlag_TruckBFP, nBills);
   if (not nRet) or (Length(nBills) < 1)
   then
   begin
@@ -432,9 +427,6 @@ begin
     end;
   end;
 
-  if FCardUsed = sFlag_Provide then
-    FProNextStatus := FBillItems[0].FNextStatus;
-
   FInnerData.FPModel := sFlag_PoundPD;
   FUIData := FInnerData;
   SetUIData(False);
@@ -490,7 +482,7 @@ begin
       Exit;
     end;
 
-    FLastCard := nCard;
+    FCardTmp := nCard;
     EditBill.Text := nCard;
     LoadBillItems(EditBill.Text);
   except
@@ -622,7 +614,7 @@ begin
 
     FPoundID := sFlag_Yes;
     //标记该项有称重数据
-    Result := SaveLadingBills(FNextStatus, FBillItems, FPoundTunnel);
+    Result := SavePostItems(FNextStatus, FBillItems, FPoundTunnel);
     //保存称重
   end;
 end;
@@ -630,6 +622,7 @@ end;
 //------------------------------------------------------------------------------
 //Desc: 原材料或临时
 function TfFrameAutoPoundItem.SavePoundData: Boolean;
+var nNextStatus: String;
 begin
   Result := False;
   //init
@@ -649,6 +642,10 @@ begin
     end;
   end;
 
+  nNextStatus := '';
+  if Length(FBillItems) > 0 then
+    nNextStatus := FBillItems[0].FNextStatus;
+
   SetLength(FBillItems, 1);
   FBillItems[0] := FUIData;
   //复制用户界面数据
@@ -663,10 +660,9 @@ begin
     else FMData.FStation := FPoundTunnel.FID;
   end;
 
-  if FCardUsed = sFlag_Provide then
-  begin
-    Result := SavePurchaseOrders(FProNextStatus, FBillItems,FPoundTunnel);
-  end else Result := SaveTruckPoundItem(FPoundTunnel, FBillItems);
+  if Length(nNextStatus)>0 then
+       Result := SavePostItems(nNextStatus, FBillItems, FPoundTunnel)
+  else Result := SaveTruckPoundItem(FPoundTunnel, FBillItems);
   //保存称重
 end;
 
@@ -712,7 +708,12 @@ begin
     Exit;
   end else FEmptyPoundInit := 0;
 
-  if FCardUsed = sFlag_Provide then
+  if (Length(FBillItems) > 0) and (FUIData.FCardUse=sFlag_Sale) then
+  begin
+    if FUIData.FNextStatus = sFlag_TruckBFP then
+         FUIData.FPData.FValue := nValue
+    else FUIData.FMData.FValue := nValue;
+  end else
   begin
     if FInnerData.FPData.FValue > 0 then
     begin
@@ -734,10 +735,7 @@ begin
         //切换为称毛重
       end;
     end else FUIData.FPData.FValue := nValue;
-  end else
-  if FBillItems[0].FNextStatus = sFlag_TruckBFP then
-       FUIData.FPData.FValue := nValue
-  else FUIData.FMData.FValue := nValue;
+  end;
 
   SetUIData(False);
   AddSample(nValue);
@@ -754,9 +752,8 @@ begin
   end;
 
   FIsSaving := True;
-  if FCardUsed = sFlag_Provide then
-       nRet := SavePoundData
-  else nRet := SavePoundSale;
+  if FUIData.FCardUse = sFlag_Sale then  nRet := SavePoundSale
+  else nRet := SavePoundData;
 
   if nRet then
   begin
@@ -769,9 +766,10 @@ procedure TfFrameAutoPoundItem.TimerDelayTimer(Sender: TObject);
 begin
   try
     TimerDelay.Enabled := False;
-    FLastCardDone := GetTickCount;
     WriteSysLog(Format('对车辆[ %s ]称重完毕.', [FUIData.FTruck]));
 
+    FLastCard := FCardTmp;
+    FLastCardDone := GetTickCount;
     PlayVoice(#9 + FUIData.FTruck);
     //播放语音
       

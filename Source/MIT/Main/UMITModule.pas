@@ -14,7 +14,7 @@ uses
   UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker, UMemDataPool,
   {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF}
   {$IFDEF MicroMsg}UMgrRemoteWXMsg,{$ENDIF} UWorkerBusinessBills,
-  UWorkerBusinessCommander, UWorkerBusinessOrders,
+  UWorkerBusinessCommander, UWorkerBusinessOrders, UWorkerBusinessRefund,
   UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser, USAPConnection;
 
 procedure InitSystemObject(const nMainForm: THandle);

@@ -33,12 +33,10 @@ type
     EditCustomer: TcxButtonEdit;
     dxLayout1Item7: TdxLayoutItem;
     PMenu1: TPopupMenu;
-    N6: TMenuItem;
     EditDate: TcxButtonEdit;
     dxLayout1Item8: TdxLayoutItem;
     N1: TMenuItem;
     N2: TMenuItem;
-    N3: TMenuItem;
     Check1: TcxCheckBox;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
@@ -50,6 +48,7 @@ type
     procedure BtnExitClick(Sender: TObject);
     procedure cxView1DblClick(Sender: TObject);
     procedure Check1Click(Sender: TObject);
+    procedure N1Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -232,6 +231,42 @@ procedure TfFramePOrderBase.Check1Click(Sender: TObject);
 begin
   inherited;
   InitFormData('');
+end;
+
+procedure TfFramePOrderBase.N1Click(Sender: TObject);
+var nXuNi, nStr, nBID: String;
+begin
+  inherited;
+
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nBID := SQLQuery.FieldByName('B_ID').AsString;
+    if not QueryDlg('确定要修改编号为[ ' + nBID + ' ]的申请单吗?', sAsk) then Exit;
+
+    Case TMenuItem(Sender).Tag of
+    0:  nXuNi := sFlag_Yes;
+    1:  nXuNi := sFlag_No;
+    end;
+
+    FDM.ADOConn.BeginTrans;
+    try
+      nStr := 'Update %s Set B_XuNi=''%s'' Where B_ID=''%s''';
+      nStr := Format(nStr, [sTable_OrderBase, nXuNi, nBID]);
+      FDM.ExecuteSQL(nStr);
+
+      nStr := 'Update %s Set O_XuNi=''%s'' Where O_BID=''%s''';
+      nStr := Format(nStr, [sTable_Order, nXuNi, nBID]);
+      FDM.ExecuteSQL(nStr);
+
+      FDM.ADOConn.CommitTrans;
+    except
+      FDM.ADOConn.RollbackTrans;
+      raise;
+    end;
+
+  end;
+
+
 end;
 
 initialization

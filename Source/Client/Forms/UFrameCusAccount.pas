@@ -61,8 +61,8 @@ uses
   ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness;
 
 const
-  gA_YuE = 'A_InMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
-  gI_YuE = 'I_Money-I_OutMoney-I_FreezeMoney-I_BackMoney';
+  gA_YuE = 'A_InMoney+A_RefundMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
+  gI_YuE = 'I_Money+I_RefundMoney-I_OutMoney-I_FreezeMoney-I_BackMoney';
   gYuE   = 'IsNull(I_YuE, 0) + A_YuE';
 
 class function TfFrameCusAccount.FrameID: integer;

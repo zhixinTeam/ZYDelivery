@@ -56,6 +56,8 @@ type
       AButtonIndex: Integer);
   protected
     { Protected declarations }
+    FPopedom: String;
+    //权限
     FListData: TStrings;
     procedure LoadFormData(nData: string);
     //载入数据
@@ -102,6 +104,7 @@ begin
 
   with TfFormOrderAdditional.Create(Application) do
   try
+    FPopedom := nPopedom;
     LoadFormData(gOrderBaseData);
     //try load data
 
@@ -197,7 +200,7 @@ end;
 
 //Desc: 保存
 procedure TfFormOrderAdditional.BtnOKClick(Sender: TObject);
-var nStr: string;
+var nStr, nID: string;
     nVal: Double;
 begin
   if not IsDataValid then Exit;
@@ -233,12 +236,14 @@ begin
     Values['SQ_Memo'] := Trim(EditMemo.Text);
   end;
 
-  if not SaveOrderDtlAdd(PackerEncodeStr(FListData.Text), nStr) then
+  nID := SaveOrderDtlAdd(PackerEncodeStr(FListData.Text), nStr);
+  if nID = '' then
   begin
     ShowMsg('采购单保存失败:' + nStr, sHint);
     Exit;
-  end;  
+  end;
 
+  PrintOrderReport(nID, True);
   ModalResult := mrOk;
   ShowMsg('采购单保存成功', sHint);
 end;
@@ -249,7 +254,7 @@ var nP: TFormCommandParam;
 begin
   inherited;
   nP.FParamA := cCmd_ViewData;
-  CreateBaseFormItem(cFI_FormGetPOrderBase, '', @nP);
+  CreateBaseFormItem(cFI_FormGetPOrderBase, FPopedom, @nP);
   if (nP.FCommand <> cCmd_ModalResult) or (nP.FParamA <> mrOK) then Exit;
 
   gOrderBaseData := PackerDecodeStr(nP.FParamB);

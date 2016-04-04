@@ -55,6 +55,7 @@ type
     { Protected declarations }
     FBuDanFlag: string;
     //补单标记
+    FShowTxt: string;
     procedure LoadFormData;
     procedure LoadStockList;
     //载入数据
@@ -71,7 +72,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, DB, IniFiles, UMgrControl, UAdjustForm, UFormBase, UBusinessPacker,
-  UDataModule, USysPopedom, USysBusiness, USysDB, USysGrid, USysConst;
+  UDataModule, USysPopedom, USysBusiness, USysDB, USysGrid, USysConst, UMgrLEDDisp;
 
 type
   TCommonInfo = record
@@ -184,6 +185,15 @@ begin
     nIni.Free;
   end;
 
+  nIni := TIniFile.Create(gPath + sConfigFile);
+  try
+    FShowTxt := nIni.ReadString(gSysParam.FProgID, 'ShowTxt',
+                '尊敬的客户：$Customer,当天提货品种：$Stock, ' +
+                '剩余金额: $Money元,剩余可提货量: $Value吨');
+  finally
+    nIni.Free;
+  end;
+
   AdjustCtrlData(Self);
 end;
 
@@ -244,6 +254,8 @@ begin
   with gInfo do
   begin
     FCusID := nDB.FieldByName('C_ID').AsString;
+    FShowTxt := MacroValue(FShowTxt, [
+                MI('$Customer', nDB.FieldByName('C_Name').AsString)]);
 
     if FZKType = sFlag_BillSZ then
     begin
@@ -586,7 +598,8 @@ end;
 //Desc: 保存
 procedure TfFormBill.BtnOKClick(Sender: TObject);
 var nIdx: Integer;
-    nPrint: Boolean;
+    nPrint, nFix: Boolean;
+    nMoney, nPrice: Double;
     nList,nTmp,nStocks: TStrings;
 begin
   if ListBill.Items.Count < 1 then
@@ -609,6 +622,7 @@ begin
     {$ENDIF}
 
     nList.Clear;
+    nPrice := -1;
     nPrint := False;
     LoadSysDictItem(sFlag_PrintBill, nStocks);
     //需打印品种
@@ -632,6 +646,10 @@ begin
       if (not nPrint) and (FBuDanFlag <> sFlag_Yes) then
         nPrint := nStocks.IndexOf(FStockNO) >= 0;
       //xxxxx
+
+      nPrice   := FPrice;
+      FShowTxt := MacroValue(FShowTxt, [
+                  MI('$Stock', Values['StockName'])]);
     end;
 
     with nList do
@@ -651,6 +669,16 @@ begin
     gInfo.FIDList := SaveBill(PackerEncodeStr(nList.Text));
     //call mit bus
     if gInfo.FIDList = '' then Exit;
+
+    if nPrice<=0 then nPrice := 65535;
+
+    nMoney := GetZhikaValidMoney(gInfo.FZhiKa, nFix, gInfo.FZKType);
+    nPrice := nMoney / nPrice;
+    nPrice := Float2Float(nPrice, cPrecision, False);
+
+    FShowTxt := MacroValue(FShowTxt, [
+                MI('$Money', FloatToStr(nMoney)),
+                MI('$Value', FloatToStr(nPrice))]);
   finally
     nTmp.Free;
     nList.Free;
@@ -667,6 +695,7 @@ begin
   
   ModalResult := mrOk;
   ShowMsg('提货单保存成功', sHint);
+  gDisplayManager.Display('ShowBill', FShowTxt);
 end;
 
 procedure TfFormBill.EditFQPropertiesButtonClick(Sender: TObject;

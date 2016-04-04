@@ -68,7 +68,7 @@ end;
 function TfFrameCompensateAccount.InitFormDataSQL(const nWhere: string): string;
 begin
   Result := 'Select ca.*,cus.*,S_Name as C_SaleName,' +
-            '(A_BeginBalance+A_InMoney-A_OutMoney-' +
+            '(A_BeginBalance+A_InMoney+A_RefundMoney-A_OutMoney-' +
             ' A_Compensation-A_FreezeMoney-A_CardUseMoney)' +
             ' As A_YuE From $CA ca ' +
             ' Left Join $Cus cus On cus.C_ID=ca.A_CID ' +

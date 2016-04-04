@@ -78,8 +78,6 @@ type
     procedure BtnReadCardClick(Sender: TObject);
   private
     { Private declarations }
-    FCardUsed, FProNextStatus: string;
-    //卡片类型
     FPoundTunnel: PPTTunnelItem;
     //磅站通道
     FLastGS,FLastBT,FLastBQ: Int64;
@@ -218,8 +216,6 @@ begin
       FFactory := gSysParam.FFactNum;
     end;
 
-    FCardUsed := '';
-
     FUIData := nItem;
     FInnerData := nItem;
     if nOnlyData then Exit;
@@ -291,11 +287,12 @@ begin
   nInt := Length(FBillItems);
   if nInt > 0 then
   begin
-    if nInt > 1 then
-         nStr := '销售并单'
-    else nStr := '销售';
-
-    if FCardUsed=sFlag_Provide then nStr := '供应';
+    if FBillItems[0].FCardUse = sFlag_Sale then
+    begin
+      if nInt > 1 then
+           nStr := '销售并单'
+      else nStr := '销售';
+    end else nStr := BusinessToStr(FBillItems[0].FCardUse);
 
     if FUIData.FNextStatus = sFlag_TruckBFP then
     begin
@@ -333,17 +330,11 @@ begin
     ShowMsg('请输入磁卡号', sHint); Exit;
   end;
 
-  FCardUsed := GetCardUsed(nCard);
-  if ((FCardUsed=sFlag_Provide)
-      and (not GetPurchaseOrders(nCard, sFlag_TruckBFP, nBills)))
-    or
-    ((FCardUsed <> sFlag_Provide)
-      and (not GetLadingBills(nCard, sFlag_TruckBFP, nBills)))
-  then
+  if not GetPostItems(nCard, sFlag_TruckBFP, nBills) then
   begin
     SetUIData(True);
     Exit;
-  end;
+  end;  
   
   nHint := '';
   nInt := 0;
@@ -402,9 +393,6 @@ begin
       Inc(nInt);
     end;
   end;
-
-  if FCardUsed = sFlag_Provide then
-    FProNextStatus := FBillItems[0].FNextStatus;
 
   FInnerData.FPModel := sFlag_PoundPD;
   FUIData := FInnerData;
@@ -591,7 +579,13 @@ begin
   if not IsNumber(EditValue.Text, True) then Exit;
   nVal := StrToFloat(EditValue.Text);
 
-  if (Length(FBillItems) > 0) and (FCardUsed <> sFlag_Provide) then
+  if not gProberManager.IsTunnelOK(FPoundTunnel.FProber) then
+  begin
+    ShowMsg('车辆未站稳,请稍后', sHint);
+    Exit;
+  end;
+
+  if (Length(FBillItems) > 0) and (FBillItems[0].FCardUse = sFlag_Sale) then
   begin
     if FBillItems[0].FNextStatus = sFlag_TruckBFP then
          FUIData.FPData.FValue := nVal
@@ -732,6 +726,7 @@ end;
 //------------------------------------------------------------------------------
 //Desc: 原材料或临时
 function TfFrameManualPoundItem.SavePoundData: Boolean;
+var nNextStatus: String;
 begin
   Result := False;
   //init
@@ -751,6 +746,10 @@ begin
     end;
   end;
 
+  nNextStatus := '';
+  if Length(FBillItems) > 0 then
+    nNextStatus := FBillItems[0].FNextStatus;
+
   SetLength(FBillItems, 1);
   FBillItems[0] := FUIData;
   //复制用户界面数据
@@ -765,10 +764,9 @@ begin
     else FMData.FStation := FPoundTunnel.FID;
   end;
 
-  if FCardUsed = sFlag_Provide then
-  begin
-    Result := SavePurchaseOrders(FProNextStatus, FBillItems,FPoundTunnel);
-  end else Result := SaveTruckPoundItem(FPoundTunnel, FBillItems);
+  if Length(nNextStatus)>0 then
+       Result := SavePostItems(nNextStatus, FBillItems, FPoundTunnel)
+  else Result := SaveTruckPoundItem(FPoundTunnel, FBillItems);
   //保存称重
 end;
 
@@ -882,7 +880,7 @@ begin
 
     FPoundID := sFlag_Yes;
     //标记该项有称重数据
-    Result := SaveLadingBills(FNextStatus, FBillItems, FPoundTunnel);
+    Result := SavePostItems(FNextStatus, FBillItems, FPoundTunnel);
     //保存称重
   end;
 end;
@@ -907,7 +905,7 @@ begin
     BtnSave.Enabled := False;
     ShowWaitForm(ParentForm, '正在保存称重', True);
     
-    if (Length(FBillItems) > 0) and (FCardUsed=sFlag_Sale) then
+    if FUIData.FCardUse=sFlag_Sale then
          nBool := SavePoundSale
     else nBool := SavePoundData;
 

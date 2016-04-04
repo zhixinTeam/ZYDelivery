@@ -52,6 +52,7 @@ type
     dxLayout1Item11: TdxLayoutItem;
     N11: TMenuItem;
     N7: TMenuItem;
+    N12: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -67,6 +68,7 @@ type
     procedure N10Click(Sender: TObject);
     procedure N11Click(Sender: TObject);
     procedure N7Click(Sender: TObject);
+    procedure N12Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
     //日期区间
@@ -443,6 +445,34 @@ begin
   FDM.ExecuteSQL(nStr);
   ShowMsg('修改提货方式成功', sHint);
   InitFormData(FWhere);
+end;
+
+//Date: 2016/3/29
+//Parm: 
+//Desc: 修改提货量(已出厂或者已经二次过重的提货单禁止修改)
+procedure TfFrameBill.N12Click(Sender: TObject);
+var nStr, nValue: string;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nStr := SQLQuery.FieldByName('L_Value').AsString;
+    nValue := nStr;
+    if not ShowInputBox('请输入新的提货量:', '修改', nValue, 15) then Exit;
+
+    if (nValue = '') or (nStr = nValue) then Exit;
+    //无效或一致
+
+    if (not IsNumber(nValue, True)) or (StrToFloat(nValue) <= 0) then
+    begin
+      nStr := '提货量必须大于0';
+      ShowMsg(nStr, sHint);
+      Exit;
+    end;
+
+    if ChangeLadingTruckNo(SQLQuery.FieldByName('L_ID').AsString, nValue) then
+     ShowMsg('修改提货量成功!', sHint);
+  end;
 end;
 
 initialization

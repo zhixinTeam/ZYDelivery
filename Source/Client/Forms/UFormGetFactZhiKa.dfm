@@ -96,6 +96,7 @@ inherited fFormGetFactZhiKa: TfFormGetFactZhiKa
     object EditID: TcxComboBox [6]
       Left = 81
       Top = 157
+      ParentFont = False
       Properties.OnEditValueChanged = EditIDPropertiesEditValueChanged
       TabOrder = 1
       OnKeyPress = OnCtrlKeyPress

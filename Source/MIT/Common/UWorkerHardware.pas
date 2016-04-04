@@ -463,7 +463,8 @@ begin
 
       nIDLen := Length(nStr);
       nCode:= Copy(nStr, nPrefixLen + 1, 6);
-      nCode:= nCode + '$CODE' + FieldByName('L_Seal').AsString;
+      nCode:= nCode + '$CODE' + SealToStr(FieldByName('L_Seal').AsString,
+              FieldByName('L_StockName').AsString);
       nCode := nCode + Copy(nStr, nPrefixLen + 7, nIDLen-nPreFixLen-6);
       {$ENDIF}
 

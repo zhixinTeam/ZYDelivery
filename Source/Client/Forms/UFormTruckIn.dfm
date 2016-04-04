@@ -10,17 +10,17 @@ inherited fFormTruckIn: TfFormTruckIn
   PixelsPerInch = 96
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
-    Width = 478
-    Height = 539
+    Width = 470
+    Height = 528
     inherited BtnOK: TButton
-      Left = 332
-      Top = 506
+      Left = 324
+      Top = 495
       Caption = #25918#34892
       TabOrder = 4
     end
     inherited BtnExit: TButton
-      Left = 402
-      Top = 506
+      Left = 394
+      Top = 495
       TabOrder = 5
     end
     object ListInfo: TcxMCListBox [2]
@@ -45,17 +45,17 @@ inherited fFormTruckIn: TfFormTruckIn
     end
     object ListBill: TcxListView [3]
       Left = 23
-      Top = 348
+      Top = 341
       Width = 350
       Height = 115
       Columns = <
         item
-          Caption = #20132#36135#21333#21495
+          Caption = #35746#21333#32534#21495
           Width = 80
         end
         item
           Alignment = taCenter
-          Caption = #20132#36135#37327'('#21544')'
+          Caption = #20379#36135#37327'('#21544')'
           Width = 100
         end
         item
@@ -90,7 +90,7 @@ inherited fFormTruckIn: TfFormTruckIn
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
-        Caption = #20132#36135#21333#20449#24687
+        Caption = #35746#21333#20449#24687
         object dxLayout1Item3: TdxLayoutItem
           AutoAligns = [aaHorizontal]
           Caption = 'cxMCListBox1'
@@ -119,7 +119,7 @@ inherited fFormTruckIn: TfFormTruckIn
       object dxGroup2: TdxLayoutGroup [1]
         AutoAligns = [aaHorizontal]
         AlignVert = avClient
-        Caption = #20132#36135#21333#21015#34920
+        Caption = #35746#21333#21015#34920
         object dxLayout1Item7: TdxLayoutItem
           AutoAligns = [aaHorizontal]
           AlignVert = avClient

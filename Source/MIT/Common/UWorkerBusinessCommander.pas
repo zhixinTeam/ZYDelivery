@@ -88,8 +88,6 @@ type
     //获取客户可用金
     function GetZhiKaValidMoney(var nData: string): Boolean;
     //获取订单可用金
-    function GetFLValidMoney(var nData: string): Boolean;
-    //获取返利订单可用金
     function GetCompensateMoney(var nData: string): Boolean;
     //获取返利账户可用金
     function CustomerHasMoney(var nData: string): Boolean;
@@ -430,7 +428,6 @@ begin
    cBC_GetCustomerMoney    : Result := GetCustomerValidMoney(nData);
    cBC_AdjustCustomerMoney : Result := AdjustCustomerMoney(nData);
    cBC_GetZhiKaMoney       : Result := GetZhiKaValidMoney(nData);
-   cBC_GetFLMoney          : Result := GetFLValidMoney(nData);
    cBC_GetCompensateMoney  : Result := GetCompensateMoney(nData);
    cBC_GetTransportMoney   : Result := GetTransportValidMoney(nData);
    cBC_CustomerHasMoney    : Result := CustomerHasMoney(nData);
@@ -773,7 +770,8 @@ begin
     end;
 
     nVal := FieldByName('A_BeginBalance').AsFloat +
-            FieldByName('A_InMoney').AsFloat -
+            FieldByName('A_InMoney').AsFloat +
+            FieldByName('A_RefundMoney').AsFloat -
             FieldByName('A_OutMoney').AsFloat -
             FieldByName('A_CardUseMoney').AsFloat -
             FieldByName('A_Compensation').AsFloat - //返利金额不参与正常发货
@@ -852,7 +850,7 @@ begin
 
   if FIn.FExtParam = sFlag_BillFX then
   begin
-    nStr := 'Select I_Money,I_OutMoney,I_FreezeMoney,I_BackMoney ' +
+    nStr := 'Select I_Money,I_OutMoney,I_FreezeMoney,I_BackMoney,I_RefundMoney ' +
             'From %s Where I_ID=''%s'' And I_Enabled=''%s'''; 
     nStr := Format(nStr, [sTable_FXZhiKa, FIn.FData, sFlag_Yes]);
 
@@ -865,8 +863,9 @@ begin
         Exit;
       end;
 
-      nMoney := Float2Float(Fields[0].AsFloat - Fields[1].AsFloat -
-                Fields[2].AsFloat - Fields[3].AsFloat, cPrecision, False);
+      nMoney := Float2Float(Fields[0].AsFloat + Fields[4].AsFloat -
+                Fields[1].AsFloat - Fields[2].AsFloat - Fields[3].AsFloat,
+                cPrecision, False);
       //xxxxx
 
       FOut.FData := FloatToStr(nMoney);
@@ -912,7 +911,8 @@ begin
       end;
 
       nVal := FieldByName('A_BeginBalance').AsFloat +
-              FieldByName('A_InMoney').AsFloat -
+              FieldByName('A_InMoney').AsFloat +
+              FieldByName('A_RefundMoney').AsFloat -
               FieldByName('A_OutMoney').AsFloat -
               FieldByName('A_CardUseMoney').AsFloat -
               FieldByName('A_Compensation').AsFloat - //返利金额不参与正常发货
@@ -932,71 +932,6 @@ begin
     Result := True;
   end;
   //获取纸卡限提金额
-end;
-
-//Date: 2015/12/5
-//Parm:
-//Desc: 获取提货凭证卡余额
-function TWorkerBusinessCommander.GetFLValidMoney(var nData: string): Boolean;
-var nStr: string;
-    nMoney: Double;
-    nOut: TWorkerBusinessCommand;
-begin
-  Result := False;
-
-  if FIn.FExtParam = sFlag_ICCardM then
-  begin
-    nStr := 'Select Z_ID From %s Where Z_Card=''%s''';
-    nStr := Format(nStr , [sTable_FLZhiKa, FIn.FData]);
-
-    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-    begin
-      if RecordCount < 1 then
-      begin
-        nData := '提货卡[ %s ]绑定的订单不存在.';
-        nData := Format(nData, [FIn.FData]);
-        Exit;
-      end;
-
-      if not TWorkerBusinessCommander.CallMe(cBC_GetZhiKaMoney,
-                Fields[0].AsString, '', @nOut) then
-      begin
-        nData := nOut.FData;
-        Exit;
-      end;
-
-      FOut.FData := nOut.FData;
-      FOut.FExtParam := nOut.FExtParam;
-    end;
-  end else
-
-  if FIn.FExtParam = sFlag_ICCardV then
-  begin
-    nStr := 'Select I_Money,I_OutMoney,I_FreezeMoney,I_BackMoney ' +
-            'From %s Where I_ID=''%s'' And I_Enabled=''%s''';
-    nStr := Format(nStr, [sTable_FXZhiKa, FIn.FData, sFlag_Yes]);
-
-    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-    begin
-      if RecordCount < 1 then
-      begin
-        nData := '提货卡[ %s ]绑定的订单不存在.';
-        nData := Format(nData, [FIn.FData]);
-        Exit;
-      end;
-
-      nMoney := Float2Float(Fields[0].AsFloat - Fields[1].AsFloat -
-                Fields[2].AsFloat - Fields[3].AsFloat, cPrecision, False);
-      //xxxxx
-
-      FOut.FData := FloatToStr(nMoney);
-      FOut.FExtParam := sFlag_No;
-    end;
-  end else Exit;
-
-
-  Result := True;
-  //获取IC卡限提金额
 end;
 
 //Date: 2015/11/28
@@ -1021,7 +956,8 @@ begin
     end;
 
     nVal := FieldByName('A_BeginBalance').AsFloat +
-            FieldByName('A_InMoney').AsFloat -
+            FieldByName('A_InMoney').AsFloat +            
+            FieldByName('A_RefundMoney').AsFloat -
             FieldByName('A_OutMoney').AsFloat -
             FieldByName('A_Compensation').AsFloat -
             FieldByName('A_FreezeMoney').AsFloat;
@@ -1062,7 +998,8 @@ begin
     end;
 
     nVal := FieldByName('A_BeginBalance').AsFloat +
-            FieldByName('A_InMoney').AsFloat -
+            FieldByName('A_InMoney').AsFloat +            
+            FieldByName('A_RefundMoney').AsFloat -
             FieldByName('A_OutMoney').AsFloat -
             FieldByName('A_Compensation').AsFloat -
             FieldByName('A_FreezeMoney').AsFloat;
@@ -2043,14 +1980,16 @@ begin
         nData := '编号为[ %s ]的客户账户不存在.';
         nData := Format(nData, [nStr]);
         Exit;
-      end;
-
-      nMon2 :=FieldByName('A_InMoney').AsFloat -
-              FieldByName('A_OutMoney').AsFloat -
-              FieldByName('A_CardUseMoney').AsFloat -
-              FieldByName('A_Compensation').AsFloat - //返利金额不参与正常发货
-              FieldByName('A_FreezeMoney').AsFloat;
-      //xxxxx
+      end;      
+      
+      nMon2 :=FieldByName('A_BeginBalance').AsFloat +
+                FieldByName('A_InMoney').AsFloat +
+                FieldByName('A_RefundMoney').AsFloat -
+                FieldByName('A_OutMoney').AsFloat -
+                FieldByName('A_CardUseMoney').AsFloat -
+                FieldByName('A_Compensation').AsFloat - //返利金额不参与正常发货
+                FieldByName('A_FreezeMoney').AsFloat;
+        //xxxxx        
 
       nCredit := FieldByName('A_CreditLimit').AsFloat;
       nCredit := Float2PInt(nCredit, cPrecision, False) / cPrecision;
@@ -2310,9 +2249,9 @@ begin
                 ], sTable_Bill, SF('L_ID', FID), False);
         FListA.Add(nSQL);
 
-        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%.2f) ' +
+        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
                 'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, nVal,
+        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
                 FieldByName('L_CusID').AsString,
                 FieldByName('L_Paytype').AsString]);
         FListA.Add(nSQL); //更新纸卡冻结
@@ -2427,10 +2366,10 @@ begin
         nPrice := FieldByName('L_Price').AsFloat;
         nVal   := Float2Float(nPrice * FValue, cPrecision, False);
 
-        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%.2f),' +
-                'A_FreezeMoney=A_FreezeMoney-(%.2f) ' +
+        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%s),' +
+                'A_FreezeMoney=A_FreezeMoney-(%s) ' +
                 'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, nVal, nVal,
+        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal), FloatToStr(nVal),
                 FieldByName('L_CusID').AsString, FieldByName('L_Paytype').AsString]);
         FListA.Add(nSQL); //更新客户资金(可能不同客户)
       end;
@@ -2522,12 +2461,12 @@ begin
       nHasOut := FieldByName('L_OutFact').AsString <> '';
       //已出厂
 
-      if nHasOut then
+      {if nHasOut then
       begin
         nData := '交货单[ %s ]已出厂,不允许删除.';
         nData := Format(nData, [FIn.FData]);
         Exit;
-      end;
+      end;   }
 
       nP   := FieldByName('L_Paytype').AsString;
       nZK  := FieldByName('L_ZhiKa').AsString;

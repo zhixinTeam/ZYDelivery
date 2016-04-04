@@ -129,7 +129,7 @@ function TfFormGetFactZhiKa.LoadCustomerInfo(const nID: string): Boolean;
 var nDS: TDataSet;
     nStr,nCusName,nSaleMan: string;
 begin
-  ClearCustomerInfo;
+  //ClearCustomerInfo;
   nDS := USysBusiness.LoadCustomerInfo(nID, ListInfo, nStr, True);
 
   Result := Assigned(nDS);

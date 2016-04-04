@@ -7,7 +7,7 @@ uses
   Dialogs, UFrameBase, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, ComCtrls, cxContainer, cxListView, Grids, ExtCtrls,
   cxEdit, cxLabel, UBitmapPanel, cxSplitter, dxLayoutControl, cxMaskEdit,
-  cxButtonEdit, cxTextEdit, ToolWin;
+  cxButtonEdit, cxTextEdit, ToolWin, Menus;
 
 type
   TRecordInfo = record
@@ -61,6 +61,8 @@ type
     cxSplitter1: TcxSplitter;
     ZnBitmapPanel1: TZnBitmapPanel;
     ReportGrid: TStringGrid;
+    PopupMenu1: TPopupMenu;
+    N1: TMenuItem;
     procedure BtnExitClick(Sender: TObject);
     procedure BtnRefreshClick(Sender: TObject);
     procedure ReportGridKeyDown(Sender: TObject; var Key: Word;
@@ -73,6 +75,7 @@ type
     procedure EditCustomerPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure OnCtrlKeyPress(Sender: TObject; var Key: Char);
+    procedure N1Click(Sender: TObject);
     {*按键处理*}
   private
     { Private declarations }
@@ -154,7 +157,7 @@ var nStr: string;
     nSumValue, nSumKValue, nSumMomey: Double;
 begin
   ReportGrid.RowCount := 1;
-  ReportGrid.ColCount := 12;   //总共8列
+  ReportGrid.ColCount := 11;   //总共8列
   with ReportGrid do
   begin
     DefaultColWidth := 60;
@@ -167,13 +170,13 @@ begin
     Cells[2, RowCount-1] := '销售经理';
     Cells[3, RowCount-1] := '存货名称';
     Cells[4, RowCount-1] := '规格型号';
-    Cells[5, RowCount-1] := '包装类型';
-    Cells[6, RowCount-1] := '提货方式';
-    Cells[7, RowCount-1] := '单价';
-    Cells[8, RowCount-1] := '发货数量';
-    Cells[9, RowCount-1] := '金额';
-    Cells[10, RowCount-1] := '发货车数';
-    Cells[11, RowCount-1] := '发退货标记';
+    //Cells[5, RowCount-1] := '包装类型';
+    Cells[5, RowCount-1] := '提货方式';
+    Cells[6, RowCount-1] := '单价';
+    Cells[7, RowCount-1] := '发货数量';
+    Cells[8, RowCount-1] := '金额';
+    Cells[9, RowCount-1] := '发货车数';
+    Cells[10, RowCount-1] := '发退货标记';
   end;
 
   SetLength(FGroups, 0);
@@ -250,14 +253,14 @@ begin
       Cells[1, RowCount-1] := FCName;
       Cells[2, RowCount-1] := FSName;
       Cells[3, RowCount-1] := FStockName + '(' + nStr + ')';
-      Cells[4, RowCount-1] := FSeal;
-      Cells[5, RowCount-1] := nStr;
-      Cells[6, RowCount-1] := FLading;
-      Cells[7, RowCount-1] := Format('%.2f', [FPrice]);
-      Cells[8, RowCount-1] := Format('%.2f', [FValue]);
-      Cells[9, RowCount-1] := Format('%.2f', [FMoney]);
-      Cells[10, RowCount-1] := IntToStr(FCount);
-      Cells[11, RowCount-1] := FFlagT;
+      Cells[4, RowCount-1] := nStr + FSeal;
+      //Cells[5, RowCount-1] := '';
+      Cells[5, RowCount-1] := FLading;
+      Cells[6, RowCount-1] := Format('%.2f', [FPrice]);
+      Cells[7, RowCount-1] := Format('%.2f', [FValue]);
+      Cells[8, RowCount-1] := Format('%.2f', [FMoney]);
+      Cells[9, RowCount-1] := IntToStr(FCount);
+      Cells[10, RowCount-1] := FFlagT;
     end;
     {
     RowCount := RowCount + 1;
@@ -298,13 +301,13 @@ begin
     Cells[2, RowCount-1] := '';
     Cells[3, RowCount-1] := '';
     Cells[4, RowCount-1] := '';
+    //Cells[5, RowCount-1] := '';
     Cells[5, RowCount-1] := '';
     Cells[6, RowCount-1] := '';
-    Cells[7, RowCount-1] := '';
-    Cells[8, RowCount-1] := Format('%.2f', [nSumValue]);
-    Cells[9, RowCount-1] := Format('%.2f', [nSumMomey]);
-    Cells[10, RowCount-1] := IntToStr(nInt);
-    Cells[11, RowCount-1] := '';
+    Cells[7, RowCount-1] := Format('%.2f', [nSumValue]);
+    Cells[8, RowCount-1] := Format('%.2f', [nSumMomey]);
+    Cells[9, RowCount-1] := IntToStr(nInt);
+    Cells[10, RowCount-1] := '';
   end;  
 end;  
 
@@ -412,6 +415,19 @@ begin
     FWhere := 'L_CusPY like ''%%%s%%'' Or L_CusName like ''%%%s%%''';
     FWhere := Format(FWhere, [EditCustomer.Text, EditCustomer.Text]);
     QueryData(FWhere);
+  end;
+end;
+
+procedure TfFrameQueryBillTotal.N1Click(Sender: TObject);
+begin
+  inherited;
+  if ShowDateFilterForm(FTimeS, FTimeE, True) then
+  try
+    FJBWhere := '(L_OutFact>=''%s'' and L_OutFact <''%s'')';
+    FJBWhere := Format(FJBWhere, [DateTime2Str(FTimeS), DateTime2Str(FTimeE)]);
+    QueryData('');
+  finally
+    FJBWhere := '';
   end;
 end;
 

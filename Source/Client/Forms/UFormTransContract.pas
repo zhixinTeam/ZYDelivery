@@ -400,7 +400,7 @@ begin
   if not IsNumber(EditTValue.Text, True) then
   begin
     EditTValue.SetFocus;
-    ShowMsg('请填写有效的发货量', sHint); Exit;
+    ShowMsg('请填写有效的退货量', sHint); Exit;
   end;
 
   if FRID = '' then
@@ -434,11 +434,8 @@ begin
   nDPrice := StrToFloatDef(EditDPrice.Text, 0);
   nCPrice := StrToFloatDef(EditCPrice.Text, 0);
 
-  //nDrvMoney := Float2Float(nDPrice * nFVal, cPrecision, False);
-  nCusMoney := Float2Float(nCPrice * nFVal, cPrecision, True);
-  if FloatRelation(nTVal, 0, rtGreater, cPrecision) then
-       nDrvMoney := Float2Float(nDPrice * nTVal, cPrecision, True)
-  else nDrvMoney := Float2Float(nDPrice * nFVal, cPrecision, True);
+  nCusMoney := Float2Float(nCPrice * (nFVal-nTVal), cPrecision, True);
+  nDrvMoney := Float2Float(nDPrice * (nFVal-nTVal), cPrecision, True);
 
   nList := TStringList.Create;
   try
@@ -529,6 +526,7 @@ begin
 
         nMoney := FieldByName('A_BeginBalance').AsFloat +
                   FieldByName('A_InMoney').AsFloat +
+                  FieldByName('A_RefundMoney').AsFloat +
                   FieldByName('A_CreditLimit').AsFloat-
                   FieldByName('A_OutMoney').AsFloat -
                   FieldByName('A_CardUseMoney').AsFloat -

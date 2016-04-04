@@ -66,6 +66,9 @@ type
     cxLabel3: TcxLabel;
     dxLayoutControl1Item15: TdxLayoutItem;
     dxLayoutControl1Group6: TdxLayoutGroup;
+    cxCheckBox2: TcxCheckBox;
+    dxLayoutControl1Item16: TdxLayoutItem;
+    dxLayoutControl1Group7: TdxLayoutGroup;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
    
@@ -327,6 +330,10 @@ begin
     if cxCheckBox1.Checked then
           Values['IsValid'] := sFlag_Yes
     else  Values['IsValid'] := sFlag_No;
+
+    if cxCheckBox2.Checked then
+          Values['IsXuNi'] := sFlag_Yes
+    else  Values['IsXuNi'] := sFlag_No;
 
     Values['Area']          := EditArea.Text;
     Values['Project']       := EditProject.Text;

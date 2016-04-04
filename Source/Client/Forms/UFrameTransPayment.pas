@@ -89,14 +89,14 @@ begin
   
   Result := 'Select iom.*,sm.S_Name From $IOM iom ' +
             ' Left Join $SM sm On sm.S_ID=iom.M_SaleMan ' +
-            'Where M_Type=''$HK'' ';
+            'Where 1=1 ';
             
   if nWhere = '' then
        Result := Result + 'And (M_Date>=''$Start'' And M_Date <''$End'')'
   else Result := Result + 'And (' + nWhere + ')';
 
   Result := MacroValue(Result, [MI('$SM', sTable_Salesman),
-            MI('$IOM', sTable_TransInOutMoney), MI('$HK', sFlag_MoneyHuiKuan),
+            MI('$IOM', sTable_TransInOutMoney), 
             MI('$Start', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
 end;

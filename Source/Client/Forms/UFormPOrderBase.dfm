@@ -3,7 +3,7 @@ inherited fFormPOrderBase: TfFormPOrderBase
   Top = 210
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  ClientHeight = 332
+  ClientHeight = 401
   ClientWidth = 506
   OldCreateOrder = True
   OnClose = FormClose
@@ -15,7 +15,7 @@ inherited fFormPOrderBase: TfFormPOrderBase
     Left = 0
     Top = 0
     Width = 506
-    Height = 332
+    Height = 401
     Align = alClient
     TabOrder = 0
     TabStop = False
@@ -34,20 +34,20 @@ inherited fFormPOrderBase: TfFormPOrderBase
     end
     object BtnOK: TButton
       Left = 350
-      Top = 298
+      Top = 367
       Width = 70
       Height = 23
       Caption = #20445#23384
-      TabOrder = 13
+      TabOrder = 14
       OnClick = BtnOKClick
     end
     object BtnExit: TButton
       Left = 426
-      Top = 298
+      Top = 367
       Width = 69
       Height = 23
       Caption = #21462#28040
-      TabOrder = 14
+      TabOrder = 15
       OnClick = BtnExitClick
     end
     object EditSalesMan: TcxComboBox
@@ -115,8 +115,8 @@ inherited fFormPOrderBase: TfFormPOrderBase
       Width = 161
     end
     object cxCheckBox1: TcxCheckBox
-      Left = 11
-      Top = 298
+      Left = 24
+      Top = 288
       Caption = #30003#35831#21333#29983#25928
       ParentFont = False
       State = cbsChecked
@@ -156,6 +156,15 @@ inherited fFormPOrderBase: TfFormPOrderBase
       Top = 185
       Caption = #20801#35768#35746#21333#36229#21457#30340#26368#22823#33539#22260
       ParentFont = False
+    end
+    object cxCheckBox2: TcxCheckBox
+      Left = 24
+      Top = 315
+      Caption = #36164#28304#32508#21512#21033#29992'('#26159#65306#21246#36873#65307#21542#65306#19981#36873')'
+      ParentFont = False
+      State = cbsChecked
+      TabOrder = 13
+      Width = 121
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup
       ShowCaption = False
@@ -255,6 +264,21 @@ inherited fFormPOrderBase: TfFormPOrderBase
           ControlOptions.ShowBorder = False
         end
       end
+      object dxLayoutControl1Group7: TdxLayoutGroup
+        Caption = #38468#21152#20449#24687
+        object dxLayoutControl1Item1: TdxLayoutItem
+          Caption = 'cxCheckBox1'
+          ShowCaption = False
+          Control = cxCheckBox1
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayoutControl1Item16: TdxLayoutItem
+          Caption = 'cxCheckBox2'
+          ShowCaption = False
+          Control = cxCheckBox2
+          ControlOptions.ShowBorder = False
+        end
+      end
       object dxLayoutControl1Group2: TdxLayoutGroup
         AutoAligns = [aaHorizontal]
         AlignVert = avBottom
@@ -262,12 +286,6 @@ inherited fFormPOrderBase: TfFormPOrderBase
         Hidden = True
         LayoutDirection = ldHorizontal
         ShowBorder = False
-        object dxLayoutControl1Item1: TdxLayoutItem
-          Caption = 'cxCheckBox1'
-          ShowCaption = False
-          Control = cxCheckBox1
-          ControlOptions.ShowBorder = False
-        end
         object dxLayoutControl1Item10: TdxLayoutItem
           AutoAligns = [aaVertical]
           AlignHorz = ahRight

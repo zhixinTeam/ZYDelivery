@@ -102,11 +102,12 @@ end;
 function TfFrameSaleDetailQuery.InitFormDataSQL(const nWhere: string): string;
 begin
   EditDate.Text := Format('%s жа %s', [Date2Str(FStart), Date2Str(FEnd)]);
-  Result := 'Select *,(L_Value*L_Price) as L_Money From $Bill b ';
+  Result := 'Select b.*,(L_Value*L_Price) as L_Money,s.* ' +
+            'From $Bill b Left Join $SaleMan s on b.L_SaleID=s.S_ID ';
 
   if FJBWhere = '' then
   begin
-    Result := Result + 'Where (L_OutFact>=''$S'' and L_OutFact <''$End'')';
+    Result := Result + 'Where (L_OutFact>=''$ST'' and L_OutFact <''$End'')';
 
     if nWhere <> '' then
       Result := Result + ' And (' + nWhere + ')';
@@ -121,7 +122,8 @@ begin
   else Result := Result + ' And L_CusType=''$ZY''';
 
   Result := MacroValue(Result, [MI('$Bill', sTable_Bill), MI('$ZY', sFlag_CusZY),
-            MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
+            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1)),
+            MI('$SaleMan', sTable_Salesman)]);
   //xxxxx
 end;
 

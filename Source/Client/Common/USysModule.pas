@@ -39,6 +39,8 @@ uses
   UFrameQueryOrderDetail, UFrameOrderCard,  UFrameOrderDetail,
   UFormGetProvider, UFormGetMeterails, UFramePOrderBase, UFormPOrderBase,
   UFormGetPOrderBase, UFrameDeduct, UFormDeduct, UFrameQueryOrderTotal,
+  UFormRefund, UFormRefundNew, UFrameRefund, UFrameQueryRefundDetail,
+  UFrameQueryRefundTotal,
 
   UFormHYStock, UFormHYData, UFormHYRecord, UFormGetStockNo,
   UFrameHYStock, UFrameHYData, UFrameHYRecord
@@ -58,7 +60,7 @@ implementation
 
 uses
   UMgrChannel, UChannelChooser, UDataModule, USysDB, USysMAC, SysUtils,
-  USysLoger, USysConst;
+  USysLoger, USysConst, UMgrLEDDisp;
 
 //Desc: 初始化系统对象
 procedure InitSystemObject;
@@ -69,6 +71,11 @@ begin
 
   if not Assigned(gMemDataManager) then
     gMemDataManager := TMemDataManager.Create;
+
+  gDisplayManager.TempDir := gPath + 'Temp\';
+  gDisplayManager.LoadConfig(gPath + 'LEDDisp.xml');
+  gDisplayManager.StartDisplay;
+  //小屏显示
 
   gChannelManager := TChannelManager.Create;
   gChannelManager.ChannelMax := 20;
@@ -204,6 +211,10 @@ end;
 //Desc: 释放系统对象
 procedure FreeSystemObject;
 begin
+  gDisplayManager.Display('ShowBill', gDisplayManager.DefaultTxt);
+  Sleep(5000);
+  //xxxxx
+  gDisplayManager.StopDisplay;
   FreeAndNil(gSysLoger);
 end;
 

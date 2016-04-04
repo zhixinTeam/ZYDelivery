@@ -48,7 +48,6 @@ uses
   USysDB, USysConst;
 
 var
-  gCardUsed: string;
   gBills: TLadingBillItems;
   //提货单列表
 
@@ -68,16 +67,12 @@ begin
 
   while True do
   begin
-    if not ShowInputBox('请输入提货磁卡号:', '出厂', nStr) then Exit;
+    if not ShowInputBox('请输入磁卡号:', '出厂', nStr) then Exit;
     nStr := Trim(nStr);
 
     if nStr = '' then Continue;
 
-    gCardUsed := GetCardUsed(nStr);
-    if gCardUsed = sFlag_Provide then
-         nRet := GetPurchaseOrders(nStr, sFlag_TruckOut, gBills)
-    else nRet := GetLadingBills(nStr, sFlag_TruckOut, gBills);
-
+    nRet := GetPostItems(nStr, sFlag_TruckOut, gBills);
     if nRet and (Length(gBills)>0) then Break;
   end;
 
@@ -85,10 +80,10 @@ begin
   for nIdx:=Low(gBills) to High(gBills) do
   if gBills[nIdx].FNextStatus <> sFlag_TruckOut then
   begin
-    nStr := '※.单号:[ %s ] 状态:[ %-6s -> %-6s ]   ';
+    nStr := '※.车辆:[ %s ] 状态:[ %-6s -> %-6s ]   ';
     if nIdx < High(gBills) then nStr := nStr + #13#10;
 
-    nStr := Format(nStr, [gBills[nIdx].FID,
+    nStr := Format(nStr, [gBills[nIdx].FTruck,
             TruckStatusToStr(gBills[nIdx].FStatus),
             TruckStatusToStr(gBills[nIdx].FNextStatus)]);
     nHint := nHint + nStr;
@@ -150,7 +145,7 @@ begin
   for nIdx:=Low(gBills) to High(gBills) do
   with ListBill.Items.Add,gBills[nIdx] do
   begin
-    if gCardUsed = sFlag_Provide then
+    if FCardUse = sFlag_Provide then
          Caption := FZhiKa
     else Caption := FID;
 
@@ -174,22 +169,12 @@ begin
 
     with gBills[nIdx] do
     begin
-      if gCardUsed = sFlag_Provide then
-      begin
-        LayItem1.Caption := '采购单号:';
-        EditBill.Text := FZhiKa;
-
-        LoadOrderItemToMC(gBills[nIdx], ListInfo.Items, ListInfo.Delimiter);
-      end
-      else
-      begin
-        LayItem1.Caption := '交货单号:';
-        EditBill.Text := FID;
-
-        LoadBillItemToMC(gBills[nIdx], ListInfo.Items, ListInfo.Delimiter);
-      end;
-
-      EditCus.Text := FCusName;
+      LayItem1.Caption := '订单单号:';
+      EditCus.Text     := FCusName;
+      if FCardUse = sFlag_Provide then
+           EditBill.Text := FZhiKa
+      else EditBill.Text := FID;
+      LoadBillItemToMC(gBills[nIdx], ListInfo.Items, ListInfo.Delimiter);
     end;
   end;
 end;
@@ -215,9 +200,7 @@ end;
 procedure TfFormTruckOut.BtnOKClick(Sender: TObject);
 var nRet: Boolean;
 begin
-  if gCardUsed = sFlag_Provide then
-       nRet := SavePurchaseOrders(sFlag_TruckOut, gBills)
-  else nRet := SaveLadingBills(sFlag_TruckOut, gBills);
+  nRet := SavePostItems(sFlag_TruckOut, gBills);
 
   if nRet then
   begin

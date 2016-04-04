@@ -91,6 +91,7 @@ inherited fFormPurchasing: TfFormPurchasing
     object EditKZValue: TcxTextEdit [6]
       Left = 105
       Top = 463
+      ParentFont = False
       Properties.OnEditValueChanged = EditKZValuePropertiesEditValueChanged
       TabOrder = 4
       Width = 96
@@ -98,6 +99,7 @@ inherited fFormPurchasing: TfFormPurchasing
     object EditMemo: TcxTextEdit [7]
       Left = 264
       Top = 463
+      ParentFont = False
       Properties.OnEditValueChanged = EditKZValuePropertiesEditValueChanged
       TabOrder = 5
       Width = 176

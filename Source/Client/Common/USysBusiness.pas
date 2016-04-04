@@ -89,8 +89,6 @@ function LoadCardInfo(const nCard: string; const nList: TcxMCListBox;
 function GetZhikaValidMoney(nZhiKa: string; var nFixMoney: Boolean;
  nZKType: string='S'): Double;
 //订单可用金
-function GetCardValidMoney(nCard: string; var nFixMoney: Boolean): Double;
-//提货IC卡可用金额
 function GetCustomerValidMoney(nCID: string; const nLimit: Boolean = True;
  const nCredit: PDouble = nil): Double;
 //客户可用金额
@@ -147,6 +145,8 @@ function DeleteBill(const nBill: string): Boolean;
 //删除交货单
 function ChangeLadingTruckNo(const nBill,nTruck: string): Boolean;
 //更改提货车辆
+function ChangeLadingValue(const nBill,nValue: string): Boolean;
+//更改提货量
 function BillSaleAdjust(const nBill, nNewZK: string): Boolean;
 //交货单调拨
 function SetBillCard(const nBill,nTruck: string; nVerify: Boolean): Boolean;
@@ -157,16 +157,11 @@ function LogoutBillCard(const nCard: string): Boolean;
 //注销指定磁卡
 function SetTruckRFIDCard(nTruck: string; var nRFIDCard: string;
   var nIsUse: string; nOldCard: string=''): Boolean;
-
-function GetLadingBills(const nCard,nPost: string;
- var nBills: TLadingBillItems): Boolean;
-//获取指定岗位的交货单列表
 procedure LoadBillItemToMC(const nItem: TLadingBillItem; const nMC: TStrings;
  const nDelimiter: string);
 //载入单据信息到列表
-function SaveLadingBills(const nPost: string; const nData: TLadingBillItems;
- const nTunnel: PPTTunnelItem = nil): Boolean;
-//保存指定岗位的交货单
+function ReadBillInfo(var nBillInfo: string):Boolean;
+//读取提货单信息
 
 function GetTruckPoundItem(const nTruck: string;
  var nPoundData: TLadingBillItems): Boolean;
@@ -187,7 +182,7 @@ function SaveOrder(const nOrderData: string): string;
 //保存采购单
 function DeleteOrder(const nOrder: string): Boolean;
 //删除采购单
-function SaveOrderDtlAdd(const nOrderData: string; var nHint: string): Boolean;
+function SaveOrderDtlAdd(const nOrderData: string; var nHint: string): string;
 //function ChangeLadingTruckNo(const nBill,nTruck: string): Boolean;
 ////更改提货车辆
 function SetOrderCard(const nOrder,nTruck: string; nVerify: Boolean): Boolean;
@@ -199,14 +194,24 @@ function LogoutOrderCard(const nCard: string): Boolean;
 function ChangeOrderTruckNo(const nOrder,nTruck: string): Boolean;
 //修改车牌号
 
-function GetPurchaseOrders(const nCard,nPost: string;
- var nBills: TLadingBillItems): Boolean;
-//获取指定岗位的采购单列表
-function SavePurchaseOrders(const nPost: string; const nData: TLadingBillItems;
- const nTunnel: PPTTunnelItem = nil): Boolean;
-//保存指定岗位的采购单
-procedure LoadOrderItemToMC(const nItem: TLadingBillItem; const nMC: TStrings;
- const nDelimiter: string);
+function SaveRefund(const nRefundData: string): string;
+//保存退购单
+function DeleteRefund(const nRefund: string): Boolean;
+//删除退购单
+function ChangeRefundTruckNo(const nRefund,nTruck: string): Boolean;
+//更改退购车辆
+function SetRefundCard(const nRefund,nTruck: string; nVerify: Boolean): Boolean;
+//为退购单办理磁卡
+function SaveRefundCard(const nRefund, nCard: string): Boolean;
+//保存退购单磁卡
+
+function GetPostItems(const nCard,nPost: string;
+ var nItems: TLadingBillItems): Boolean;
+//获取岗位订单信息
+function SavePostItems(const nPost: string; const nItems: TLadingBillItems;
+ const nTunnel: PPTTunnelItem=nil): Boolean;
+//保存岗位订单信息
+
 procedure LoadOrderBaseToMC(const nItem: TStrings; const nMC: TStrings;
  const nDelimiter: string);
 
@@ -252,6 +257,8 @@ function PrintPoundReport(const nPound: string; nAsk: Boolean): Boolean;
 //打印榜单
 function PrintOrderReport(const nOrder: string; const nAsk: Boolean): Boolean;
 //打印材料单据
+function PrintRefundReport(nRefund: string; const nAsk: Boolean): Boolean;
+//打印退购单
 function PrintHuaYanReport(const nHID: string; const nAsk: Boolean): Boolean;
 function PrintHeGeReport(const nHID: string; const nAsk: Boolean): Boolean;
 //化验单,合格证
@@ -493,6 +500,40 @@ begin
     //自动称重时不提示
 
     nWorker := gBusinessWorkerManager.LockWorker(sCLI_BusinessPurchaseOrder);
+    //get worker
+    Result := nWorker.WorkActive(@nIn, nOut);
+
+    if not Result then
+      WriteLog(nOut.FBase.FErrDesc);
+    //xxxxx
+  finally
+    gBusinessWorkerManager.RelaseWorker(nWorker);
+  end;
+end;
+
+//Date: 2014-09-05
+//Parm: 命令;数据;参数;输出
+//Desc: 调用中间件上的销售退购单据对象
+function CallBusinessRefund(const nCmd: Integer; const nData,nExt: string;
+  const nOut: PWorkerBusinessCommand; const nWarn: Boolean = True): Boolean;
+var nIn: TWorkerBusinessCommand;
+    nWorker: TBusinessWorkerBase;
+begin
+  nWorker := nil;
+  try
+    nIn.FCommand := nCmd;
+    nIn.FData := nData;
+    nIn.FExtParam := nExt;
+
+    if nWarn then
+         nIn.FBase.FParam := ''
+    else nIn.FBase.FParam := sParam_NoHintOnError;
+
+    if gSysParam.FAutoPound and (not gSysParam.FIsManual) then
+      nIn.FBase.FParam := sParam_NoHintOnError;
+    //自动称重时不提示
+
+    nWorker := gBusinessWorkerManager.LockWorker(sCLI_BusinessRefund);
     //get worker
     Result := nWorker.WorkActive(@nIn, nOut);
 
@@ -1183,8 +1224,8 @@ begin
       nStr := Format(nStr, [nAccountTable, nVal, nCusID]);
       if FDM.ExecuteSQL(nStr) < 1 then
       begin
-        nStr := 'Insert Into %s(A_CID,A_Date) Values(''%s'', %s)';
-        nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow]);
+        nStr := 'Insert Into %s(A_CID,A_Date,A_CreditLimit) Values(''%s'', %s, %.2f)';
+        nStr := Format(nStr, [nAccountTable, nCusID, FDM.SQLServerNow, nVal]);
         FDM.ExecuteSQL(nStr);
       end;
     end else
@@ -1748,24 +1789,6 @@ begin
   end else Result := 0;
 end;
 
-//Date: 2015/12/6
-//Parm: 
-//Desc: 获取提货凭证卡余额
-function GetCardValidMoney(nCard: string; var nFixMoney: Boolean): Double;
-var nOut: TWorkerBusinessCommand;
-    nExt: string;
-begin
-  if nFixMoney then
-       nExt := sFlag_ICCardM
-  else nExt := sFlag_ICCardV;
-
-  if CallBusinessCommand(cBC_GetFLMoney, nCard, nExt, @nOut) then
-  begin
-    Result := StrToFloat(nOut.FData);
-    nFixMoney := nOut.FExtParam = sFlag_Yes;
-  end else Result := 0;
-end;
-
 //Desc: 获取nCID用户的可用金额,包含信用额或净额
 function GetCustomerValidMoney(nCID: string; const nLimit: Boolean;
  const nCredit: PDouble): Double;
@@ -1902,6 +1925,15 @@ begin
   Result := CallBusinessSaleBill(cBC_ModifyBillTruck, nBill, nTruck, @nOut);
 end;
 
+//Date: 2014-09-15
+//Parm: 交货单;新提货量
+//Desc: 修改nBill的提货量为nTruck.
+function ChangeLadingValue(const nBill,nValue: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessSaleBill(cBC_ModifyBillValue, nBill, nValue, @nOut);
+end;
+
 //Date: 2014-09-30
 //Parm: 交货单;订单
 //Desc: 将nBill调拨给nNewZK的客户
@@ -1995,58 +2027,59 @@ begin
   Result := CallBusinessSaleBill(cBC_LogoffCard, nCard, '', @nOut);
 end;
 
-//Date: 2014-09-17
-//Parm: 磁卡号;岗位;交货单列表
-//Desc: 获取nPost岗位上磁卡为nCard的交货单列表
-function GetLadingBills(const nCard,nPost: string;
- var nBills: TLadingBillItems): Boolean;
-var nOut: TWorkerBusinessCommand;
-begin
-  Result := CallBusinessSaleBill(cBC_GetPostBills, nCard, nPost, @nOut);
-  if Result then
-    AnalyseBillItems(nOut.FData, nBills);
-  //xxxxx
-end;
-
-//Date: 2014-09-18
-//Parm: 岗位;交货单列表;磅站通道
-//Desc: 保存nPost岗位上的交货单数据
-function SaveLadingBills(const nPost: string; const nData: TLadingBillItems;
- const nTunnel: PPTTunnelItem): Boolean;
-var nStr: string;
-    nIdx: Integer;
+//Date: 2016/3/29
+//Parm: 
+//Desc: 读取交货单信息
+function ReadBillInfo(var nBillInfo: string):Boolean;
+var nSQL: string;
     nList: TStrings;
-    nOut: TWorkerBusinessCommand;
 begin
-  nStr := CombineBillItmes(nData);
-  Result := CallBusinessSaleBill(cBC_SavePostBills, nStr, nPost, @nOut);
-  if (not Result) or (nOut.FData = '') then Exit;
+  Result := False;
+  if Length(nBillInfo) < 1 then Exit;
 
-  for nIdx:=Low(nData) to High(nData) do
-  with nData[nIdx] do
-  if FNextStatus = sFlag_TruckBFM then
+  nSQL := 'Select * From %s Where L_ID=''%s''';
+  nSQL := Format(nSQL, [sTable_Bill, nBillInfo]);
+
+  with FDM.QueryTemp(nSQL) do
   begin
-    PrintBillReport(FID, False);
-    Sleep(100);
-  end;
-  //打印散装榜单
-
-  if Assigned(nTunnel) then //过磅称重
-  begin
-    nList := TStringList.Create;
-    try
-      CapturePicture(nTunnel, nList);
-      //capture file
-
-      for nIdx:=0 to nList.Count - 1 do
-        SavePicture(nOut.FData, nData[0].FTruck,
-                                nData[0].FStockName, nList[nIdx]);
-      //save file
-    finally
-      nList.Free;
+    if RecordCount < 1 then
+    begin
+      nBillInfo := Format('提货单[ %s ]信息已丢失.', [nBillInfo]);
+      Exit;
     end;
-  end;
-end;
+
+    nList := TStringList.Create;
+
+    try
+      with nList do
+      begin
+        Clear;
+
+        Values['BillNO']    := FieldByName('L_ID').AsString;
+        Values['CusName']   := FieldByName('L_CusName').AsString;
+        Values['SaleMan']   := FieldByName('L_SaleMan').AsString;
+        Values['StockName'] := FieldByName('L_StockName').AsString;
+
+        Values['OutFact'] := FieldByName('L_OutFact').AsString;
+        Values['Truck']   := FieldByName('L_Truck').AsString;
+        Values['Value']   := FieldByName('L_Value').AsString;
+        Values['Man']     := FieldByName('L_Man').AsString;
+      end;
+
+      if Length(nList.Values['OutFact']) < 1 then
+      begin
+        nBillInfo := Format('提货单[ %s ]提货未完成,禁止退货.', [nBillInfo]);
+        Exit;
+      end;  
+
+      nBillInfo := PackerEncodeStr(nList.Text);
+      Result := True;
+    finally
+      FreeAndNil(nList);
+    end;
+  end;  
+end;  
+
 
 //------------------------------------------------------------------------------
 //Date: 2015/9/19
@@ -2086,11 +2119,14 @@ begin
   Result := CallBusinessPurchaseOrder(cBC_DeleteOrder, nOrder, '', @nOut);
 end;
 
-function SaveOrderDtlAdd(const nOrderData: string; var nHint: string): Boolean;
+function SaveOrderDtlAdd(const nOrderData: string; var nHint: string): String;
 var nOut: TWorkerBusinessCommand;
 begin
-  Result := CallBusinessPurchaseOrder(cBC_SaveOrderDtlAdd, nOrderData, '', @nOut);
-  if not Result then nHint := nOut.FData;
+  if CallBusinessPurchaseOrder(cBC_SaveOrderDtlAdd, nOrderData, '', @nOut) then
+       Result := nOut.FData
+  else Result := '';
+
+  nHint := nOut.FData;
 end;
 
 //Date: 2014-09-17
@@ -2145,41 +2181,155 @@ begin
   Result := CallBusinessPurchaseOrder(cBC_ModifyBillTruck, nOrder, nTruck, @nOut);
 end;
 
+//Date: 2014-09-15
+//Parm: 开单数据
+//Desc: 保存退购单,返回退购单号列表
+function SaveRefund(const nRefundData: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  if CallBusinessRefund(cBC_SaveRefund, nRefundData, '', @nOut) then
+       Result := nOut.FData
+  else Result := '';
+end;
+
+//Date: 2014-09-15
+//Parm: 退购单号
+//Desc: 删除nRefund单据
+function DeleteRefund(const nRefund: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessRefund(cBC_DeleteRefund, nRefund, '', @nOut);
+end;
+
+//Date: 2014-09-15
+//Parm: 退购单;新车牌
+//Desc: 修改nBill的车牌为nTruck.
+function ChangeRefundTruckNo(const nRefund,nTruck: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessRefund(cBC_ModifyRefundTruck, nRefund, nTruck, @nOut);
+end;
+
+//Date: 2014-09-17
+//Parm: 退购单号;磁卡
+//Desc: 绑定nBill.nCard
+function SaveRefundCard(const nRefund, nCard: string): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessRefund(cBC_SaveRefundCard, nRefund, nCard, @nOut);
+end;
+
+//Date: 2014-09-17
+//Parm: 退购单;车牌号;校验制卡开关
+//Desc: 为Refund退购单制卡
+function SetRefundCard(const nRefund,nTruck: string; nVerify: Boolean): Boolean;
+var nStr: string;
+    nP: TFormCommandParam;
+begin
+  Result := True;
+  if nVerify then
+  begin
+    nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+    nStr := Format(nStr, [sTable_SysDict, sFlag_SysParam, sFlag_ViaBillCard]);
+
+    with FDM.QueryTemp(nStr) do
+     if (RecordCount < 1) or (Fields[0].AsString <> sFlag_Yes) then Exit;
+    //no need do card
+  end;
+
+  nP.FParamA := nRefund;
+  nP.FParamB := nTruck;
+  nP.FParamC := sFlag_Refund;
+  CreateBaseFormItem(cFI_FormMakeCard, '', @nP);
+  Result := (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK);
+end;
+
 //Date: 2014-09-17
 //Parm: 磁卡号;岗位;交货单列表
 //Desc: 获取nPost岗位上磁卡为nCard的交货单列表
-function GetPurchaseOrders(const nCard,nPost: string;
- var nBills: TLadingBillItems): Boolean;
-var nOut: TWorkerBusinessCommand;
+function GetPostItems(const nCard,nPost: string;
+ var nItems: TLadingBillItems): Boolean;
+var nStr: string;
+    nIdx: Integer;
+    nOut: TWorkerBusinessCommand;
 begin
-  Result := CallBusinessPurchaseOrder(cBC_GetPostOrders, nCard, nPost, @nOut);
+  Result := False;
+  SetLength(nItems, 0);
+  nStr := GetCardUsed(nCard);
+
+  if nStr = sFlag_Sale then //销售
+  begin
+    Result := CallBusinessSaleBill(cBC_GetPostBills, nCard, nPost, @nOut);
+  end else
+
+  if nStr = sFlag_Provide then
+  begin
+    Result := CallBusinessPurchaseOrder(cBC_GetPostOrders, nCard, nPost, @nOut);
+  end else
+
+  if nStr = sFlag_Refund then
+  begin
+    Result := CallBusinessRefund(cBC_GetPostBills, nCard, nPost, @nOut);
+  end;
+
   if Result then
-    AnalyseBillItems(nOut.FData, nBills);
+    AnalyseBillItems(nOut.FData, nItems);
+    //xxxxx
+
+  for nIdx:=Low(nItems) to High(nItems) do
+    nItems[nIdx].FCardUse := nStr;
   //xxxxx
 end;
 
 //Date: 2014-09-18
 //Parm: 岗位;交货单列表;磅站通道
 //Desc: 保存nPost岗位上的交货单数据
-function SavePurchaseOrders(const nPost: string; const nData: TLadingBillItems;
+function SavePostItems(const nPost: string; const nItems: TLadingBillItems;
  const nTunnel: PPTTunnelItem): Boolean;
 var nStr: string;
     nIdx: Integer;
     nList: TStrings;
     nOut: TWorkerBusinessCommand;
 begin
-  nStr := CombineBillItmes(nData);
-  Result := CallBusinessPurchaseOrder(cBC_SavePostOrders, nStr, nPost, @nOut);
-  if (not Result) or (nOut.FData = '') then Exit;
+  Result := False;
+  if Length(nItems) < 1 then Exit;
+  nStr := nItems[0].FCardUse;
 
-  for nIdx:=Low(nData) to High(nData) do
-  with nData[nIdx] do
-  if nPost = sFlag_TruckBFM then
+  if nStr = sFlag_Sale then //销售
   begin
-    PrintOrderReport(FID, False);
-    Sleep(100);
+    nStr := CombineBillItmes(nItems);
+    Result := CallBusinessSaleBill(cBC_SavePostBills, nStr, nPost, @nOut);
+    if (not Result) or (nOut.FData = '') then Exit;
+  end else
+
+  if nStr = sFlag_Provide then
+  begin
+    nStr := CombineBillItmes(nItems);
+    Result := CallBusinessPurchaseOrder(cBC_SavePostOrders, nStr, nPost, @nOut); 
+    if (not Result) or (nOut.FData = '') then Exit;
+  end else
+
+  if nStr = sFlag_Refund then
+  begin
+    nStr := CombineBillItmes(nItems);
+    Result := CallBusinessRefund(cBC_SavePostBills, nStr, nPost, @nOut);
+	  if (not Result) or (nOut.FData = '') then Exit;
   end;
 
+  for nIdx:=Low(nItems) to High(nItems) do
+  with nItems[nIdx] do
+  if nPost = sFlag_TruckBFM then
+  begin
+    if FCardUse = sFlag_Sale then //销售
+      PrintBillReport(FID, False)
+    else if FCardUse = sFlag_Refund then //销售 退购
+      PrintRefundReport(FID, False)
+    else if FCardUse = sFlag_Provide then //销售
+      PrintOrderReport(FID, False);
+
+    Sleep(100);
+  end;
+  
   if Assigned(nTunnel) then //过磅称重
   begin
     nList := TStringList.Create;
@@ -2188,15 +2338,14 @@ begin
       //capture file
 
       for nIdx:=0 to nList.Count - 1 do
-        SavePicture(nOut.FData, nData[0].FTruck,
-                                nData[0].FStockName, nList[nIdx]);
+        SavePicture(nOut.FData, nItems[0].FTruck,
+                                nItems[0].FStockName, nList[nIdx]);
       //save file
     finally
       nList.Free;
     end;
   end;
 end;
-
 
 //Date: 2014-09-17
 //Parm: 交货单项; MCListBox;分隔符
@@ -2212,45 +2361,20 @@ begin
     Add(Format('当前状态:%s %s', [nDelimiter, TruckStatusToStr(FStatus)]));
 
     Add(Format('%s ', [nDelimiter]));
-    Add(Format('交货单号:%s %s', [nDelimiter, FId]));
-    Add(Format('交货数量:%s %.3f 吨', [nDelimiter, FValue]));
+    if FCardUse = sFlag_Provide then
+         Add(Format('订单编号:%s %s', [nDelimiter, FZhiKa]))
+    else Add(Format('订单编号:%s %s', [nDelimiter, FId]));
+
+    Add(Format('办理数量:%s %.3f 吨', [nDelimiter, FValue]));
     if FType = sFlag_Dai then nStr := '袋装' else nStr := '散装';
 
     Add(Format('品种类型:%s %s', [nDelimiter, nStr]));
     Add(Format('品种名称:%s %s', [nDelimiter, FStockName]));
     
     Add(Format('%s ', [nDelimiter]));
-    Add(Format('提货磁卡:%s %s', [nDelimiter, FCard]));
+    Add(Format('磁卡编号:%s %s', [nDelimiter, FCard]));
     Add(Format('单据类型:%s %s', [nDelimiter, BillTypeToStr(FIsVIP)]));
     Add(Format('客户名称:%s %s', [nDelimiter, FCusName]));
-  end;
-end;
-
-//Date: 2014-09-17
-//Parm: 交货单项; MCListBox;分隔符
-//Desc: 将nItem载入nMC
-procedure LoadOrderItemToMC(const nItem: TLadingBillItem; const nMC: TStrings;
- const nDelimiter: string);
-var nStr: string;
-begin
-  with nItem,nMC do
-  begin
-    Clear;
-    Add(Format('车牌号码:%s %s', [nDelimiter, FTruck]));
-    Add(Format('当前状态:%s %s', [nDelimiter, TruckStatusToStr(FStatus)]));
-
-    Add(Format('%s ', [nDelimiter]));
-    Add(Format('采购单号:%s %s', [nDelimiter, FZhiKa]));
-//    Add(Format('交货数量:%s %.3f 吨', [nDelimiter, FValue]));
-    if FType = sFlag_Dai then nStr := '袋装' else nStr := '散装';
-
-    Add(Format('品种类型:%s %s', [nDelimiter, nStr]));
-    Add(Format('品种名称:%s %s', [nDelimiter, FStockName]));
-    
-    Add(Format('%s ', [nDelimiter]));
-    Add(Format('送货磁卡:%s %s', [nDelimiter, FCard]));
-    Add(Format('单据类型:%s %s', [nDelimiter, BillTypeToStr(FIsVIP)]));
-    Add(Format('供 应 商:%s %s', [nDelimiter, FCusName]));
   end;
 end;
 
@@ -2607,6 +2731,58 @@ begin
   FDR.Dataset1.DataSet := FDM.SqlTemp;
   FDR.Dataset2.DataSet := FDM.SqlQuery;
   FDR.ShowReport;
+  Result := FDR.PrintSuccess;
+end;
+
+//Desc: 打印退购单
+function PrintRefundReport(nRefund: string; const nAsk: Boolean): Boolean;
+var nStr: string;
+    nParam: TReportParamItem;
+begin
+  Result := False;
+
+  if nAsk then
+  begin
+    nStr := '是否要打印提货单?';
+    if not QueryDlg(nStr, sAsk) then Exit;
+  end;
+
+  nRefund := AdjustListStrFormat(nRefund, '''', True, ',', False);
+  //添加引号
+  
+  nStr := 'Select * From %s r Left join %s c on r.F_StockNo=c.P_ID ' +
+          'Where F_ID In(%s)';
+  nStr := Format(nStr, [sTable_Refund, sTable_StockParam, nRefund]);
+  //xxxxx
+
+  if FDM.QueryTemp(nStr).RecordCount < 1 then
+  begin
+    nStr := '编号为[ %s ] 的记录已无效!!';
+    nStr := Format(nStr, [nRefund]);
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  if FDM.SqlTemp.FieldByName('F_Type').AsString = sFlag_San then
+       nStr := gPath + sReportDir + 'SRefund.fr3'
+  else nStr := gPath + sReportDir + 'DRefund.fr3';
+
+  if not FDR.LoadReportFile(nStr) then
+  begin
+    nStr := '无法正确加载报表文件';
+    ShowMsg(nStr, sHint); Exit;
+  end;
+
+  nParam.FName := 'UserName';
+  nParam.FValue := gSysParam.FUserID;
+  FDR.AddParamItem(nParam);
+
+  nParam.FName := 'Company';
+  nParam.FValue := gSysParam.FHintText;
+  FDR.AddParamItem(nParam);
+
+  FDR.Dataset1.DataSet := FDM.SqlTemp;
+  FDR.ShowReport;
+  //FDR.PrintReport;
   Result := FDR.PrintSuccess;
 end;
 

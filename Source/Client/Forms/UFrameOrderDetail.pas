@@ -121,12 +121,16 @@ begin
        Result := Result + ''
   else Result := Result + ' And D_ProType=''$ZY''';
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusXN) then
+       Result := Result + ''
+  else Result := Result + ' And D_XuNi=''$Yes''';
+
   if Check1.Checked then
        Result := MacroValue(Result, [MI('$OD', sTable_OrderDtlBak)])
   else Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl)]);
 
   Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),
-            MI('$OO', sTable_Order), MI('$ZY', sFlag_CusZYF),
+            MI('$OO', sTable_Order), MI('$ZY', sFlag_CusZY),MI('$Yes', sFlag_Yes),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
 end;

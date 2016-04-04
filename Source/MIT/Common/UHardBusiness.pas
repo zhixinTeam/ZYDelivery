@@ -130,6 +130,38 @@ begin
   end;
 end;
 
+//Date: 2016/3/30
+//Parm: 命令;数据;参数;输出
+//Desc: 调用中间件上的销售退购单据对象
+function CallBusinessRefund(const nCmd: Integer;
+  const nData, nExt: string; const nOut: PWorkerBusinessCommand): Boolean;
+var nStr: string;
+    nIn: TWorkerBusinessCommand;
+    nPacker: TBusinessPackerBase;
+    nWorker: TBusinessWorkerBase;
+begin
+  nPacker := nil;
+  nWorker := nil;
+  try
+    nIn.FCommand := nCmd;
+    nIn.FData := nData;
+    nIn.FExtParam := nExt;
+
+    nPacker := gBusinessPackerManager.LockPacker(sBus_BusinessCommand);
+    nStr := nPacker.PackIn(@nIn);
+    nWorker := gBusinessWorkerManager.LockWorker(sBus_BusinessRefund);
+    //get worker
+
+    Result := nWorker.WorkActive(nStr);
+    if Result then
+         nPacker.UnPackOut(nStr, nOut)
+    else nOut.FData := nStr;
+  finally
+    gBusinessPackerManager.RelasePacker(nPacker);
+    gBusinessWorkerManager.RelaseWorker(nWorker);
+  end;
+end;
+
 //Date: 2014-10-16
 //Parm: 命令;数据;参数;输出
 //Desc: 调用硬件守护上的业务对象
@@ -231,6 +263,34 @@ begin
     gSysLoger.AddLog(TBusinessWorkerManager, '业务对象', nOut.FData);
   //xxxxx
 end;
+
+//Date: 2016/3/30
+//Parm: 磁卡号;岗位;退购单列表
+//Desc: 获取nPost岗位上磁卡为nCard的退货单列表
+function GetRefundPostItems(const nCard,nPost: string;
+ var nData: TLadingBillItems): Boolean;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := CallBusinessRefund(cBC_GetPostBills, nCard, nPost, @nOut);
+  if Result then
+       AnalyseBillItems(nOut.FData, nData)
+  else gSysLoger.AddLog(TBusinessWorkerManager, '业务对象', nOut.FData);
+end;
+
+//Date: 2016/3/30
+//Parm: 岗位;采购单列表
+//Desc: 保存nPost岗位上的采购单数据
+function SaveRefundPostItems(const nPost: string; nData: TLadingBillItems): Boolean;
+var nStr: string;
+    nOut: TWorkerBusinessCommand;
+begin
+  nStr := CombineBillItmes(nData);
+  Result := CallBusinessRefund(cBC_SavePostBills, nStr, nPost, @nOut);
+
+  if not Result then
+    gSysLoger.AddLog(TBusinessWorkerManager, '业务对象', nOut.FData);
+  //xxxxx
+end;
                                                              
 //------------------------------------------------------------------------------
 //Date: 2013-07-21
@@ -260,12 +320,16 @@ begin
     Exit;
   end; //同读头同卡,在2分钟内不做二次进厂业务.
 
+  nRet := False;
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
 
   if nCardType = sFlag_Provide then
-        nRet := GetLadingOrders(nCard, sFlag_TruckIn, nTrucks)
-  else  nRet := GetLadingBills(nCard, sFlag_TruckIn, nTrucks);
+    nRet := GetLadingOrders(nCard, sFlag_TruckIn, nTrucks) else
+  if nCardType = sFlag_Refund then
+    nRet := GetRefundPostItems(nCard, sFlag_TruckIn, nTrucks) else
+  if nCardType = sFlag_Sale then
+    nRet := GetLadingBills(nCard, sFlag_TruckIn, nTrucks);
 
   if not nRet then
   begin
@@ -320,9 +384,16 @@ begin
     Exit;
   end;
 
-  if nCardType = sFlag_Provide then
+  //----------------------------------------------------------------------------
+  if nCardType <> sFlag_Sale then //非销售业务,不使用队列
   begin
-    if not SaveLadingOrders(sFlag_TruckIn, nTrucks) then
+    if nCardType = sFlag_Provide then
+      nRet := SaveLadingOrders(sFlag_TruckIn, nTrucks) else
+    if nCardType = sFlag_Refund then
+      nRet := SaveRefundPostItems(sFlag_TruckIn, nTrucks) else nRet := False;
+    //xxxxx
+
+    if not nRet then
     begin
       nStr := '车辆[ %s ]进厂放行失败.';
       nStr := Format(nStr, [nTrucks[0].FTruck]);
@@ -341,13 +412,13 @@ begin
       //抬杆
     end;
 
-    nStr := '原材料卡[%s]进厂抬杆成功';
-    nStr := Format(nStr, [nCard]);
+    nStr := '%s磁卡[%s]进厂抬杆成功';
+    nStr := Format(nStr, [BusinessToStr(nCardType), nCard]);
     WriteHardHelperLog(nStr, sPost_In);
     Exit;
   end;
-  //采购磁卡直接抬杆
 
+  //----------------------------------------------------------------------------
   nPLine := nil;
   //nPTruck := nil;
 
@@ -438,12 +509,16 @@ var nStr,nCardType: string;
     nOut: TWorkerBusinessCommand;
     {$ENDIF}
 begin
+  nRet := False;
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
 
   if nCardType = sFlag_Provide then
-        nRet := GetLadingOrders(nCard, sFlag_TruckOut, nTrucks)
-  else  nRet := GetLadingBills(nCard, sFlag_TruckOut, nTrucks);
+    nRet := GetLadingOrders(nCard, sFlag_TruckIn, nTrucks) else
+  if nCardType = sFlag_Refund then
+    nRet := GetRefundPostItems(nCard, sFlag_TruckIn, nTrucks) else
+  if nCardType = sFlag_Sale then
+    nRet := GetLadingBills(nCard, sFlag_TruckIn, nTrucks);
 
   if not nRet then
   begin
@@ -475,8 +550,11 @@ begin
   end;
 
   if nCardType = sFlag_Provide then
-        nRet := SaveLadingOrders(sFlag_TruckOut, nTrucks)
-  else  nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
+    nRet := SaveLadingOrders(sFlag_TruckOut, nTrucks) else
+  if nCardType = sFlag_Refund then
+    nRet := SaveRefundPostItems(sFlag_TruckOut, nTrucks) else
+  if nCardType = sFlag_Sale then
+    nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
 
   if not nRet then
   begin

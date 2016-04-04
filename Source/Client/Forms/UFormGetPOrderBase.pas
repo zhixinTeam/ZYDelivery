@@ -16,6 +16,7 @@ uses
 type
   TOrderBaseParam = record
     FID :string;
+    FXuNi: string;
 
     FProvID: string;
     FProvName: string;
@@ -56,8 +57,8 @@ type
     { Private declarations }
     FResults: TStrings;
     //查询类型
-    FOrderData: string;
-    //申请单信息
+    FOrderData,FPopedom: string;
+    //申请单信息,权限项
     FOrderItems: TOrderBaseParams;
     function QueryData(const nQueryType: string=''): Boolean;
     //查询数据
@@ -76,7 +77,7 @@ implementation
 
 uses
   IniFiles, ULibFun, UMgrControl, UFormCtrl, UFormBase, USysGrid, USysDB, 
-  USysConst, UDataModule, UBusinessPacker;
+  USysConst, UDataModule, UBusinessPacker, USysPopedom;
 
 class function TfFormGetPOrderBase.CreateForm(const nPopedom: string;
   const nParam: Pointer): TWinControl;
@@ -89,8 +90,10 @@ begin
 
   with TfFormGetPOrderBase.Create(Application) do
   begin
-    Caption := '选择申请单';
     FResults.Clear;
+    FPopedom:=nPopedom;
+    Caption := '选择申请单';
+
     SetLength(FOrderItems, 0);
 
     nP.FCommand := cCmd_ModalResult;
@@ -165,9 +168,12 @@ begin
             'or (B_StockNo  like ''%%$QUERY%%'')) ';
   end else Exit;
 
-  nStr := MacroValue(nStr , [MI('$TB', sTable_OrderBase),
-          MI('$QUERY', nQuery)]);
+  if gPopedomManager.HasPopedom(FPopedom, sPopedom_ViewCusFZY) then
+       nStr := nStr + ''
+  else nStr := nStr + ' And B_ProType=''$ZY''';
 
+  nStr := MacroValue(nStr , [MI('$TB', sTable_OrderBase),
+          MI('$ZY', sFlag_CusZY), MI('$QUERY', nQuery)]);  
 
   with FDM.QueryTemp(nStr) do
   if RecordCount > 0 then
@@ -189,6 +195,7 @@ begin
       FStockNO  := FieldByName('B_StockNO').AsString;
       FStockName:= FieldByName('B_StockName').AsString;
       FArea     := FieldByName('B_Area').AsString;
+      FXuNi     := FieldByName('B_XuNi').AsString;
       FProject  := FieldByName('B_Project').AsString;
       if FieldByName('B_Value').AsFloat>0 then
            FRestValue:= Format('%.2f', [FieldByName('B_MaxValue').AsFloat])
@@ -246,6 +253,7 @@ begin
         Values['SQ_StockNO']  := FStockNO;
         Values['SQ_StockName']:= FStockName;
         Values['SQ_Area']     := FArea;
+        Values['SQ_XuNi']     := FXuNi;
         Values['SQ_Project']  := FProject;
         Values['SQ_RestValue']:= FRestValue;
         Break;

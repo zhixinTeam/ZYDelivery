@@ -70,7 +70,7 @@ begin
     nStr := Trim(nStr);
 
     if nStr = '' then Continue;
-    if GetLadingBills(nStr, sFlag_TruckZT, gBills) then Break;
+    if GetPostItems(nStr, sFlag_TruckZT, gBills) then Break;
   end;
 
   nInt := 0;
@@ -205,7 +205,7 @@ end;
 
 procedure TfFormLadingDai.BtnOKClick(Sender: TObject);
 begin
-  if SaveLadingBills(sFlag_TruckZT, gBills) then
+  if SavePostItems(sFlag_TruckZT, gBills) then
   begin
     ShowMsg('袋装提货成功', sHint);
     ModalResult := mrOk;

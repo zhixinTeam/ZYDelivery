@@ -1,8 +1,8 @@
 {*******************************************************************************
-  作者: fendou116688@163.com 2015/8/10
-  描述: 采购验收明细
+  作者: fendou116688@163.com 2016-04-2
+  描述: 退购明细
 *******************************************************************************}
-unit UFrameQueryOrderDetail;
+unit UFrameQueryRefundDetail;
 
 interface
 
@@ -17,7 +17,7 @@ uses
   ComCtrls, ToolWin;
 
 type
-  TfFrameOrderDetailQuery = class(TfFrameNormal)
+  TfFrameRefundDetailQuery = class(TfFrameNormal)
     cxtxtdt1: TcxTextEdit;
     dxLayout1Item5: TdxLayoutItem;
     EditDate: TcxButtonEdit;
@@ -36,19 +36,18 @@ type
     dxLayout1Item4: TdxLayoutItem;
     EditBill: TcxButtonEdit;
     dxLayout1Item7: TdxLayoutItem;
-    N1: TMenuItem;
-    N2: TMenuItem;
+    EditCard: TcxButtonEdit;
+    dxLayout1Item9: TdxLayoutItem;
+    EditSaleMan: TcxButtonEdit;
+    dxLayout1Item10: TdxLayoutItem;
     N3: TMenuItem;
     N4: TMenuItem;
-    N5: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure mniN1Click(Sender: TObject);
-    procedure N2Click(Sender: TObject);
     procedure N3Click(Sender: TObject);
-    procedure N4Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -59,6 +58,7 @@ type
     //交班条件 
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
+    function FilterColumnField: string; override;
     function InitFormDataSQL(const nWhere: string): string; override;
     //查询SQL
   public
@@ -71,14 +71,14 @@ implementation
 {$R *.dfm}
 uses
   IniFiles, ULibFun, UMgrControl, UFormDateFilter, USysPopedom, USysBusiness,
-  UBusinessConst, USysConst, USysDB;
+  UBusinessConst, USysConst, USysDB, UDataModule, UFormInputbox;
 
-class function TfFrameOrderDetailQuery.FrameID: integer;
+class function TfFrameRefundDetailQuery.FrameID: integer;
 begin
-  Result := cFI_FrameOrderDetailQuery;
+  Result := cFI_FrameRefundDetailQuery;
 end;
 
-procedure TfFrameOrderDetailQuery.OnCreateFrame;
+procedure TfFrameRefundDetailQuery.OnCreateFrame;
 begin
   inherited;
   FTimeS := Str2DateTime(Date2Str(Now) + ' 00:00:00');
@@ -88,22 +88,21 @@ begin
   InitDateRange(Name, FStart, FEnd);
 end;
 
-procedure TfFrameOrderDetailQuery.OnDestroyFrame;
+procedure TfFrameRefundDetailQuery.OnDestroyFrame;
 begin
   SaveDateRange(Name, FStart, FEnd);
   inherited;
 end;
 
-function TfFrameOrderDetailQuery.InitFormDataSQL(const nWhere: string): string;
+function TfFrameRefundDetailQuery.InitFormDataSQL(const nWhere: string): string;
 begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
-  Result := 'Select *,(D_MValue-D_PValue-D_KZValue) as D_NetWeight ' +
-            'From $OD od Inner Join $OO oo on od.D_OID=oo.O_ID ';
-  //xxxxxx
+  Result := 'Select r.*,(F_Value*F_Price) as F_Money,s.* ' +
+            'From $Refund r Left Join $SaleMan s on r.F_SaleID=s.S_ID ';
 
   if FJBWhere = '' then
   begin
-    Result := Result + 'Where (D_PDate>=''$S'' and D_PDate <''$End'') And D_MDate Is Not NULL';
+    Result := Result + 'Where (F_OutFact>=''$ST'' and F_OutFact <''$End'')';
 
     if nWhere <> '' then
       Result := Result + ' And (' + nWhere + ')';
@@ -113,38 +112,57 @@ begin
     Result := Result + ' Where (' + FJBWhere + ')';
   end;
 
-  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
-       Result := Result + ''
-  else Result := Result + ' And D_ProType=''$ZY''';
-
-  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusXN) then
-       Result := Result + ''
-  else Result := Result + ' And D_XuNi=''$Yes''';
-
-  Result := MacroValue(Result, [MI('$OD', sTable_OrderDtl),MI('$OO', sTable_Order),
-            MI('$ZY', sFlag_CusZY), MI('$S', Date2Str(FStart)),
-            MI('$Yes', sFlag_Yes), MI('$End', Date2Str(FEnd + 1))]);
+  Result := MacroValue(Result, [MI('$Refund', sTable_Refund),
+            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1)),
+            MI('$SaleMan', sTable_Salesman)]);
   //xxxxx
 end;
 
+//Desc: 过滤字段
+function TfFrameRefundDetailQuery.FilterColumnField: string;
+begin
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewPrice) then
+       Result := ''
+  else Result := 'F_Price;F_Money';
+end;
 
 //Desc: 日期筛选
-procedure TfFrameOrderDetailQuery.EditDatePropertiesButtonClick(Sender: TObject;
+procedure TfFrameRefundDetailQuery.EditDatePropertiesButtonClick(Sender: TObject;
   AButtonIndex: Integer);
 begin
   if ShowDateFilterForm(FStart, FEnd) then InitFormData(FWhere);
 end;
 
 //Desc: 执行查询
-procedure TfFrameOrderDetailQuery.EditTruckPropertiesButtonClick(Sender: TObject;
+procedure TfFrameRefundDetailQuery.EditTruckPropertiesButtonClick(Sender: TObject;
   AButtonIndex: Integer);
 begin
+  if Sender = EditCard then
+  begin
+    EditCard.Text := Trim(EditCard.Text);
+    if EditCard.Text = '' then Exit;
+
+    FWhere := 'F_LID like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditCard.Text]);
+    InitFormData(FWhere);
+  end else
+
+  if Sender = EditSaleMan then
+  begin
+    EditSaleMan.Text := Trim(EditSaleMan.Text);
+    if EditSaleMan.Text = '' then Exit;
+
+    FWhere := 'F_SaleMan like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditSaleMan.Text]);
+    InitFormData(FWhere);
+  end else
+
   if Sender = EditCustomer then
   begin
     EditCustomer.Text := Trim(EditCustomer.Text);
     if EditCustomer.Text = '' then Exit;
 
-    FWhere := 'D_ProPY like ''%%%s%%'' Or D_ProName like ''%%%s%%''';
+    FWhere := 'F_CusPY like ''%%%s%%'' Or F_CusName like ''%%%s%%''';
     FWhere := Format(FWhere, [EditCustomer.Text, EditCustomer.Text]);
     InitFormData(FWhere);
   end else
@@ -154,7 +172,7 @@ begin
     EditTruck.Text := Trim(EditTruck.Text);
     if EditTruck.Text = '' then Exit;
 
-    FWhere := 'oo.O_Truck like ''%%%s%%''';
+    FWhere := 'F_Truck like ''%%%s%%''';
     FWhere := Format(FWhere, [EditTruck.Text]);
     InitFormData(FWhere);
   end;
@@ -164,68 +182,35 @@ begin
     EditBill.Text := Trim(EditBill.Text);
     if EditBill.Text = '' then Exit;
 
-    FWhere := 'od.D_ID like ''%%%s%%''';
+    FWhere := 'F_ID like ''%%%s%%''';
     FWhere := Format(FWhere, [EditBill.Text]);
     InitFormData(FWhere);
   end;
 end;
 
 //Desc: 交接班查询
-procedure TfFrameOrderDetailQuery.mniN1Click(Sender: TObject);
+procedure TfFrameRefundDetailQuery.mniN1Click(Sender: TObject);
 begin
   if ShowDateFilterForm(FTimeS, FTimeE, True) then
   try
-    FJBWhere := '(D_OutFact>=''%s'' and D_OutFact <''%s'')';
+    FJBWhere := '(F_OutFact>=''%s'' and F_OutFact <''%s'')';
     FJBWhere := Format(FJBWhere, [DateTime2Str(FTimeS), DateTime2Str(FTimeE)]);
     InitFormData('');
   finally
     FJBWhere := '';
   end;
 end;
-//------------------------------------------------------------------------------
-//Date: 2015/8/13
-//Parm: 
-//Desc: 查询未完成
-procedure TfFrameOrderDetailQuery.N2Click(Sender: TObject);
-begin
-  inherited;
-  try
-    FJBWhere := '(D_OutFact Is Null And D_DStatus<>''%s'')';
-    FJBWhere := Format(FJBWhere, [sFlag_OrderDel]);
-    InitFormData('');
-  finally
-    FJBWhere := '';
-  end;
-end;
-//------------------------------------------------------------------------------
-//Date: 2015/8/13
-//Parm: 
-//Desc: 删除未完成记录
-procedure TfFrameOrderDetailQuery.N3Click(Sender: TObject);
-var nStr: string;
-begin
-  inherited;
-  if cxView1.DataController.GetSelectedCount > 0 then
-  begin
-    nStr := SQLQuery.FieldByName('D_ID').AsString;
-    if not QueryDlg('确认删除该订单么?', sWarn) then Exit;
 
-    //nSQL := MacroValue()
-  end;
-
-  N2.Click;
-end;
-
-procedure TfFrameOrderDetailQuery.N4Click(Sender: TObject);
+procedure TfFrameRefundDetailQuery.N3Click(Sender: TObject);
 begin
   inherited;
   if ShowDateFilterForm(FTimeS, FTimeE, True) then
   try
-    if Sender = N4 then   //过空时间
-       FJBWhere := '(D_PDate>=''%s'' and P_PDate <''%s'')'
+    if Sender = N3 then   //过重时间
+       FJBWhere := '(F_MDate>=''%s'' and F_MDate <''%s'')'
     else
-    if Sender = N5 then   //进厂时间
-      FJBWhere := '(D_InTime>=''%s'' and D_InTime <''%s'')';
+    if Sender = N4 then   //开单时间
+      FJBWhere := '(F_Date>=''%s'' and F_Date <''%s'')';
 
     FJBWhere := Format(FJBWhere, [DateTime2Str(FTimeS), DateTime2Str(FTimeE)]);
     InitFormData('');
@@ -235,5 +220,5 @@ begin
 end;
 
 initialization
-  gControlManager.RegCtrl(TfFrameOrderDetailQuery, TfFrameOrderDetailQuery.FrameID);
+  gControlManager.RegCtrl(TfFrameRefundDetailQuery, TfFrameRefundDetailQuery.FrameID);
 end.
