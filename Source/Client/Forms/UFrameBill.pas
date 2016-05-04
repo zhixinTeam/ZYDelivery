@@ -470,7 +470,7 @@ begin
       Exit;
     end;
 
-    if ChangeLadingTruckNo(SQLQuery.FieldByName('L_ID').AsString, nValue) then
+    if ChangeLadingValue(SQLQuery.FieldByName('L_ID').AsString, nValue) then
      ShowMsg('修改提货量成功!', sHint);
   end;
 end;

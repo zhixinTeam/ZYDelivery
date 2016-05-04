@@ -8,17 +8,17 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, UFrameNormal, cxGraphics, cxControls, cxLookAndFeels,
-  cxLookAndFeelPainters, cxStyles, cxCustomData, cxFilter, cxData,
-  cxDataStorage, cxEdit, DB, cxDBData, cxContainer, Menus, dxLayoutControl,
-  cxTextEdit, cxMaskEdit, cxButtonEdit, ADODB, cxLabel, UBitmapPanel,
-  cxSplitter, cxGridLevel, cxClasses, cxGridCustomView,
+  Dialogs, UFrameNormal, cxStyles, cxCustomData, cxGraphics, cxFilter,
+  cxData, cxDataStorage, cxEdit, DB, cxDBData, ADODB, cxContainer, cxLabel,
+  dxLayoutControl, cxGridLevel, cxClasses, cxControls, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
-  ComCtrls, ToolWin, cxCheckBox;
+  ComCtrls, ToolWin, cxTextEdit, cxMaskEdit, cxButtonEdit, Menus,
+  UBitmapPanel, cxSplitter, cxLookAndFeels, cxLookAndFeelPainters,
+  cxCheckBox;
 
 type
   TfFramePOrderBase = class(TfFrameNormal)
-    EditID: TcxButtonEdit;
+    EditCustomer: TcxButtonEdit;
     dxLayout1Item1: TdxLayoutItem;
     EditName: TcxButtonEdit;
     dxLayout1Item2: TdxLayoutItem;
@@ -26,35 +26,34 @@ type
     dxLayout1Item3: TdxLayoutItem;
     cxTextEdit2: TcxTextEdit;
     dxLayout1Item4: TdxLayoutItem;
-    cxTextEdit4: TcxTextEdit;
-    dxLayout1Item6: TdxLayoutItem;
-    cxTextEdit3: TcxTextEdit;
-    dxLayout1Item5: TdxLayoutItem;
-    EditCustomer: TcxButtonEdit;
+    EditDate: TcxButtonEdit;
     dxLayout1Item7: TdxLayoutItem;
     PMenu1: TPopupMenu;
-    EditDate: TcxButtonEdit;
-    dxLayout1Item8: TdxLayoutItem;
     N1: TMenuItem;
     N2: TMenuItem;
-    Check1: TcxCheckBox;
-    procedure EditDatePropertiesButtonClick(Sender: TObject;
-      AButtonIndex: Integer);
+    EditID: TcxButtonEdit;
+    dxLayout1Item8: TdxLayoutItem;
+    Edit1: TcxTextEdit;
+    dxLayout1Item9: TdxLayoutItem;
+    dxLayout1Item10: TdxLayoutItem;
+    CheckDelete: TcxCheckBox;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnAddClick(Sender: TObject);
     procedure BtnEditClick(Sender: TObject);
     procedure BtnDelClick(Sender: TObject);
-    procedure BtnExitClick(Sender: TObject);
-    procedure cxView1DblClick(Sender: TObject);
-    procedure Check1Click(Sender: TObject);
+    procedure EditDatePropertiesButtonClick(Sender: TObject;
+      AButtonIndex: Integer);
     procedure N1Click(Sender: TObject);
-  private
-    { Private declarations }
+    procedure CheckDeleteClick(Sender: TObject);
+    procedure cxView1DblClick(Sender: TObject);
   protected
     FStart,FEnd: TDate;
+    //日期区间
     FTimeS,FTimeE: TDate;
-    //时间区间
+    //时间段查询
+    FUseDate: Boolean;
+    //使用区间
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
     function InitFormDataSQL(const nWhere: string): string; override;
@@ -68,8 +67,8 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl,UDataModule, UFrameBase, UFormBase, USysBusiness,
-  USysConst, USysDB, UFormDateFilter, UFormInputbox;
+  ULibFun, UMgrControl, UDataModule, UFormBase, UFormInputbox, USysPopedom,
+  USysConst, USysDB, USysBusiness, UFormDateFilter;
 
 //------------------------------------------------------------------------------
 class function TfFramePOrderBase.FrameID: integer;
@@ -80,9 +79,10 @@ end;
 procedure TfFramePOrderBase.OnCreateFrame;
 begin
   inherited;
+  FUseDate := True;
   FTimeS := Str2DateTime(Date2Str(Now) + ' 00:00:00');
   FTimeE := Str2DateTime(Date2Str(Now) + ' 00:00:00');
-
+  
   InitDateRange(Name, FStart, FEnd);
 end;
 
@@ -104,7 +104,7 @@ begin
        Result := Result + ' Where (B_Date >=''$ST'' and B_Date<''$End'') '
   else Result := Result + ' Where (' + nWhere + ')';
 
-  if Check1.Checked then
+  if CheckDelete.Checked then
        Result := MacroValue(Result, [MI('$OrderBase', sTable_OrderBaseBak)])
   else Result := MacroValue(Result, [MI('$OrderBase', sTable_OrderBase)]);
 
@@ -113,19 +113,55 @@ begin
   //xxxxx
 end;
 
-//Desc: 关闭
-procedure TfFramePOrderBase.BtnExitClick(Sender: TObject);
-var nParam: TFormCommandParam;
+//Desc: 执行查询
+procedure TfFramePOrderBase.EditIDPropertiesButtonClick(Sender: TObject;
+  AButtonIndex: Integer);
 begin
-  if not IsBusy then
+  if Sender = EditID then
   begin
-    nParam.FCommand := cCmd_FormClose;
-    CreateBaseFormItem(cFI_FormOrderBase, '', @nParam); Close;
-  end;
+    EditID.Text := Trim(EditID.Text);
+    if EditID.Text = '' then Exit;
+
+    FWhere := 'B_ID like ''%' + EditID.Text + '%''';
+    InitFormData(FWhere);
+  end else
+
+  if Sender = EditName then
+  begin
+    EditName.Text := Trim(EditName.Text);
+    if EditName.Text = '' then Exit;
+
+    FWhere := 'B_SaleMan like ''%%%s%%'' Or B_SaleMan like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditName.Text, EditName.Text]);
+    InitFormData(FWhere);  
+  end else
+
+  if Sender = EditCustomer then
+  begin
+    EditCustomer.Text := Trim(EditCustomer.Text);
+    if EditCustomer.Text = '' then Exit;
+
+    FWhere := 'B_ProPY like ''%%%s%%'' Or B_ProName like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditCustomer.Text, EditCustomer.Text]);
+    InitFormData(FWhere);
+  end
+end;
+
+//Desc: 日期筛选
+procedure TfFramePOrderBase.EditDatePropertiesButtonClick(Sender: TObject;
+  AButtonIndex: Integer);
+begin
+  if ShowDateFilterForm(FStart, FEnd) then InitFormData('');
+end;
+
+//Desc: 查询删除
+procedure TfFramePOrderBase.CheckDeleteClick(Sender: TObject);
+begin
+  InitFormData('');
 end;
 
 //------------------------------------------------------------------------------
-//Desc: 添加
+//Desc: 开申请单
 procedure TfFramePOrderBase.BtnAddClick(Sender: TObject);
 var nParam: TFormCommandParam;
 begin
@@ -138,7 +174,7 @@ begin
   end;
 end;
 
-//Desc: 修改
+//Desc: 修改申请单
 procedure TfFramePOrderBase.BtnEditClick(Sender: TObject);
 var nParam: TFormCommandParam;
 begin
@@ -174,65 +210,7 @@ begin
   InitFormData('');
 end;
 
-//Desc: 查看内容
-procedure TfFramePOrderBase.cxView1DblClick(Sender: TObject);
-var nParam: TFormCommandParam;
-begin
-  if cxView1.DataController.GetSelectedCount > 0 then
-  begin
-    nParam.FCommand := cCmd_ViewData;
-    nParam.FParamA := SQLQuery.FieldByName('B_ID').AsString;
-    //CreateBaseFormItem(cFI_FormOrderBase, PopedomItem, @nParam);
-  end;
-end;
-
-//Desc: 日期筛选
-procedure TfFramePOrderBase.EditDatePropertiesButtonClick(Sender: TObject;
-  AButtonIndex: Integer);
-begin
-  if ShowDateFilterForm(FStart, FEnd) then InitFormData(FWhere);
-end;
-
-//Desc: 执行查询
-procedure TfFramePOrderBase.EditIDPropertiesButtonClick(Sender: TObject;
-  AButtonIndex: Integer);
-begin
-  if Sender = EditID then
-  begin
-    EditID.Text := Trim(EditID.Text);
-    if EditID.Text = '' then Exit;
-
-    FWhere := 'B_ID like ''%' + EditID.Text + '%''';
-    InitFormData(FWhere);
-  end else
-
-  if Sender = EditName then
-  begin
-    EditName.Text := Trim(EditName.Text);
-    if EditName.Text = '' then Exit;
-
-    FWhere := 'B_SaleMan like ''%%%s%%'' Or B_SaleMan like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditName.Text, EditName.Text]);
-    InitFormData(FWhere);
-  end else
-
-  if Sender = EditCustomer then
-  begin
-    EditCustomer.Text := Trim(EditCustomer.Text);
-    if EditCustomer.Text = '' then Exit;
-
-    FWhere := 'B_ProPY like ''%%%s%%'' Or B_ProName like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditCustomer.Text, EditCustomer.Text]);
-    InitFormData(FWhere);
-  end;
-end;
-
-procedure TfFramePOrderBase.Check1Click(Sender: TObject);
-begin
-  inherited;
-  InitFormData('');
-end;
-
+//Desc: 修改订单类型
 procedure TfFramePOrderBase.N1Click(Sender: TObject);
 var nXuNi, nStr, nBID: String;
 begin
@@ -263,10 +241,18 @@ begin
       FDM.ADOConn.RollbackTrans;
       raise;
     end;
-
   end;
+end;
 
-
+procedure TfFramePOrderBase.cxView1DblClick(Sender: TObject);
+var nParam: TFormCommandParam;
+begin
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nParam.FCommand := cCmd_ViewData;
+    nParam.FParamA := SQLQuery.FieldByName('B_ID').AsString;
+    CreateBaseFormItem(cFI_FormOrderBase, PopedomItem, @nParam);
+  end;
 end;
 
 initialization

@@ -637,10 +637,22 @@ end;
 function TWorkerBusinessCommander.GetSerailIDByDate(var nData: string): Boolean;
 var nInt: Integer;
     nStr,nP,nB: string;
+    nOut: TWorkerBusinessCommand;
 begin
   Result := False;
   FListA.Text := FIn.FData;
   //param list
+
+  if Str2Date(FListA.Values['DateTime']) = Date then
+  begin
+    Result := CallMe(cBC_GetSerialNO, FListC.Text, sFlag_Yes, @nOut);
+
+    if not Result then
+         nData      := nOut.FData
+    else FOut.FData := nOut.FData;
+    Exit;
+  end;  
+  //判断如果是日期属于当天，则根据标准规则进行生成
 
   nStr := 'Select B_Prefix,B_IDLen From %s ' +
           'Where B_Group=''%s'' And B_Object=''%s''';
@@ -2028,14 +2040,27 @@ begin
   FListA.Clear;
   //SQL List
 
-  if FIn.FExtParam = sFlag_BillNew then   //新增
-  begin
+  nDBWorker := nil;
+  try
+    nJdx := -1;
     for nIdx:=Low(nItems) to High(nItems) do
     with nItems[nIdx] do
-    try
-      nDBWorker := nil;
+    begin
       if FZKType <> sFlag_BillMY then Continue;
 
+      nJdx := nIdx;
+      Break;
+    end;
+    //获取贸易公司订单索引
+
+    if nJdx<Low(nItems) then
+    begin
+      nData := '不包含贸易公司订单!';
+      Exit;
+    end;
+
+    with nItems[nJdx] do
+    begin
       nSQL := 'Select * From $MYZhiKa Where M_ID=''$ID''';
       nSQL := MacroValue(nSQL, [MI('$MYZhiKa', sTable_MYZhiKa),
               MI('$ID', FZhiKa)]);
@@ -2067,320 +2092,356 @@ begin
           Exit;
         end;
 
-        nStr := Fields[0].AsString;
-        if (nDBID<>'') and (nStr<>nDBID) then
-        begin
-          nData := '不同贸易公司禁止拼单,详情如下:' + #13#10 +
-                   '提货单号:[%s] 贸易公司编号:[%s]' + #13#10 +
-                   '提货单号:[%s] 贸易公司编号:[%s]';
-          nData := Format(nData, [nItems[nIdx-1].FID, nDBID,
-                   FID, nStr]);
-
-          Exit;
-        end;
-
-        nDBID := nStr;
+        nDBID := Fields[0].AsString;
       end;
 
-      nSQL := 'Select zk.*,zd.*,' +
-              'ht.C_Area,cus.C_Type,cus.C_Name,cus.C_PY,sm.S_Name ' +
-              'From $ZK zk ' +
-              ' Left Join $HT ht On ht.C_ID=zk.Z_CID ' +
-              ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer ' +
-              ' Left Join $SM sm On sm.S_ID=Z_SaleMan ' +
-              ' Left Join $ZD zd On zd.D_ZID=Z_ID ' +
-              'Where Z_ID=''$ZID'' And D_StockNo=''$SN''';
-
-      nSQL := MacroValue(nSQL, [MI('$ZK', sTable_ZhiKa),
-              MI('$HT', sTable_SaleContract),
-              MI('$Cus', sTable_Customer),
-              MI('$SM', sTable_Salesman),
-              MI('$ZD', sTable_ZhiKaDtl),
-              MI('$SN', FStockNo),
-              MI('$ZID', nMYZK)]);
-      //订单信息
+      nSQL := 'Select * From %s Where Z_ID=''%s''';
+      nSQL := Format(nSQL, [sTable_ZhiKa, nMYZK]);
 
       with gDBConnManager.SQLQuery(nSQL, nDBWorker, nDBID) do
       begin
         if RecordCount < 1 then
         begin
-          nData := '贸易公司中,订单编号 [%s] 或者 物料 [%s] 不存在.';
-          nData := Format(nData, [nMYZK, FStockName]);
-          Exit;
-        end;
-
-        if FieldByName('Z_Freeze').AsString = sFlag_Yes then
-        begin
-          nData := Format('订单[ %s ]已被管理员冻结.', [nMYZK]);
-          Exit;
-        end;
-
-        if FieldByName('Z_InValid').AsString = sFlag_Yes then
-        begin
-          nData := Format('订单[ %s ]已被管理员作废.', [nMYZK]);
-          Exit;
-        end;
-
-        nStr := FieldByName('Z_TJStatus').AsString;
-        if nStr  <> '' then
-        begin
-          if nStr = sFlag_TJOver then
-               nData := '订单[ %s ]已调价,请重新开单.'
-          else nData := '订单[ %s ]正在调价,请稍后.';
-
+          nData := '贸易公司中,订单编号 [%s]不存在.';
           nData := Format(nData, [nMYZK]);
           Exit;
         end;
-
-        nPrice := FieldByName('D_Price').AsFloat;
-        nVal   := Float2Float(nPrice * FValue, cPrecision, True);
-
-        nSQL := MakeSQLByStr([SF('L_ID', FID),
-                SF('L_ZhiKa', FieldByName('Z_ID').AsString),
-                SF('L_Project', FieldByName('Z_Project').AsString),
-                SF('L_Area', FieldByName('C_Area').AsString),
-                SF('L_CusID', FieldByName('Z_Customer').AsString),
-                SF('L_CusType', FieldByName('C_Type').AsString),
-                SF('L_CusName', FieldByName('C_Name').AsString),
-                SF('L_CusPY', FieldByName('C_PY').AsString),
-                SF('L_SaleID', FieldByName('Z_SaleMan').AsString),
-                SF('L_SaleMan', FieldByName('S_Name').AsString),
-                SF('L_ICC', FieldByName('Z_CardNO').AsString),
-
-                SF('L_Paytype', FieldByName('Z_Paytype').AsString),
-                SF('L_Payment', FieldByName('Z_Payment').AsString),
-
-                SF('L_Seal', FSeal),
-                SF('L_Type', FType),
-                SF('L_StockNo', FStockNo),
-                SF('L_StockName', FStockName),
-                SF('L_Value', FValue, sfVal),
-                SF('L_Price', nPrice, sfVal),
-
-                SF('L_ZKMoney', FieldByName('Z_OnlyMoney').AsString),
-                SF('L_Truck', FTruck),
-                SF('L_Status', sFlag_BillNew)
-                ], sTable_Bill, '', True);
-        FListA.Add(nSQL);
-
-        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
-                'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
-                FieldByName('Z_Customer').AsString,
-                FieldByName('Z_Paytype').AsString]);
-        FListA.Add(nSQL);
       end;
-    finally
-      gDBConnManager.ReleaseConnection(nDBWorker);
     end;
-  end else
+    //获取贸易公司数据库连接
 
-  if FIn.FExtParam = sFlag_BillEdit then  //修改
-  begin
-    for nIdx:=Low(nItems) to High(nItems) do
-    with nItems[nIdx] do
-    try
-      if FZKType <> sFlag_BillMY then Continue;
-
-      nDBWorker := nil;
-
-      nSQL := 'Select * From $MYZhiKa Where M_ID=''$ID''';
-      nSQL := MacroValue(nSQL, [MI('$MYZhiKa', sTable_MYZhiKa),
-              MI('$ID', FZhiKa)]);
-      //Get Factory ID
-
-      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+    if FIn.FExtParam = sFlag_BillNew then   //新增
+    begin
+      for nIdx:=Low(nItems) to High(nItems) do
+      with nItems[nIdx] do
       begin
-        if RecordCount < 1 then
+        if FZKType <> sFlag_BillMY then Continue;
+
+        nSQL := 'Select * From $MYZhiKa Where M_ID=''$ID''';
+        nSQL := MacroValue(nSQL, [MI('$MYZhiKa', sTable_MYZhiKa),
+                MI('$ID', FZhiKa)]);
+        //Get Factory ID
+
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
         begin
-          nData := '贸易公司订单编号[ %s ]不存在!';
-          nData := Format(nData, [FZhiKa]);
-          Exit;
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司订单编号[ %s ]不存在!';
+            nData := Format(nData, [FZhiKa]);
+            Exit;
+          end;
+
+          nFact := FieldByName('M_Fact').AsString;
+          nMYZK := FieldByName('M_MID').AsString;
         end;
 
-        nFact := FieldByName('M_Fact').AsString;
-        nMYZK := FieldByName('M_MID').AsString;
+        nSQL := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+        nSQL := Format(nSQL, [sTable_SysDict, sFlag_SysParam, nFact]);
+        //Get Factory DB ID
+
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司编号[ %s ]数据库不存在!';
+            nData := Format(nData, [nFact]);
+            Exit;
+          end;
+
+          nStr := Fields[0].AsString;
+          if (nDBID<>'') and (nStr<>nDBID) then
+          begin
+            nData := '不同贸易公司禁止拼单,详情如下:' + #13#10 +
+                     '提货单号:[%s] 贸易公司编号:[%s]' + #13#10 +
+                     '提货单号:[%s] 贸易公司编号:[%s]';
+            nData := Format(nData, [nItems[nIdx-1].FID, nDBID,
+                     FID, nStr]);
+
+            Exit;
+          end;
+        end;
+
+        nSQL := 'Select zk.*,zd.*,' +
+                'ht.C_Area,cus.C_Type,cus.C_Name,cus.C_PY,sm.S_Name ' +
+                'From $ZK zk ' +
+                ' Left Join $HT ht On ht.C_ID=zk.Z_CID ' +
+                ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer ' +
+                ' Left Join $SM sm On sm.S_ID=Z_SaleMan ' +
+                ' Left Join $ZD zd On zd.D_ZID=Z_ID ' +
+                'Where Z_ID=''$ZID'' And D_StockNo=''$SN''';
+
+        nSQL := MacroValue(nSQL, [MI('$ZK', sTable_ZhiKa),
+                MI('$HT', sTable_SaleContract),
+                MI('$Cus', sTable_Customer),
+                MI('$SM', sTable_Salesman),
+                MI('$ZD', sTable_ZhiKaDtl),
+                MI('$SN', FStockNo),
+                MI('$ZID', nMYZK)]);
+        //订单信息
+
+        with gDBConnManager.WorkerQuery(nDBWorker, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司中,订单编号 [%s] 或者 物料 [%s] 不存在.';
+            nData := Format(nData, [nMYZK, FStockName]);
+            Exit;
+          end;
+
+          if FieldByName('Z_Freeze').AsString = sFlag_Yes then
+          begin
+            nData := Format('订单[ %s ]已被管理员冻结.', [nMYZK]);
+            Exit;
+          end;
+
+          if FieldByName('Z_InValid').AsString = sFlag_Yes then
+          begin
+            nData := Format('订单[ %s ]已被管理员作废.', [nMYZK]);
+            Exit;
+          end;
+
+          nStr := FieldByName('Z_TJStatus').AsString;
+          if nStr  <> '' then
+          begin
+            if nStr = sFlag_TJOver then
+                 nData := '订单[ %s ]已调价,请重新开单.'
+            else nData := '订单[ %s ]正在调价,请稍后.';
+
+            nData := Format(nData, [nMYZK]);
+            Exit;
+          end;
+
+          nPrice := FieldByName('D_Price').AsFloat;
+          nVal   := Float2Float(nPrice * FValue, cPrecision, True);
+
+          nSQL := MakeSQLByStr([SF('L_ID', FID),
+                  SF('L_ZhiKa', FieldByName('Z_ID').AsString),
+                  SF('L_Project', FieldByName('Z_Project').AsString),
+                  SF('L_Area', FieldByName('C_Area').AsString),
+                  SF('L_CusID', FieldByName('Z_Customer').AsString),
+                  SF('L_CusType', FieldByName('C_Type').AsString),
+                  SF('L_CusName', FieldByName('C_Name').AsString),
+                  SF('L_CusPY', FieldByName('C_PY').AsString),
+                  SF('L_SaleID', FieldByName('Z_SaleMan').AsString),
+                  SF('L_SaleMan', FieldByName('S_Name').AsString),
+                  SF('L_ICC', FieldByName('Z_CardNO').AsString),
+
+                  SF('L_Paytype', FieldByName('Z_Paytype').AsString),
+                  SF('L_Payment', FieldByName('Z_Payment').AsString),
+
+                  SF('L_Seal', FSeal),
+                  SF('L_Type', FType),
+                  SF('L_StockNo', FStockNo),
+                  SF('L_StockName', FStockName),
+                  SF('L_Value', FValue, sfVal),
+                  SF('L_Price', nPrice, sfVal),
+
+                  SF('L_ZKMoney', FieldByName('Z_OnlyMoney').AsString),
+                  SF('L_Truck', FTruck),
+                  SF('L_Status', sFlag_BillNew)
+                  ], sTable_Bill, '', True);
+          FListA.Add(nSQL);
+
+          nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
+                  'Where A_CID=''%s'' And A_Type=''%s''';
+          nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
+                  FieldByName('Z_Customer').AsString,
+                  FieldByName('Z_Paytype').AsString]);
+          FListA.Add(nSQL);
+        end;
       end;
+    end else
 
-      nSQL := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
-      nSQL := Format(nSQL, [sTable_SysDict, sFlag_SysParam, nFact]);
-      //Get Factory DB ID
-
-      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+    if FIn.FExtParam = sFlag_BillEdit then  //修改
+    begin
+      for nIdx:=Low(nItems) to High(nItems) do
+      with nItems[nIdx] do
       begin
-        if RecordCount < 1 then
+        if FZKType <> sFlag_BillMY then Continue;
+
+        nSQL := 'Select * From $MYZhiKa Where M_ID=''$ID''';
+        nSQL := MacroValue(nSQL, [MI('$MYZhiKa', sTable_MYZhiKa),
+                MI('$ID', FZhiKa)]);
+        //Get Factory ID
+
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
         begin
-          nData := '贸易公司编号[ %s ]数据库不存在!';
-          nData := Format(nData, [nFact]);
-          Exit;
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司订单编号[ %s ]不存在!';
+            nData := Format(nData, [FZhiKa]);
+            Exit;
+          end;
+
+          nFact := FieldByName('M_Fact').AsString;
+          nMYZK := FieldByName('M_MID').AsString;
         end;
 
-        nStr := Fields[0].AsString;
-        if (nDBID<>'') and (nStr<>nDBID) then
-        begin
-          nData := '不同贸易公司禁止拼单,详情如下:' + #13#10 +
-                   '提货单号:[%s] 贸易公司编号:[%s]' + #13#10 +
-                   '提货单号:[%s] 贸易公司编号:[%s]';
-          nData := Format(nData, [nItems[nIdx-1].FID, nDBID,
-                   FID, nStr]);
+        nSQL := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+        nSQL := Format(nSQL, [sTable_SysDict, sFlag_SysParam, nFact]);
+        //Get Factory DB ID
 
-          Exit;
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司编号[ %s ]数据库不存在!';
+            nData := Format(nData, [nFact]);
+            Exit;
+          end;
+
+          nStr := Fields[0].AsString;
+          if (nDBID<>'') and (nStr<>nDBID) then
+          begin
+            nData := '不同贸易公司禁止拼单,详情如下:' + #13#10 +
+                     '提货单号:[%s] 贸易公司编号:[%s]' + #13#10 +
+                     '提货单号:[%s] 贸易公司编号:[%s]';
+            nData := Format(nData, [nItems[nIdx-1].FID, nDBID,
+                     FID, nStr]);
+
+            Exit;
+          end;
         end;
 
-        nDBID := nStr;
+        nSQL := 'Select * From %s Where L_ID=''%s''';
+        nSQL := Format(nSQL, [sTable_Bill, FID]);
+
+        with gDBConnManager.WorkerQuery(nDBWorker, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司中提货单号 [%s] 不存在';
+            nData := Format(nData, [FID]);
+            Exit;
+          end;
+
+          nPrice := FieldByName('L_Price').AsFloat;
+          nVal   := -Float2Float(nPrice * FKZValue, cPrecision, False);
+
+          nSQL := MakeSQLByStr([SF('L_Value', FValue, sfVal)
+                  ], sTable_Bill, SF('L_ID', FID), False);
+          FListA.Add(nSQL);
+
+          nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
+                  'Where A_CID=''%s'' And A_Type=''%s''';
+          nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
+                  FieldByName('L_CusID').AsString,
+                  FieldByName('L_Paytype').AsString]);
+          FListA.Add(nSQL); //更新纸卡冻结
+        end;
       end;
+    end else
 
-      nSQL := 'Select * From %s Where L_ID=''%s''';
-      nSQL := Format(nSQL, [sTable_Bill, FID]);
+    if FIn.FExtParam = sFlag_BillDone then   //完成
+    begin
+      for nIdx:=Low(nItems) to High(nItems) do
+      with nItems[nIdx] do
+      Begin
+        if FZKType <> sFlag_BillMY then Continue;
 
-      with gDBConnManager.SQLQuery(nSQL, nDBWorker, nDBID) do
-      begin
-        if RecordCount < 1 then
+        nSQL := 'Select * From $MYZhiKa Where M_ID=''$ID''';
+        nSQL := MacroValue(nSQL, [MI('$MYZhiKa', sTable_MYZhiKa),
+                MI('$ID', FZhiKa)]);
+        //Get Factory ID
+
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
         begin
-          nData := '贸易公司中提货单号 [%s] 不存在';
-          nData := Format(nData, [FID]);
-          Exit;
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司订单编号[ %s ]不存在!';
+            nData := Format(nData, [FZhiKa]);
+            Exit;
+          end;
+
+          nFact := FieldByName('M_Fact').AsString;
+          nMYZK := FieldByName('M_MID').AsString;
         end;
 
-        nPrice := FieldByName('L_Price').AsFloat;
-        nVal   := -Float2Float(nPrice * FKZValue, cPrecision, False);
+        nSQL := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+        nSQL := Format(nSQL, [sTable_SysDict, sFlag_SysParam, nFact]);
+        //Get Factory DB ID
 
-        nSQL := MakeSQLByStr([SF('L_Value', FValue, sfVal)
-                ], sTable_Bill, SF('L_ID', FID), False);
-        FListA.Add(nSQL);
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司编号[ %s ]数据库不存在!';
+            nData := Format(nData, [nFact]);
+            Exit;
+          end;
 
-        nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney+(%s) ' +
-                'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal),
-                FieldByName('L_CusID').AsString,
-                FieldByName('L_Paytype').AsString]);
-        FListA.Add(nSQL); //更新纸卡冻结
+          nStr := Fields[0].AsString;
+          if (nDBID<>'') and (nStr<>nDBID) then
+          begin
+            nData := '不同贸易公司禁止拼单,详情如下:' + #13#10 +
+                     '提货单号:[%s] 贸易公司编号:[%s]' + #13#10 +
+                     '提货单号:[%s] 贸易公司编号:[%s]';
+            nData := Format(nData, [nItems[nIdx-1].FID, nDBID,
+                     FID, nStr]);
+
+            Exit;
+          end;
+        end;
+
+        nSQL := 'Select * From %s Where L_ID=''%s''';
+        nSQL := Format(nSQL, [sTable_Bill, FID]);
+
+        with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '提货单号 [%s] 不存在';
+            nData := Format(nData, [FID]);
+            Exit;
+          end;
+
+          nStr := MakeSQLByStr([
+                  SF('L_Status', sFlag_TruckOut),
+                  SF('L_NextStatus', ''),
+
+                  SF('L_InTime', FieldByName('L_InTime').AsString),
+                  SF('L_InMan', FieldByName('L_InMan').AsString),
+
+                  SF('L_PValue', FieldByName('L_PValue').AsFloat, sfVal),
+                  SF('L_PDate', FieldByName('L_PDate').AsString),
+                  SF('L_PMan', FieldByName('L_PMan').AsString),
+
+                  SF('L_LadeTime', FieldByName('L_LadeTime').AsString),
+                  SF('L_LadeMan', FieldByName('L_LadeMan').AsString),
+
+                  SF('L_MValue', FieldByName('L_PValue').AsFloat, sfVal),
+                  SF('L_MDate', FieldByName('L_PDate').AsString),
+                  SF('L_MMan', FieldByName('L_MMan').AsString),
+
+                  SF('L_Card', ''),
+                  SF('L_OutFact', sField_SQLServer_Now, sfVal),
+                  SF('L_OutMan', FIn.FBase.FFrom.FUser)
+                  ], sTable_Bill, SF('L_ID', FID), False);
+          FListA.Add(nStr); //更新交货单
+        end;
+        //更新状态
+
+        with gDBConnManager.WorkerQuery(nDBWorker, nSQL) do
+        begin
+          if RecordCount < 1 then
+          begin
+            nData := '贸易公司中提货单号 [%s] 不存在';
+            nData := Format(nData, [FID]);
+            Exit;
+          end;
+
+          nPrice := FieldByName('L_Price').AsFloat;
+          nVal   := Float2Float(nPrice * FValue, cPrecision, False);
+
+          nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%s),' +
+                  'A_FreezeMoney=A_FreezeMoney-(%s) ' +
+                  'Where A_CID=''%s'' And A_Type=''%s''';
+          nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal), FloatToStr(nVal),
+                  FieldByName('L_CusID').AsString, FieldByName('L_Paytype').AsString]);
+          FListA.Add(nSQL); //更新客户资金(可能不同客户)
+        end;
       end;
-    finally
-      gDBConnManager.ReleaseConnection(nDBWorker);
     end;
-  end else
-
-  if FIn.FExtParam = sFlag_BillDone then   //完成
-  begin
-    for nIdx:=Low(nItems) to High(nItems) do
-    with nItems[nIdx] do
-    try
-      if FZKType <> sFlag_BillMY then Continue;
-
-      nDBWorker := nil;
-
-      nSQL := 'Select * From $MYZhiKa Where M_ID=''$ID''';
-      nSQL := MacroValue(nSQL, [MI('$MYZhiKa', sTable_MYZhiKa),
-              MI('$ID', FZhiKa)]);
-      //Get Factory ID
-
-      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-      begin
-        if RecordCount < 1 then
-        begin
-          nData := '贸易公司订单编号[ %s ]不存在!';
-          nData := Format(nData, [FZhiKa]);
-          Exit;
-        end;
-
-        nFact := FieldByName('M_Fact').AsString;
-        nMYZK := FieldByName('M_MID').AsString;
-      end;
-
-      nSQL := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
-      nSQL := Format(nSQL, [sTable_SysDict, sFlag_SysParam, nFact]);
-      //Get Factory DB ID
-
-      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-      begin
-        if RecordCount < 1 then
-        begin
-          nData := '贸易公司编号[ %s ]数据库不存在!';
-          nData := Format(nData, [nFact]);
-          Exit;
-        end;
-
-        nStr := Fields[0].AsString;
-        if (nDBID<>'') and (nStr<>nDBID) then
-        begin
-          nData := '不同贸易公司禁止拼单,详情如下:' + #13#10 +
-                   '提货单号:[%s] 贸易公司编号:[%s]' + #13#10 +
-                   '提货单号:[%s] 贸易公司编号:[%s]';
-          nData := Format(nData, [nItems[nIdx-1].FID, nDBID,
-                   FID, nStr]);
-
-          Exit;
-        end;
-        
-        nDBID := nStr;
-      end;
-
-      nSQL := 'Select * From %s Where L_ID=''%s''';
-      nSQL := Format(nSQL, [sTable_Bill, FID]);
-
-      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-      begin
-        if RecordCount < 1 then
-        begin
-          nData := '提货单号 [%s] 不存在';
-          nData := Format(nData, [FID]);
-          Exit;
-        end;
-
-        nStr := MakeSQLByStr([
-                SF('L_Status', sFlag_TruckOut),
-                SF('L_NextStatus', ''),
-
-                SF('L_InTime', FieldByName('L_InTime').AsString),
-                SF('L_InMan', FieldByName('L_InMan').AsString),
-
-                SF('L_PValue', FieldByName('L_PValue').AsFloat, sfVal),
-                SF('L_PDate', FieldByName('L_PDate').AsString),
-                SF('L_PMan', FieldByName('L_PMan').AsString),
-
-                SF('L_LadeTime', FieldByName('L_LadeTime').AsString),
-                SF('L_LadeMan', FieldByName('L_LadeMan').AsString),
-
-                SF('L_MValue', FieldByName('L_PValue').AsFloat, sfVal),
-                SF('L_MDate', FieldByName('L_PDate').AsString),
-                SF('L_MMan', FieldByName('L_MMan').AsString),
-
-                SF('L_Card', ''),
-                SF('L_OutFact', sField_SQLServer_Now, sfVal),
-                SF('L_OutMan', FIn.FBase.FFrom.FUser)
-                ], sTable_Bill, SF('L_ID', FID), False);
-        FListA.Add(nStr); //更新交货单
-      end;
-      //更新状态
-
-      with gDBConnManager.SQLQuery(nSQL, nDBWorker, nDBID) do
-      begin
-        if RecordCount < 1 then
-        begin
-          nData := '贸易公司中提货单号 [%s] 不存在';
-          nData := Format(nData, [FID]);
-          Exit;
-        end;
-
-        nPrice := FieldByName('L_Price').AsFloat;
-        nVal   := Float2Float(nPrice * FValue, cPrecision, False);
-
-        nSQL := 'Update %s Set A_OutMoney=A_OutMoney+(%s),' +
-                'A_FreezeMoney=A_FreezeMoney-(%s) ' +
-                'Where A_CID=''%s'' And A_Type=''%s''';
-        nSQL := Format(nSQL, [sTable_CusAccDetail, FloatToStr(nVal), FloatToStr(nVal),
-                FieldByName('L_CusID').AsString, FieldByName('L_Paytype').AsString]);
-        FListA.Add(nSQL); //更新客户资金(可能不同客户)
-      end;
-    finally
-      gDBConnManager.ReleaseConnection(nDBWorker);
-    end;
-  end;
-
-  try
-    nDBWorker := nil;
-    gDBConnManager.SQLQuery('Select 1', nDBWorker, nDBID);
 
     nDBWorker.FConn.BeginTrans;
     try

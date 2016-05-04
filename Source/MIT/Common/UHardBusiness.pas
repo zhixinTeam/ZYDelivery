@@ -11,8 +11,9 @@ uses
   Windows, Classes, Controls, SysUtils, UMgrDBConn, UMgrParam, DB,
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
   UMgrHardHelper, U02NReader, UMgrERelay, UMultiJS, UMgrRemotePrint,
-  UMgrLEDDisp, UMgrRFID102;
+  UMgrLEDDisp, UMgrRFID102, UMgrTTCEM100;
 
+procedure WhenTTCE_M100_ReadCard(const nItem: PM100ReaderItem);
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
 //有新卡号到达读头
@@ -460,16 +461,6 @@ begin
     Exit;
   end;
 
-  if gTruckQueueManager.IsTruckAutoIn then
-  begin
-    gHardwareHelper.SetCardLastDone(nCard, nReader);
-    gHardwareHelper.SetReaderCard(nReader, nCard);
-  end else
-  begin
-    gHardwareHelper.OpenDoor(nReader);
-    //抬杆
-  end;
-
   with gTruckQueueManager do
   if not IsDelayQueue then //厂外模式,进厂时绑定道号(一车多单)
   try
@@ -495,6 +486,16 @@ begin
   finally
     SyncLock.Leave;
   end;
+
+  if gTruckQueueManager.IsTruckAutoIn then
+  begin
+    gHardwareHelper.SetCardLastDone(nCard, nReader);
+    gHardwareHelper.SetReaderCard(nReader, nCard);
+  end else
+  begin
+    gHardwareHelper.OpenDoor(nReader);
+    //抬杆
+  end;
 end;
 
 //Date: 2012-4-22
@@ -512,6 +513,9 @@ begin
   nRet := False;
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
+
+  if nCardType = sFlag_Sale then Exit;
+  //卓越水泥禁止出厂刷蓝卡读卡器
 
   if nCardType = sFlag_Provide then
     nRet := GetLadingOrders(nCard, sFlag_TruckIn, nTrucks) else
@@ -591,6 +595,95 @@ begin
          gRemotePrinter.PrintBill(nTrucks[nIdx].FID + nStr)
     else gRemotePrinter.PrintBill(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
   end; //打印报表
+end;
+
+//Date: 2016-5-4
+//Parm: 卡号;读头;打印机
+//Desc: 对nCard放行出
+function MakeTruckOutM100(const nCard,nReader,nPrinter: string): Boolean;
+var nStr,nCardType: string;
+    nIdx: Integer;
+    nRet: Boolean;
+    nTrucks: TLadingBillItems;
+    {$IFDEF PrintBillMoney}
+    nOut: TWorkerBusinessCommand;
+    {$ENDIF}
+begin
+  Result := False;               
+  nCardType := '';
+  if not GetCardUsed(nCard, nCardType) then Exit;
+
+  if nCardType <> sFlag_Sale then Exit;
+  //卓越原材料禁止出厂刷三合一读卡器
+
+  nRet := GetLadingBills(nCard, sFlag_TruckOut, nTrucks);
+  if not nRet then
+  begin
+    nStr := '读取磁卡[ %s ]订单信息失败.';
+    nStr := Format(nStr, [nCard]);
+
+    WriteHardHelperLog(nStr, sPost_Out);
+    Exit;
+  end;
+
+  if Length(nTrucks) < 1 then
+  begin
+    nStr := '磁卡[ %s ]没有需要出厂车辆.';
+    nStr := Format(nStr, [nCard]);
+
+    WriteHardHelperLog(nStr, sPost_Out);
+    Exit;
+  end;
+
+  for nIdx:=Low(nTrucks) to High(nTrucks) do
+  with nTrucks[nIdx] do
+  begin
+    if FNextStatus = sFlag_TruckOut then Continue;
+    nStr := '车辆[ %s ]下一状态为:[ %s ],无法出厂.';
+    nStr := Format(nStr, [FTruck, TruckStatusToStr(FNextStatus)]);
+    
+    WriteHardHelperLog(nStr, sPost_Out);
+    Exit;
+  end;
+
+  nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
+  if not nRet then
+  begin
+    nStr := '车辆[ %s ]出厂放行失败.';
+    nStr := Format(nStr, [nTrucks[0].FTruck]);
+
+    WriteHardHelperLog(nStr, sPost_Out);
+    Exit;
+  end;
+
+  nIdx := 0;
+  if nReader <> '' then
+  while nIdx < 5 do
+  begin
+    gHardwareHelper.OpenDoor(nReader);
+    Inc(nIdx);
+  end;
+  //抬杆五次
+
+  for nIdx:=Low(nTrucks) to High(nTrucks) do
+  begin
+    {$IFDEF PrintBillMoney}
+    if CallBusinessCommand(cBC_GetZhiKaMoney,nTrucks[nIdx].FZhiKa,'',@nOut) then
+         nStr := #8 + nOut.FData
+    else nStr := #8 + '0';
+    {$ELSE}
+    nStr := '';
+    {$ENDIF}
+
+    nStr := nStr + #7 + nCardType;
+    //磁卡类型
+
+    if nPrinter = '' then
+         gRemotePrinter.PrintBill(nTrucks[nIdx].FID + nStr)
+    else gRemotePrinter.PrintBill(nTrucks[nIdx].FID + #9 + nPrinter + nStr);
+  end; //打印报表
+
+  Result := True;
 end;
 
 //Date: 2012-10-19
@@ -731,6 +824,70 @@ begin
   {$ELSE}
   g02NReader.ActiveELabel(nReader.FID, nReader.FCard);
   {$ENDIF}
+end;
+
+procedure WhenTTCE_M100_ReadCard(const nItem: PM100ReaderItem);
+var nStr: string;
+    nRetain: Boolean;
+    nErrNum: Integer;
+    nDBConn: PDBWorker;
+begin
+  nDBConn := nil;
+  nRetain := False;
+  //init
+
+  {$IFDEF DEBUG}
+  nStr := '接收到卡号'  + nItem.FID + ' ::: ' + nItem.FCard;
+  WriteHardHelperLog(nStr);
+  {$ENDIF}
+
+  with gParamManager.ActiveParam^ do
+  try
+    nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
+    if not Assigned(nDBConn) then
+    begin
+      WriteHardHelperLog('连接HM数据库失败(DBConn Is Null).');
+      Exit;
+    end;
+
+    if not nDBConn.FConn.Connected then
+      nDBConn.FConn.Connected := True;
+    //conn db
+
+    try
+      if nItem.FVType = rtInM100 then
+      begin
+        MakeTruckIn(nItem.FCard, nItem.FVReader, nDBConn);
+      end else
+
+      if nItem.FVType = rtOutM100 then
+      begin
+        nRetain := MakeTruckOutM100(nItem.FCard, nItem.FVReader, nItem.FVPrinter);
+      end else
+
+      if nItem.FVType = rtGateM100 then
+      begin
+        if nItem.FVReader <> '' then
+          gHardwareHelper.OpenDoor(nItem.FVReader);
+        //抬杆
+      end else
+
+      if nItem.FVType = rtQueueGateM100 then
+      begin
+        if nItem.FVReader <> '' then
+          MakeTruckPassGate(nItem.FCard, nItem.FVReader, nDBConn);
+        //抬杆
+      end;
+    except
+      On E:Exception do
+      begin
+        WriteHardHelperLog(E.Message);
+      end;
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nDBConn);
+    gM100ReaderManager.DealtWithCard(nItem, nRetain);
+  end;
 end;
 
 //------------------------------------------------------------------------------

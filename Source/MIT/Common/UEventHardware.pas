@@ -36,7 +36,7 @@ uses
   SysUtils, USysLoger, UHardBusiness, UMgrTruckProbe, UMgrParam,
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
   UMgrERelay, UMultiJS, UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp,
-  UMgrRFID102, UMgrVoiceNet;
+  UMgrRFID102, UMgrVoiceNet, UMgrTTCEM100;
 
 class function THardwareWorker.ModuleInfo: TPlugModuleInfo;
 begin
@@ -66,7 +66,14 @@ begin
     gHardwareHelper.LoadConfig(nCfg + '900MK.xml');
 
     nStr := '近距读头';
-    g02NReader.LoadConfig(nCfg + 'Readers.xml');
+    g02NReader.LoadConfig(nCfg + 'Readers.xml');  
+    
+    nStr := '三合一读卡器';
+    if not Assigned(gM100ReaderManager) then
+    begin
+      gM100ReaderManager := TM100ReaderManager.Create;
+      gM100ReaderManager.LoadConfig(nCfg + cTTCE_M100_Config);
+    end;
 
     nStr := '计数器';
     gMultiJSManager.LoadFile(nCfg + 'JSQ.xml');
@@ -86,8 +93,7 @@ begin
       if not Assigned(gNetVoiceHelper) then
         gNetVoiceHelper := TNetVoiceManager.Create;
       gNetVoiceHelper.LoadConfig(nCfg + 'NetVoice.xml');
-    end;
-
+    end;       
 
     nStr := '喷码机';
     gCodePrinterManager.LoadConfig(nCfg + 'CodePrinter.xml');
@@ -97,23 +103,19 @@ begin
 
     {$IFDEF HYRFID201}
     nStr := '华益RFID102';
-    nCfg := nCfg + 'RFID102.xml';
-
     if not Assigned(gHYReaderManager) then
     begin
       gHYReaderManager := THYReaderManager.Create;
-      gHYReaderManager.LoadConfig(nCfg);
+      gHYReaderManager.LoadConfig(nCfg + 'RFID102.xml');
     end;
     {$ENDIF}
 
-    nStr := '车辆检测器';
-    nCfg := nCfg + 'TruckProber.xml';
-    
-    if FileExists(nCfg) then
+    nStr := '车辆检测器';    
+    if FileExists(nCfg + 'TruckProber.xml') then
     begin
       gProberManager := TProberManager.Create;
-      gProberManager.LoadConfig(nCfg);
-    end;
+      gProberManager.LoadConfig(nCfg + 'TruckProber.xml');
+    end;  
   except
     on E:Exception do
     begin
@@ -163,6 +165,13 @@ begin
     gHYReaderManager.StartReader;
   end;
   {$ENDIF}
+
+  if Assigned(gM100ReaderManager) then
+  begin
+    gM100ReaderManager.OnCardProc := WhenTTCE_M100_ReadCard;
+    gM100ReaderManager.StartReader;
+  end;
+  //三合一读卡器
 
   g02NReader.OnCardIn := WhenReaderCardIn;
   g02NReader.OnCardOut := WhenReaderCardOut;
@@ -220,6 +229,14 @@ begin
     gHYReaderManager.OnCardProc := nil;
   end;
   {$ENDIF}
+  //HY Reader
+
+  if Assigned(gM100ReaderManager) then
+  begin
+    gM100ReaderManager.StopReader;
+    gM100ReaderManager.OnCardProc := nil;
+  end;
+  //三合一读卡器
 
   gDisplayManager.StopDisplay;
   //small led
