@@ -36,7 +36,7 @@ uses
   SysUtils, USysLoger, UHardBusiness, UMgrTruckProbe, UMgrParam,
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
   UMgrERelay, UMultiJS, UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp,
-  UMgrRFID102, UMgrVoiceNet, UMgrTTCEM100;
+  UMgrRFID102, UMgrVoiceNet, UMgrTTCEM100, UBlueReader;
 
 class function THardwareWorker.ModuleInfo: TPlugModuleInfo;
 begin
@@ -64,6 +64,9 @@ begin
 
     nStr := '远距读头';
     gHardwareHelper.LoadConfig(nCfg + '900MK.xml');
+
+    nStr := '蓝卡读卡器';
+    gBlueReader.LoadConfig(nCfg + 'BlueCardReader.XML');
 
     nStr := '近距读头';
     g02NReader.LoadConfig(nCfg + 'Readers.xml');  
@@ -158,6 +161,10 @@ begin
   gHardwareHelper.StartRead;
   //long reader
 
+  gBlueReader.OnCardArrived := WhenBlueReaderCardArrived;
+  if not gHardwareHelper.ConnHelper then gBlueReader.StartReader;
+  //blue reader, 如果不使用硬件守护服务器，则服务器独自读卡
+
   {$IFDEF HYRFID201}
   if Assigned(gHYReaderManager) then
   begin
@@ -221,6 +228,10 @@ begin
   gHardwareHelper.StopRead;
   gHardwareHelper.OnProce := nil;
   //reader
+
+  gBlueReader.StopReader;
+  gBlueReader.OnCardArrived := nil;
+  //blue reader
 
   {$IFDEF HYRFID201}
   if Assigned(gHYReaderManager) then

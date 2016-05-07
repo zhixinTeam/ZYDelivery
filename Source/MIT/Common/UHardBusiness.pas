@@ -11,11 +11,12 @@ uses
   Windows, Classes, Controls, SysUtils, UMgrDBConn, UMgrParam, DB,
   UBusinessWorker, UBusinessConst, UBusinessPacker, UMgrQueue,
   UMgrHardHelper, U02NReader, UMgrERelay, UMultiJS, UMgrRemotePrint,
-  UMgrLEDDisp, UMgrRFID102, UMgrTTCEM100;
+  UMgrLEDDisp, UMgrRFID102, UMgrTTCEM100, UBlueReader;
 
 procedure WhenTTCE_M100_ReadCard(const nItem: PM100ReaderItem);
 procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
+procedure WhenBlueReaderCardArrived(nHost: TBlueReaderHost; nCard: TBlueReaderCard);
 //有新卡号到达读头
 procedure WhenReaderCardIn(nHost: TReaderHost; nCard: TReaderCard);
 //现场读头有新卡号
@@ -303,6 +304,24 @@ begin
   gSysLoger.AddLog(THardwareHelper, '硬件守护辅助', nEvent);
 end;
 
+//Date: 2016/5/5
+//Parm: 读卡器编号
+//Desc: 蓝卡读卡器抬杆
+procedure BlueOpenDoor(const nReader: string);
+var nIdx: Integer;
+begin
+  nIdx := 0;
+  if nReader <> '' then
+  while nIdx < 5 do
+  begin
+    if gHardwareHelper.ConnHelper then
+         gHardwareHelper.OpenDoor(nReader)
+    else gBlueReader.OpenDoor(nReader);
+    
+    Inc(nIdx);
+  end;
+end;
+
 //Date: 2012-4-22
 //Parm: 卡号
 //Desc: 对nCard放行进厂
@@ -373,7 +392,7 @@ begin
     begin
       if gTruckQueueManager.TruckReInfactFobidden(nTrucks[0].FTruck) then
       begin
-        gHardwareHelper.OpenDoor(nReader);
+        BlueOpenDoor(nReader);
         //抬杆
 
         nStr := '车辆[ %s ]再次抬杆操作.';
@@ -409,7 +428,7 @@ begin
       gHardwareHelper.SetReaderCard(nReader, nCard);
     end else
     begin
-      gHardwareHelper.OpenDoor(nReader);
+      BlueOpenDoor(nReader);
       //抬杆
     end;
 
@@ -493,7 +512,7 @@ begin
     gHardwareHelper.SetReaderCard(nReader, nCard);
   end else
   begin
-    gHardwareHelper.OpenDoor(nReader);
+    BlueOpenDoor(nReader);
     //抬杆
   end;
 end;
@@ -569,14 +588,8 @@ begin
     Exit;
   end;
 
-  nIdx := 0;
-  if nReader <> '' then
-  while nIdx < 5 do
-  begin
-    gHardwareHelper.OpenDoor(nReader);
-    Inc(nIdx);
-  end;
-  //抬杆五次
+  BlueOpenDoor(nReader);
+  //抬杆
 
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin
@@ -613,14 +626,20 @@ begin
   nCardType := '';
   if not GetCardUsed(nCard, nCardType) then Exit;
 
-  if nCardType <> sFlag_Sale then Exit;
+  if nCardType = sFlag_Provide then Exit;
   //卓越原材料禁止出厂刷三合一读卡器
 
-  nRet := GetLadingBills(nCard, sFlag_TruckOut, nTrucks);
+  if nCardType = sFlag_Refund then
+    nRet := GetRefundPostItems(nCard, sFlag_TruckIn, nTrucks) else
+  if nCardType = sFlag_Sale then
+    nRet := GetLadingBills(nCard, sFlag_TruckIn, nTrucks) else nRet := False;
+
   if not nRet then
   begin
     nStr := '读取磁卡[ %s ]订单信息失败.';
     nStr := Format(nStr, [nCard]);
+    Result := True;
+    //磁卡已无效
 
     WriteHardHelperLog(nStr, sPost_Out);
     Exit;
@@ -646,7 +665,11 @@ begin
     Exit;
   end;
 
-  nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
+  if nCardType = sFlag_Refund then
+    nRet := SaveRefundPostItems(sFlag_TruckOut, nTrucks) else
+  if nCardType = sFlag_Sale then
+    nRet := SaveLadingBills(sFlag_TruckOut, nTrucks);
+
   if not nRet then
   begin
     nStr := '车辆[ %s ]出厂放行失败.';
@@ -656,14 +679,8 @@ begin
     Exit;
   end;
 
-  nIdx := 0;
-  if nReader <> '' then
-  while nIdx < 5 do
-  begin
-    gHardwareHelper.OpenDoor(nReader);
-    Inc(nIdx);
-  end;
-  //抬杆五次
+  BlueOpenDoor(nReader);
+  //抬杆
 
   for nIdx:=Low(nTrucks) to High(nTrucks) do
   begin
@@ -721,7 +738,7 @@ begin
     Exit;
   end;
 
-  gHardwareHelper.OpenDoor(nReader);
+  BlueOpenDoor(nReader);
   //抬杆
 
   for nIdx:=Low(nTrucks) to High(nTrucks) do
@@ -789,7 +806,7 @@ begin
       if nReader.FType = rtGate then
       begin
         if nReader.FID <> '' then
-          gHardwareHelper.OpenDoor(nReader.FID);
+          BlueOpenDoor(nReader.FID);
         //抬杆
       end else
 
@@ -826,6 +843,15 @@ begin
   {$ENDIF}
 end;
 
+procedure WhenBlueReaderCardArrived(nHost: TBlueReaderHost; nCard: TBlueReaderCard);
+begin
+  {$IFDEF DEBUG}
+  WriteHardHelperLog(Format('蓝卡读卡器 %s:%s', [nReader.FTunnel, nReader.FCard]));
+  {$ENDIF}
+
+  gHardwareHelper.SetReaderCard(nHost.FReaderID, nCard.FCard, False);
+end;
+
 procedure WhenTTCE_M100_ReadCard(const nItem: PM100ReaderItem);
 var nStr: string;
     nRetain: Boolean;
@@ -836,13 +862,16 @@ begin
   nRetain := False;
   //init
 
-  {$IFDEF DEBUG}
-  nStr := '接收到卡号'  + nItem.FID + ' ::: ' + nItem.FCard;
+  {.$IFDEF DEBUG}
+  nStr := '三合一读卡器卡号'  + nItem.FID + ' ::: ' + nItem.FCard;
   WriteHardHelperLog(nStr);
-  {$ENDIF}
+  {.$ENDIF}
 
   with gParamManager.ActiveParam^ do
   try
+    if not nItem.FVirtual then Exit;
+    //非虚拟读卡器
+
     nDBConn := gDBConnManager.GetConnection(FDB.FID, nErrNum);
     if not Assigned(nDBConn) then
     begin
@@ -868,7 +897,7 @@ begin
       if nItem.FVType = rtGateM100 then
       begin
         if nItem.FVReader <> '' then
-          gHardwareHelper.OpenDoor(nItem.FVReader);
+          BlueOpenDoor(nItem.FVReader);
         //抬杆
       end else
 

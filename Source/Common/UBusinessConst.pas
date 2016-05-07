@@ -70,6 +70,9 @@ const
   cBC_GetGYOrderValue         = $0048;   //获取已收货量
   cBC_SaveOrderDtlAdd         = $0049;
 
+  cBC_GetQueueList            = $0050;   //获取队列数据
+  cBC_GetStockBatValue        = $0051;   //获取可用批次号
+  cBC_SaveStockBatcode        = $0052;   //保存物料批次
   cBC_ChangeDispatchMode      = $0053;   //切换调度模式
   cBC_GetPoundCard            = $0054;   //获取磅站卡号
   cBC_GetQueueData            = $0055;   //获取队列数据
@@ -77,8 +80,6 @@ const
   cBC_PrintFixCode            = $0057;   //喷码
   cBC_PrinterEnable           = $0058;   //喷码机启停
   cBC_GetStockBatcode         = $0059;   //获取可用批次号
-  cBC_GetStockBatValue        = $0051;   //获取可用批次号
-  cBC_SaveStockBatcode        = $0052;   //保存物料批次
 
   cBC_JSStart                 = $0060;
   cBC_JSStop                  = $0061;

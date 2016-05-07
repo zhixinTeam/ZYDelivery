@@ -58,8 +58,6 @@ type
     dxLayoutControl1Item17: TdxLayoutItem;
     dxLayoutControl1Group12: TdxLayoutGroup;
     dxLayoutControl1Group4: TdxLayoutGroup;
-    EditCusName: TcxTextEdit;
-    dxLayoutControl1Item5: TdxLayoutItem;
     EditSaleMan: TcxTextEdit;
     dxLayoutControl1Item6: TdxLayoutItem;
     dxLayoutControl1Group6: TdxLayoutGroup;
@@ -100,6 +98,8 @@ type
     dxLayoutControl1Item24: TdxLayoutItem;
     EditDestAddr: TcxTextEdit;
     dxLayoutControl1Item25: TdxLayoutItem;
+    EditCusName: TcxButtonEdit;
+    dxLayoutControl1Item5: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure BtnOKClick(Sender: TObject);
@@ -114,9 +114,12 @@ type
       AButtonIndex: Integer);
     procedure EditAIDPropertiesChange(Sender: TObject);
     procedure EditTruckPropertiesEditValueChanged(Sender: TObject);
+    procedure EditCusNamePropertiesButtonClick(Sender: TObject;
+      AButtonIndex: Integer);
   private
     { Private declarations }
     FRID: string;
+    FOper: Integer;
     FInfo: TCommonInfo;
     FPrefixID: string;
     //前缀编号
@@ -163,6 +166,7 @@ begin
     with TfFormTransContract.Create(Application) do
     begin
       FRID := '';
+      FOper:= nP.FCommand;
       Caption := '运费协议 - 添加';
 
       InitFormData('');
@@ -176,6 +180,7 @@ begin
     with TfFormTransContract.Create(Application) do
     begin
       FRID := nP.FParamA;
+      FOper:= nP.FCommand;
       Caption := '运费协议 - 修改';
 
       InitFormData(FRID);
@@ -197,8 +202,9 @@ begin
       end;
 
       with gForm  do
-      begin
+      begin  
         FRID := nP.FParamA;
+        FOper:= nP.FCommand;
         InitFormData(FRID);
         if not Showing then Show;
       end;
@@ -607,6 +613,13 @@ begin
       ShowMsg(nStr, sHint); Exit;
     end;
 
+    if FieldByName('L_Lading').AsString = sFlag_TiHuo then
+    begin
+      nStr := '交货单号 [%s] 属于自提客户，无法开协议!';
+      nStr := Format(nStr, [nID]);
+      ShowMsg(nStr, sHint); Exit;
+    end;
+
     FCusID := FieldByName('L_CusID').AsString;
     FCusPY := FieldByName('L_CusPY').AsString;
 
@@ -671,7 +684,38 @@ begin
   begin
     EditDriver.Text := FieldByName('T_Owner').AsString;
     EditDPhone.Text := FieldByName('T_Phone').AsString;
-  end;  
+  end;
+end;
+
+procedure TfFormTransContract.EditCusNamePropertiesButtonClick(
+  Sender: TObject; AButtonIndex: Integer);
+var nCusName, nSQL: string;
+    nP: TFormCommandParam;
+begin
+  inherited;
+  if FOper <> cCmd_AddData then Exit;
+  //非新增协议不允许修改客户名称
+  
+  nP.FParamA := FInfo.FCusID;
+  CreateBaseFormItem(cFI_FormGetCustom, '', @nP);
+  if (nP.FCommand <> cCmd_ModalResult) or (nP.FParamA <> mrOK) then Exit;
+
+  nCusName     := nP.FParamC;
+  FInfo.FCusID := nP.FParamB;
+  FInfo.FSaleID:= nP.FParamD;
+  FInfo.FCusPY := GetPinYinOfStr(nCusName);
+
+  nSQL := 'Select S_Name, S_PY From %s Where S_ID=''%s''';
+  nSQL := Format(nSQL, [sTable_SalesMan, FInfo.FSaleID]);
+  with FDM.QuerySQL(nSQL) do
+  if RecordCount > 0 then
+  begin
+    FInfo.FSalePY := FieldByName('S_PY').AsString;
+    EditSaleMan.Text := FieldByName('S_Name').AsString;
+  end;
+
+  EditCusName.Text := nCusName;
+  LoadCusAddrInfo(FInfo.FCusID);
 end;
 
 initialization

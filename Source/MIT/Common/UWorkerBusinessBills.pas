@@ -936,7 +936,7 @@ begin
 
     nSQL := MacroValue(nSQL, [MI('$Table', sTable_FLZhiKa),
             MI('$Field1', 'Z_Card'), MI('$Field2', 'Z_CardNO'),
-            MI('$Field3', 'X_ID'), MI('$ID', nZID)]);
+            MI('$Field3', 'Z_ID'), MI('$ID', nZID)]);
 
   end;
   FListA.Add(nSQL);
@@ -3168,6 +3168,7 @@ begin
 
     {$IFDEF SHXZY}
     nStr := CombineBillItmes(nBills);
+    if nBills[0].FZKType = sFlag_BillMY then
     if not TWorkerBusinessCommander.CallMe(cBC_SaveMYBills, nStr,
       sFlag_BillDone, @nOut) then
     begin

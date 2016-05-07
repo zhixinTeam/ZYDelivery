@@ -122,6 +122,7 @@ type
     procedure SetCardLastDone(const nCard,nReader: string);
     function GetReaderLastOn(const nCard: string): string;
     //磁卡活动
+    property ConnHelper: Boolean read FConnHelper write FConnHelper;
     property OnProce: THHProce read FProce write FProce;
     property OnEvent: THHEvent read FEvent write FEvent;
     //事件相关
@@ -554,18 +555,18 @@ end;
 procedure THardwareConnector.SetReaderCard(const nReader, nCard: string);
 var nIdx: Integer;
 begin
-  {$IFDEF DEBUG}
+  {.$IFDEF DEBUG}
   WriteLog(nReader + ' ::: ' + nCard);
-  {$ENDIF}
+  {.$ENDIF}
 
   for nIdx:=Low(FOwner.FItems) to High(FOwner.FItems) do
   with FOwner.FItems[nIdx] do
   begin
     if CompareText(nReader, FID) = 0 then
     begin
-      {$IFDEF DEBUG}
+      {.$IFDEF DEBUG}
       WriteLog(nReader + ' ::: 匹配成功.');
-      {$ENDIF}
+      {.$ENDIF}
 
       if FType = rtPound then
       begin

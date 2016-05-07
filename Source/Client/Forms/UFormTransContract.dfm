@@ -84,16 +84,8 @@ inherited fFormTransContract: TfFormTransContract
       Text = '0.00'
       Width = 177
     end
-    object EditCusName: TcxTextEdit
-      Left = 81
-      Top = 86
-      Hint = 'T.T_CusName'
-      ParentFont = False
-      TabOrder = 2
-      Width = 184
-    end
     object EditSaleMan: TcxTextEdit
-      Left = 328
+      Left = 320
       Top = 86
       Hint = 'T.T_SaleMan'
       ParentFont = False
@@ -109,7 +101,7 @@ inherited fFormTransContract: TfFormTransContract
       Width = 121
     end
     object EditAddr: TcxTextEdit
-      Left = 328
+      Left = 320
       Top = 136
       Hint = 'T.T_Addr'
       ParentFont = False
@@ -132,7 +124,7 @@ inherited fFormTransContract: TfFormTransContract
       Width = 176
     end
     object EditSrcAddr: TcxTextEdit
-      Left = 328
+      Left = 320
       Top = 111
       Hint = 'T.T_SrcAddr'
       ParentFont = False
@@ -165,7 +157,7 @@ inherited fFormTransContract: TfFormTransContract
       Width = 121
     end
     object EditCusPhone: TcxTextEdit
-      Left = 328
+      Left = 320
       Top = 186
       Hint = 'T.T_CusPhone'
       ParentFont = False
@@ -245,11 +237,26 @@ inherited fFormTransContract: TfFormTransContract
       Width = 121
     end
     object EditDestAddr: TcxTextEdit
-      Left = 328
+      Left = 320
       Top = 161
       Hint = 'T.T_Delivery'
       ParentFont = False
       TabOrder = 11
+      Width = 121
+    end
+    object EditCusName: TcxButtonEdit
+      Left = 81
+      Top = 86
+      Hint = 'T.T_CusName'
+      ParentFont = False
+      Properties.Buttons = <
+        item
+          Default = True
+          Kind = bkEllipsis
+        end>
+      Properties.OnButtonClick = EditCusNamePropertiesButtonClick
+      TabOrder = 2
+      OnKeyPress = OnCtrlKeyPress
       Width = 121
     end
     object dxLayoutControl1Group_Root: TdxLayoutGroup

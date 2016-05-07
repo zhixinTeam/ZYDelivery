@@ -44,6 +44,7 @@ type
     N2: TMenuItem;
     N3: TMenuItem;
     N4: TMenuItem;
+    N5: TMenuItem;
     procedure EditDatePropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure EditTruckPropertiesButtonClick(Sender: TObject;
@@ -365,6 +366,9 @@ begin
   try
     if Sender = N3 then   //过重时间
        FJBWhere := '(L_MDate>=''%s'' and L_MDate <''%s'')'
+    else
+    if Sender = N5 then   //发货时间
+       FJBWhere := '(L_LadeTime>=''%s'' and L_LadeTime <''%s'')'
     else
     if Sender = N4 then   //开单时间
       FJBWhere := '(L_Date>=''%s'' and L_Date <''%s'')';

@@ -643,9 +643,12 @@ begin
   FListA.Text := FIn.FData;
   //param list
 
-  if Str2Date(FListA.Values['DateTime']) = Date then
+  nP := Copy(FListA.Values['DateTime'], 1, 10);
+  nB := Copy(DateTime2Str(Now), 1, 10);
+
+  if CompareText(nP, nB) = 0 then
   begin
-    Result := CallMe(cBC_GetSerialNO, FListC.Text, sFlag_Yes, @nOut);
+    Result := CallMe(cBC_GetSerialNO, FListA.Text, sFlag_Yes, @nOut);
 
     if not Result then
          nData      := nOut.FData
