@@ -39,6 +39,7 @@ type
     FPound   : string;
     FCard    : string;
     FCardExt : string;
+    FCardLast: string;
     FPrinter : string;
     FLast    : Int64;
     FKeep    : Word;
@@ -369,6 +370,7 @@ begin
     begin
       FCard := '';
       FCardExt := '';
+      FCardLast:= '';
 
       FLast := 0;
       FOKTime := 0;
@@ -555,9 +557,9 @@ end;
 procedure THardwareConnector.SetReaderCard(const nReader, nCard: string);
 var nIdx: Integer;
 begin
-  {.$IFDEF DEBUG}
+  {$IFDEF DEBUG}
   WriteLog(nReader + ' ::: ' + nCard);
-  {.$ENDIF}
+  {$ENDIF}
 
   for nIdx:=Low(FOwner.FItems) to High(FOwner.FItems) do
   with FOwner.FItems[nIdx] do
@@ -574,7 +576,8 @@ begin
         //磅读头开启卡有效计时
       end else
 
-      if GetTickCount - FLast <= FKeep * 1000 then
+      if (GetTickCount - FLast <= FKeep * 1000) and
+         (CompareText(FCardLast, nCard) = 0) then
       begin
         Break;
         //短时间重复刷卡无效
@@ -603,7 +606,8 @@ begin
       if (FItems[nIdx].FCard <> '') and (FItems[nIdx].FType <> rtPound) then
       begin
         FItems[nIdx].FLast := GetTickCount + 500;
-        //重复刷卡间隔处理,多延后500ms
+        FItems[nIdx].FCardLast := FItems[nIdx].FCard;
+        //重复刷卡间隔处理,多延后500ms,记录最后一次读卡卡号
 
         nItem := FItems[nIdx];
         FItems[nIdx].FCard := '';
@@ -639,8 +643,6 @@ var nStr,nR: string;
     nPos: Integer;
 begin
   nStr := BytesToString(AData);
-  WriteLog(nStr + ' ::: 接收硬件守护卡号');
-
   nPos := Pos('NEWDATA', nStr);
   if nPos < 1 then Exit;
 

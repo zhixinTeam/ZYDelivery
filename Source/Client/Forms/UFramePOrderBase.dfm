@@ -196,6 +196,7 @@ inherited fFramePOrderBase: TfFramePOrderBase
     object N2: TMenuItem
       Tag = 1
       Caption = #25913#20026#38750#32508#21512
+      OnClick = N1Click
     end
   end
 end

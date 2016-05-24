@@ -196,7 +196,7 @@ begin
     EditName.Text := Trim(EditName.Text);
     if EditName.Text = '' then Exit;
 
-    FWhere := 'O_SaleMan like ''%%%s%%'' Or O_SaleMan like ''%%%s%%''';
+    FWhere := 'O_SalePY like ''%%%s%%'' Or O_SaleMan like ''%%%s%%''';
     FWhere := Format(FWhere, [EditName.Text, EditName.Text]);
     InitFormData(FWhere);
   end else
