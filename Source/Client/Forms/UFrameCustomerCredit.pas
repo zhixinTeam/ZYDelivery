@@ -71,7 +71,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UFormBase, USysConst, USysDB, USysGrid, USysDataDict,
-  UDataModule, UFormDateFilter;
+  UDataModule, UFormDateFilter, USysPopedom;
 
 class function TfFrameCustomerCredit.FrameID: integer;
 begin
@@ -116,8 +116,12 @@ begin
           ' Left Join $SM sm On sm.S_ID=cus.C_SaleMan ' +
           'Where (A_CreditLimit <> 0)';
   //xxxxx
+
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       nSQL := nSQL + ''
+  else nSQL := nSQL + ' And C_Type=''$ZY''';
   
-  nSQL := MacroValue(nSQL, [MI('$Cus', sTable_Customer),
+  nSQL := MacroValue(nSQL, [MI('$Cus', sTable_Customer), MI('$ZY', sFlag_CusZY),
           MI('$CA', sTable_CusAccDetail), MI('$SM', sTable_Salesman)]);
   //xxxxx
   

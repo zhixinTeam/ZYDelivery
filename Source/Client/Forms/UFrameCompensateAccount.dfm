@@ -22,7 +22,6 @@ inherited fFrameCompensateAccount: TfFrameCompensateAccount
     Height = 205
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
-      OptionsSelection.CellMultiSelect = True
     end
   end
   inherited dxLayout1: TdxLayoutControl

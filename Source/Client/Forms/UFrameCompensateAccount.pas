@@ -58,7 +58,7 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness;
+  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness, USysPopedom;
 
 class function TfFrameCompensateAccount.FrameID: integer;
 begin
@@ -79,9 +79,13 @@ begin
        Result := Result + 'Where IsNull(C_XuNi, '''')<>''$Yes'''
   else Result := Result + 'Where (' + nWhere + ')';
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And C_Type=''$ZY''';
+
   Result := MacroValue(Result, [MI('$CA', sTable_CompensateAccount),
             MI('$Cus', sTable_Customer), MI('$SM', sTable_Salesman),
-            MI('$Yes', sFlag_Yes)]);
+            MI('$Yes', sFlag_Yes), MI('$ZY', sFlag_CusZY)]);
   //xxxxx
 end;
 

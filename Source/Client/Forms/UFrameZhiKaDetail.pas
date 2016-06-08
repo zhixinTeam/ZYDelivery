@@ -98,7 +98,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, USysConst, USysDB, UDataModule, UFormDateFilter,
-  UFormBase, UFrameBase, UFormBaseInfo;
+  UFormBase, UFrameBase, UFormBaseInfo, USysPopedom;
 
 //------------------------------------------------------------------------------
 class function TfFrameZhiKaDetail.FrameID: integer;
@@ -145,11 +145,15 @@ begin
     Result := Result + ' and (Z_Date>=''$STT'' and Z_Date<''$End'')';
   //xxxxx
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And cus.C_Type=''$ZY''';
+
   Result := MacroValue(Result, [MI('$ZK', sTable_ZhiKa), MI('$Yes', sFlag_Yes),
             MI('$ZD', sTable_ZhiKaDtl), MI('$SM', sTable_Salesman),
             MI('$Cus', sTable_Customer), MI('$CheckField', FCheckField),
             MI('$STT', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1)),
-            MI('$HT', sTable_SaleContract)]);
+            MI('$ZY', sFlag_CusZY), MI('$HT', sTable_SaleContract)]);
   //xxxxx
 end;
 

@@ -566,9 +566,9 @@ begin
   begin
     if CompareText(nReader, FID) = 0 then
     begin
-      {.$IFDEF DEBUG}
+      {$IFDEF DEBUG}
       WriteLog(nReader + ' ::: 匹配成功.');
-      {.$ENDIF}
+      {$ENDIF}
 
       if FType = rtPound then
       begin
@@ -584,7 +584,9 @@ begin
       end;
 
       FCard := nCard;
+      {$IFDEF DEBUG}
       WriteLog(Format('接收到卡号: %s,%s', [nReader, nCard]));
+      {$ENDIF}
       Break;
     end;
   end;

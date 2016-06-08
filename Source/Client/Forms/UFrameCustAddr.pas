@@ -65,7 +65,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UDataModule, UFormBase, UFormWait, 
-  USysConst, USysDB;
+  USysConst, USysDB, USysPopedom;
 
 class function TfFrameCusAddr.FrameID: integer;
 begin
@@ -84,8 +84,12 @@ begin
        Result := Result + ' Where C_XuNi<>''$Yes'''
   else Result := Result + ' Where (' + nWhere + ')';
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And C_Type=''$ZY''';
+
   Result := MacroValue(Result, [MI('$Cus', sTable_Customer),
-            MI('$CAddr', sTable_CusAddr),
+            MI('$CAddr', sTable_CusAddr), MI('$ZY', sFlag_CusZY),
             MI('$Sale', sTable_Salesman), MI('$Yes', sFlag_Yes)]);
   //xxxxx
 end;

@@ -240,7 +240,7 @@ begin
   nStr := Format(nStr, [SQLQuery.FieldByName('F_ID').AsString]);
   if not QueryDlg(nStr, sAsk) then Exit;
 
-  if DeleteBill(SQLQuery.FieldByName('F_ID').AsString) then
+  if DeleteRefund(SQLQuery.FieldByName('F_ID').AsString) then
   begin
     InitFormData(FWhere);
     ShowMsg('销售退货单已删除', sHint);

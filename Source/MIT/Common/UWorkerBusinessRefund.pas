@@ -678,6 +678,7 @@ begin
       FNextStatus := FieldByName('F_NextStatus').AsString;
 
       FZKType     := FieldByName('F_ZKType').AsString;
+      FZhiKa      := FieldByName('F_ZhiKa').AsString;
       FPoundID    := FieldByName('P_ID').AsString;
       FPayType    := FieldByName('F_PayType').AsString;
 
@@ -929,8 +930,10 @@ begin
     if FZKType=sFlag_BillFX then
     begin
       nSQL := 'Update %s Set I_RefundMoney=I_RefundMoney+(%s) ' +
-              'Where I_ID=''%s'' And I_Enabled=''%s''';
-      nSQL := Format(nSQL, [sTable_FXZhiKa, FloatToStr(nVal), FZhiKa, sFlag_Yes]);
+              'Where I_ID=''%s'' ';
+      //        'Where I_ID=''%s'' And I_Enabled=''%s''';
+      //nSQL := Format(nSQL, [sTable_FXZhiKa, FloatToStr(nVal), FZhiKa, sFlag_Yes]);
+      nSQL := Format(nSQL, [sTable_FXZhiKa, FloatToStr(nVal), FZhiKa]);
       FListA.Add(nSQL); //更新客户资金(可能不同客户)
     end else
 

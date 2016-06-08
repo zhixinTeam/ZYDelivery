@@ -88,6 +88,7 @@ inherited fFrameCusAddr: TfFrameCusAddr
     object EditSale: TcxButtonEdit [6]
       Left = 450
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True
@@ -101,6 +102,7 @@ inherited fFrameCusAddr: TfFrameCusAddr
     object EditAddr: TcxButtonEdit [7]
       Left = 634
       Top = 36
+      ParentFont = False
       Properties.Buttons = <
         item
           Default = True

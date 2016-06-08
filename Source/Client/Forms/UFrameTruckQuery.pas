@@ -60,7 +60,7 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, UFormDateFilter;
+  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, UFormDateFilter, USysPopedom;
 
 class function TfFrameTruckQuery.FrameID: integer;
 begin
@@ -97,6 +97,10 @@ begin
          Result := Result + ' And (' + nWhere + ')'
     else Result := Result + ' Where (' + nWhere + ')';
   //xxxxx
+
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And L_CusType=''$ZY''';
   
   Result := MacroValue(Result, [MI('$Bill', sTable_Bill),
             MI('$S', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);

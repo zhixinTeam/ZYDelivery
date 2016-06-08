@@ -105,8 +105,12 @@ begin
        Result := Result + ' Where ' + nWhere
   else Result := Result + ' Where I_Enabled=''$Yes''';
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And sc.C_Type=''$ZY''';
 
-  Result := MacroValue(Result, [MI('$Yes', sFlag_Yes),
+
+  Result := MacroValue(Result, [MI('$Yes', sFlag_Yes), MI('$ZY', sFlag_CusZY),
             MI('$FXZhiKa', sTable_FXZhiKa), MI('$SC', sTable_Customer),
             MI('$SM', sTable_Salesman)]);
 end;

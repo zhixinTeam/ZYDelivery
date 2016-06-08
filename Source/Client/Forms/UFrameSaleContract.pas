@@ -65,7 +65,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl,UDataModule, UFrameBase, UFormBase, USysBusiness,
-  USysConst, USysDB;
+  USysConst, USysDB, USysPopedom;
 
 //------------------------------------------------------------------------------
 class function TfFrameSaleContract.FrameID: integer;
@@ -86,8 +86,12 @@ begin
        Result := Result + ' Where IsNull(C_Freeze, '''')<>''$Yes'''
   else Result := Result + ' Where (' + nWhere + ')';
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And C_Type=''$ZY''';
+
   Result := MacroValue(Result, [MI('$Con', sTable_SaleContract),
-            MI('$SM', sTable_Salesman),
+            MI('$SM', sTable_Salesman), MI('$ZY', sFlag_CusZY),
             MI('$Cus', sTable_Customer), MI('$Yes', sFlag_Yes)]);
   //xxxxx
 end;

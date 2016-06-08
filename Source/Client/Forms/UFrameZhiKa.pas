@@ -81,7 +81,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UDataModule, UFormBase, USysConst, USysDB, USysBusiness,
-  UFormDateFilter;
+  UFormDateFilter, USysPopedom;
 
 //------------------------------------------------------------------------------
 class function TfFrameZhiKa.FrameID: integer;
@@ -116,7 +116,11 @@ begin
                  ' and (Z_InValid Is Null or Z_InValid<>''$Yes'')'
   else Result := Result + ' Where (' + nWhere + ')';
 
-  Result := MacroValue(Result, [MI('$ZK', sTable_ZhiKa), 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + ' And cus.C_Type=''$ZY''';
+
+  Result := MacroValue(Result, [MI('$ZK', sTable_ZhiKa),MI('$ZY', sFlag_CusZY),
              MI('$Con', sTable_SaleContract), MI('$SM', sTable_Salesman),
              MI('$Cus', sTable_Customer), MI('$Yes', sFlag_Yes),
              MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);

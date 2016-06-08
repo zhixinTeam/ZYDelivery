@@ -135,7 +135,11 @@ begin
     Result := Result + nStr + '(' + nWhere + ')';
   //xxxxx
 
-  Result := MacroValue(Result, [
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       Result := Result + ''
+  else Result := Result + nStr + ' L_CusType=''$ZY''';
+
+  Result := MacroValue(Result, [MI('$ZY', sFlag_CusZY),
             MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
   //xxxxx
 

@@ -58,7 +58,7 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness;
+  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness, USysPopedom;
 
 const
   gA_YuE = 'A_InMoney+A_RefundMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
@@ -101,11 +101,15 @@ begin
        nWh := ' And IsNull(C_XuNi, '''')<>''$Yes'''
   else nWh := ' And (' + nWhere + ')';
 
+  if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
+       nWh := nWh + ''
+  else nWh := nWh + ' And C_Type=''$ZY''';
+
   Result := MacroValue(nSQL, [MI('$CA', sTable_CusAccDetail),
             MI('$FX', sTable_FXZhiKa), MI('$Cus', sTable_Customer),
             MI('$SM', sTable_Salesman), MI('$Where', nWh),
             MI('$YU', gYuE), MI('$AY', gA_YuE), MI('$IU', gI_YuE),
-            MI('$Yes', sFlag_Yes)]);
+            MI('$Yes', sFlag_Yes), MI('$ZY', sFlag_CusZY)]);
   //xxxxx
 end;
 
