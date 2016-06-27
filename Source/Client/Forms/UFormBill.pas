@@ -42,6 +42,9 @@ type
     EditFQ: TcxButtonEdit;
     dxLayout1Item5: TdxLayoutItem;
     dxLayout1Group4: TdxLayoutGroup;
+    EditZC: TcxTextEdit;
+    dxLayout1Item13: TdxLayoutItem;
+    dxLayout1Group3: TdxLayoutGroup;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditStockPropertiesChange(Sender: TObject);
@@ -51,6 +54,7 @@ type
     procedure EditLadingKeyPress(Sender: TObject; var Key: Char);
     procedure EditFQPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
+    procedure EditTruckPropertiesEditValueChanged(Sender: TObject);
   protected
     { Protected declarations }
     FBuDanFlag: string;
@@ -708,6 +712,17 @@ begin
   if (nP.FCommand <> cCmd_ModalResult) or (nP.FParamA <> mrOK) then Exit;
   EditFQ.Text := nP.FParamB;
   gStockList[StrToInt(GetCtrlData(EditStock))].FSeal := EditFQ.Text;
+end;
+
+procedure TfFormBill.EditTruckPropertiesEditValueChanged(Sender: TObject);
+var nSQL: string;
+begin
+  inherited;
+  //
+  nSQL := 'Select T_Bearings From %s Where T_Truck=''%s''';
+  nSQL := Format(nSQL, [sTable_Truck, Trim(EditTruck.Text)]);
+  with FDM.QuerySQL(nSQL) do
+  if RecordCount > 0 then EditZC.Text := Fields[0].AsString; 
 end;
 
 initialization

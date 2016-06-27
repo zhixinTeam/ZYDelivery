@@ -97,6 +97,7 @@ inherited fFormTruck: TfFormTruck
       Hint = 'T.T_HZValue'
       ParentFont = False
       TabOrder = 5
+      Text = '0'
       Width = 94
     end
     object cxLabel1: TcxLabel [11]
@@ -112,6 +113,7 @@ inherited fFormTruck: TfFormTruck
       Hint = 'T.T_Bearings'
       ParentFont = False
       TabOrder = 11
+      Text = '0'
       Width = 121
     end
     object EditYSSerial: TcxTextEdit [13]
@@ -145,6 +147,7 @@ inherited fFormTruck: TfFormTruck
       Hint = 'T.T_PValue'
       ParentFont = False
       TabOrder = 3
+      Text = '0'
       Width = 96
     end
     object EditCGValue: TcxTextEdit [17]
@@ -153,6 +156,7 @@ inherited fFormTruck: TfFormTruck
       Hint = 'T.T_CGHZValue'
       ParentFont = False
       TabOrder = 9
+      Text = '0'
       Width = 121
     end
     object cxLabel2: TcxLabel [18]
@@ -173,6 +177,7 @@ inherited fFormTruck: TfFormTruck
       Left = 81
       Top = 86
       Hint = 'T.T_Driver'
+      ParentFont = False
       TabOrder = 2
       Width = 121
     end
@@ -180,6 +185,7 @@ inherited fFormTruck: TfFormTruck
       Left = 271
       Top = 86
       Hint = 'T.T_DrPhone'
+      ParentFont = False
       TabOrder = 8
       Width = 121
     end

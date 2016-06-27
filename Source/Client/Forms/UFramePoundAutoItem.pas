@@ -65,7 +65,7 @@ type
     procedure Timer_SaveFailTimer(Sender: TObject);
   private
     { Private declarations }
-    FIsWeighting, FIsSaving: Boolean;
+    FIsWeighting, FIsSaving, FHasReaded: Boolean;
     //称重标识,保存标识
     FPoundTunnel: PPTTunnelItem;
     //磅站通道
@@ -138,8 +138,9 @@ procedure TfFrameAutoPoundItem.OnCreateFrame;
 begin
   inherited;
   FPoundTunnel := nil;
+  FHasReaded   := False;
   FIsWeighting := False;
-  
+
   FEmptyPoundInit := 0;
   FListA := TStringList.Create;
 end;
@@ -255,6 +256,7 @@ begin
     EditBill.Properties.Items.Clear;
 
     FIsSaving    := False;
+    FHasReaded   := False;
     FIsWeighting := False;
     FEmptyPoundInit := 0;
     
@@ -461,12 +463,14 @@ begin
   try
     WriteLog('正在读取磁卡号.');
     nCard := Trim(ReadPoundCard(FPoundTunnel.FID));
-    if nCard = '' then Exit;
+    if (nCard = '') or FHasReaded then Exit;
 
+    FHasReaded   := True;
     if nCard <> FLastCard then
       FLastCardDone := 0;
     //新卡时重置
 
+    WriteSysLog('读取到新卡号:::' + nCard + '=>旧卡号:::' + FLastCard);
     nLast := Trunc((GetTickCount - FLastCardDone) / 1000);
     if nLast < FPoundTunnel.FCardInterval then
     begin
@@ -479,6 +483,8 @@ begin
       nStr := Format('磅站[ %s.%s ]: ',[FPoundTunnel.FID,
               FPoundTunnel.FName]) + nStr;
       WriteSysLog(nStr);
+
+      SetUIData(True);
       Exit;
     end;
 

@@ -135,6 +135,8 @@ begin
     Result := Result + nStr + '(' + nWhere + ')';
   //xxxxx
 
+  if nStr <> ' And ' then nStr := ' And ';
+
   if gPopedomManager.HasPopedom(PopedomItem, sPopedom_ViewCusFZY) then
        Result := Result + ''
   else Result := Result + nStr + ' L_CusType=''$ZY''';
