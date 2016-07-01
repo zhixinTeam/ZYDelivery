@@ -403,6 +403,7 @@ begin
   begin
     nHint := '该车辆当前不能过磅,详情如下: ' + #13#10#13#10 + nHint;
     WriteSysLog(nStr);
+    SetUIData(True);
     Exit;
   end;
 
