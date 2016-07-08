@@ -14,7 +14,7 @@ uses
   cxMaskEdit, cxButtonEdit, cxTextEdit, ADODB, cxLabel, UBitmapPanel,
   cxSplitter, cxGridLevel, cxClasses, cxGridCustomView,
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
-  ComCtrls, ToolWin;
+  ComCtrls, ToolWin, cxCheckBox;
 
 type
   TfFrameZhiKaDetail = class(TfFrameNormal)
@@ -53,6 +53,8 @@ type
     N18: TMenuItem;
     N19: TMenuItem;
     N20: TMenuItem;
+    cxCheckBox1: TcxCheckBox;
+    dxLayout1Item8: TdxLayoutItem;
     procedure EditZKPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure N1Click(Sender: TObject);
@@ -66,6 +68,7 @@ type
     procedure N17Click(Sender: TObject);
     procedure N20Click(Sender: TObject);
     procedure cxView1DblClick(Sender: TObject);
+    procedure cxCheckBox1Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -536,7 +539,7 @@ procedure TfFrameZhiKaDetail.cxView1DblClick(Sender: TObject);
 var nRowIdx, nValIdx: Integer;
 begin
   inherited;
-  if cxView1.DataController.RecordCount = 0 then Exit;          
+  if cxView1.DataController.RecordCount = 0 then Exit;
 
   nRowIdx := cxView1.DataController.FocusedRowIndex;
   nValIdx := cxView1.GetColumnByFieldName(FCheckField).Index;
@@ -546,6 +549,24 @@ begin
   if cxView1.ViewData.Records[nRowIdx].Values[nValIdx] = 'N' then
        cxView1.ViewData.Records[nRowIdx].Values[nValIdx] := 'Y'
   else cxView1.ViewData.Records[nRowIdx].Values[nValIdx] := 'N';
+end;
+
+procedure TfFrameZhiKaDetail.cxCheckBox1Click(Sender: TObject);
+var nValIdx, nIdx: Integer;
+begin
+  inherited;
+  if cxView1.DataController.RecordCount = 0 then Exit;
+
+  nValIdx := cxView1.GetColumnByFieldName(FCheckField).Index;
+  if nValIdx < 0 then Exit;
+  //选中按钮位置
+
+  for nIdx := 0 to cxView1.DataController.RecordCount-1 do
+  begin
+    if cxCheckBox1.Checked then
+         cxView1.ViewData.Records[nIdx].Values[nValIdx] := 'Y'
+    else cxView1.ViewData.Records[nIdx].Values[nValIdx] := 'N';
+  end;
 end;
 
 initialization

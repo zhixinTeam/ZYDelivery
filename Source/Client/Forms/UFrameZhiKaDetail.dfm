@@ -34,10 +34,10 @@ inherited fFrameZhiKaDetail: TfFrameZhiKaDetail
     Height = 138
     object cxTextEdit1: TcxTextEdit [0]
       Left = 81
-      Top = 93
+      Top = 94
       Hint = 'T.Z_ID'
       ParentFont = False
-      TabOrder = 3
+      TabOrder = 4
       Width = 112
     end
     object EditCus: TcxButtonEdit [1]
@@ -84,27 +84,37 @@ inherited fFrameZhiKaDetail: TfFrameZhiKaDetail
     end
     object cxTextEdit4: TcxTextEdit [4]
       Left = 256
-      Top = 93
+      Top = 94
       Hint = 'T.D_StockName'
       ParentFont = False
-      TabOrder = 4
+      TabOrder = 5
       Width = 135
     end
     object cxTextEdit2: TcxTextEdit [5]
       Left = 617
-      Top = 93
+      Top = 94
       Hint = 'T.C_Name'
       ParentFont = False
-      TabOrder = 6
+      TabOrder = 7
       Width = 121
     end
     object cxTextEdit3: TcxTextEdit [6]
       Left = 454
-      Top = 93
+      Top = 94
       Hint = 'T.D_Value'
       ParentFont = False
-      TabOrder = 5
+      TabOrder = 6
       Width = 100
+    end
+    object cxCheckBox1: TcxCheckBox [7]
+      Left = 644
+      Top = 36
+      Caption = #20840#36873
+      ParentFont = False
+      TabOrder = 3
+      Transparent = True
+      OnClick = cxCheckBox1Click
+      Width = 121
     end
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
@@ -121,6 +131,12 @@ inherited fFrameZhiKaDetail: TfFrameZhiKaDetail
         object dxLayout1Item6: TdxLayoutItem
           Caption = #26085#26399#31579#36873':'
           Control = EditDate
+          ControlOptions.ShowBorder = False
+        end
+        object dxLayout1Item8: TdxLayoutItem
+          Caption = 'cxCheckBox1'
+          ShowCaption = False
+          Control = cxCheckBox1
           ControlOptions.ShowBorder = False
         end
       end
