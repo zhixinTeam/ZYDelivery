@@ -501,21 +501,6 @@ begin
 
     nStr := Fields[0].AsString;
     if nStr<>FListA.Values['Password'] then Exit;
-    {
-    if CallMe(cBC_ServerNow, '', '', @nOut) then
-         nStr := PackerEncodeStr(nOut.FData)
-    else nStr := IntToStr(Random(999999));
-
-    nInfo := FListA.Values['User'] + nStr;
-    //xxxxx
-
-    nStr := 'Insert into $EI(I_Group, I_ItemID, I_Item, I_Info) ' +
-            'Values(''$Group'', ''$ItemID'', ''$Item'', ''$Info'')';
-    nStr := MacroValue(nStr, [MI('$EI', sTable_ExtInfo),
-            MI('$Group', sFlag_UserLogItem), MI('$ItemID', FListA.Values['User']),
-            MI('$Item', PackerEncodeStr(FListA.Values['Password'])),
-            MI('$Info', nInfo)]);
-    gDBConnManager.WorkerExec(FDBConn, nStr);  }
 
     Result := True;
   end;
@@ -525,17 +510,7 @@ end;
 //Parm: 用户名；验证数据
 //Desc: 用户注销
 function TWorkerBusinessCommander.LogOut(var nData: string): Boolean;
-//var nStr: string;
 begin
-  {nStr := 'delete From %s Where I_ItemID=''%s''';
-  nStr := Format(nStr, [sTable_ExtInfo, PackerDecodeStr(FIn.FData)]);
-  //card status
-
-  
-  if gDBConnManager.WorkerExec(FDBConn, nStr)<1 then
-       Result := False
-  else Result := True;     }
-
   Result := True;
 end;
 

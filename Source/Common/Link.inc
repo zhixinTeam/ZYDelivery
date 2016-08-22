@@ -54,6 +54,10 @@
 {$IFDEF SHXZY}
   {$DEFINE HardMon}
   //编译硬件守护
+  {$DEFINE HYRFID201}
+  //华益读头
+  {$DEFINE AppAtTaskBar}
+  //状态栏显示
 {$ENDIF}
 
 {$IFDEF MYGS}
@@ -64,35 +68,3 @@
   {$DEFINE EnableDoubleDB}
   //双数据库支持
 {$ENDIF}
-
-//如东海鑫
-{$IFDEF RDHX}
-  {$DEFINE COMMON}
-  {$DEFINE HYRFID201}
-  //华益读头
-{$ENDIF}
-
-//新安中联
-{$IFDEF XAZL}
-  {$DEFINE SyncRemote}
-  //远程同步
-  {$DEFINE MicroMsg}
-  //微信支持
-{$ENDIF}
-
-//济源中联
-{$IFDEF JYZL}
-  {$DEFINE XAZL}
-  //使用新安
-  {$DEFINE SyncRemote}
-  //远程同步
-  {$DEFINE HYRFID201}
-  //华益读头
-  {$DEFINE AppAtTaskBar}
-  //状态栏显示
-  {$DEFINE PrintBillMoney}
-  //打印时显金额
-  {$DEFINE HR1847}
-  //北京科瑞车检
-{$ENDIF}
-

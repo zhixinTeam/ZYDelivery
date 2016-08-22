@@ -1329,15 +1329,6 @@ begin
       FListA.Add(nSQL); //更新采购单
     end;
 
-    {$IFDEF XAZL}
-    nStr := nPound[0].FID;
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncStockOrder, nStr, '', @nOut) then
-    begin
-      nData := nOut.FData;
-      Exit;
-    end;
-    {$ENDIF}
-
     {$IFDEF SHXZY}
     FListB.Clear;
     FListB.Add(nPound[0].FID);

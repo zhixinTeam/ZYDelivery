@@ -3157,15 +3157,6 @@ begin
         FListA.Add(nSQL);
     end;
 
-    {$IFDEF XAZL}
-    nStr := CombinStr(FListB, ',', True);
-    if not TWorkerBusinessCommander.CallMe(cBC_SyncStockBill, nStr, '', @nOut) then
-    begin
-      nData := nOut.FData;
-      Exit;
-    end;
-    {$ENDIF}
-
     {$IFDEF SHXZY}
     nStr := CombineBillItmes(nBills);
     if nBills[0].FZKType = sFlag_BillMY then
