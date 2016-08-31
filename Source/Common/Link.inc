@@ -33,8 +33,10 @@
 {$IFDEF COM_MIT}
   {$DEFINE DBPool}
   //启用数据库支持
-  {.$DEFINE ChannelPool}
+  {$DEFINE ChannelPool}
   //启用通道支持
+  {$DEFINE Remote2MIT}
+  //启用中间件互访
   {.$DEFINE AutoChannel}
   //启用通道平衡
   {.$DEFINE SAP}
@@ -54,6 +56,8 @@
 {$IFDEF SHXZY}
   {$DEFINE HardMon}
   //编译硬件守护
+  {$DEFINE MasterSys}
+  //编译主服务系统
   {$DEFINE HYRFID201}
   //华益读头
   {$DEFINE AppAtTaskBar}

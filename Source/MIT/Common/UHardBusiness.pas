@@ -315,8 +315,10 @@ begin
   while nIdx < 5 do
   begin
     if gHardwareHelper.ConnHelper then
-         gHardwareHelper.OpenDoor(nReader)
-    else gBlueReader.OpenDoor(nReader);
+      gHardwareHelper.OpenDoor(nReader) else
+    if gBlueReader.IFOpenDoor then
+      gBlueReader.OpenDoor(nReader) else
+      gHYReaderManager.OpenDoor(nReader);  
     
     Inc(nIdx);
   end;
@@ -836,11 +838,15 @@ begin
   WriteHardHelperLog(Format('华益标签 %s:%s', [nReader.FTunnel, nReader.FCard]));
   {$ENDIF}
 
-  {$IFDEF JYZL}
-  gHardwareHelper.SetReaderCard(nReader.FID, 'H' + nReader.FCard, False);
-  {$ELSE}
-  g02NReader.ActiveELabel(nReader.FID, nReader.FCard);
-  {$ENDIF}
+  if nReader.FVirtual then
+  begin
+     case nReader.FVType of
+     rt900 :
+      gHardwareHelper.SetReaderCard(nReader.FVReader, 'H' + nReader.FCard, False);
+     rt02n :
+      g02NReader.SetReaderCard(nReader.FHost, nReader.FCard);
+     end;
+  end else g02NReader.ActiveELabel(nReader.FTunnel, nReader.FCard);
 end;
 
 procedure WhenBlueReaderCardArrived(nHost: TBlueReaderHost; nCard: TBlueReaderCard);
@@ -862,10 +868,10 @@ begin
   nRetain := False;
   //init
 
-  {.$IFDEF DEBUG}
+  {$IFDEF DEBUG}
   nStr := '三合一读卡器卡号'  + nItem.FID + ' ::: ' + nItem.FCard;
   WriteHardHelperLog(nStr);
-  {.$ENDIF}
+  {$ENDIF}
 
   with gParamManager.ActiveParam^ do
   try
@@ -1141,9 +1147,9 @@ var nStr: string;
       end;
     end;
 begin
-  {$IFDEF DEBUG}
+  {.$IFDEF DEBUG}
   WriteNearReaderLog('MakeTruckLadingDai进入.');
-  {$ENDIF}
+  {.$ENDIF}
 
   if IsJSRun then Exit;
   //tunnel is busy

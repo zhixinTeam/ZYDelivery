@@ -13,9 +13,10 @@ uses
   Windows, Forms, Classes, SysUtils, ULibFun, UBusinessWorker, UBusinessPacker,
   UTaskMonitor, USysShareMem, USysLoger, UMITConst, UMITPacker, UMemDataPool,
   {$IFDEF HardMon}UEventHardware, UWorkerHardware,{$ENDIF}
-  {$IFDEF MicroMsg}UMgrRemoteWXMsg,{$ENDIF} UWorkerBusinessBills,
-  UWorkerBusinessCommander, UWorkerBusinessOrders, UWorkerBusinessRefund,
-  UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser, USAPConnection;
+  UWorkerBusinessBills, UWorkerBusinessCommander, 
+  UWorkerBusinessOrders, UWorkerBusinessRefund,
+  UMgrDBConn, UMgrParam, UMgrPlug, UMgrChannel, UChannelChooser, USAPConnection
+  {$IFDEF Remote2MIT},UEventSelfRemote, UWorkerSelfRemote{$ENDIF};
 
 procedure InitSystemObject(const nMainForm: THandle);
 procedure RunSystemObject;
@@ -90,10 +91,6 @@ begin
   gChannelChoolser.StartRefresh;
   {$ENDIF} //channel auto select
 
-  {$IFDEF MicroMsg}
-  gWXPlatFormHelper.StartPlatConnector;
-  {$ENDIF} //micro message
-
   gTaskMonitor.StartMon;
   //mon task start
 end;
@@ -115,10 +112,6 @@ begin
   {$IFDEF DBPool}
   gDBConnManager.Disconnection();
   {$ENDIF} //db
-
-  {$IFDEF MicroMsg}
-  gWXPlatFormHelper.StopPlatConnector;
-  {$ENDIF} //micro message
 end;
 
 //------------------------------------------------------------------------------
@@ -183,10 +176,6 @@ begin
   gChannelChoolser.AddChanels(gParamManager.URLRemote.Text);
   {$ENDIF}
 
-  {$IFDEF MicroMsg}
-  gWXPlatFormHelper.LoadConfig(gPath + 'Hardware\MicroMsg.XML');
-  {$ENDIF} //micro message
-
   with nParam do
   begin
     FAppHandle := Application.Handle;
@@ -206,6 +195,9 @@ begin
     AddEventWorker(TMainEventWorker.Create);
     {$IFDEF HardMon}
     AddEventWorker(THardwareWorker.Create);
+    {$ENDIF}
+    {$IFDEF Remote2MIT}
+    AddEventWorker(TEventRemoteWorker.Create);
     {$ENDIF}
     LoadPlugsInDirectory(gPath + sPlugDir);
 

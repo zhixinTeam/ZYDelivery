@@ -10,7 +10,7 @@ interface
 uses
   Windows, Classes, Controls, DB, SysUtils, UBusinessWorker, UBusinessPacker,
   UBusinessConst, UMgrDBConn, UMgrParam, ZnMD5, ULibFun, UFormCtrl, USysLoger,
-  USysDB, UMITConst, UWorkerBusinessCommander;
+  USysDB, UMITConst, UWorkerBusinessCommander, UWorkerSelfRemote;
 
 type
   TWorkerBusinessOrders = class(TMITDBWorker)
@@ -36,6 +36,9 @@ type
     //获取供应可收货量
     function SaveOrderDtlAdd(var nData: string):Boolean;
 
+    function GetCompanyID: string;
+    function GetMasterCompanyID: string;
+    //MIT互访
     function GetPostOrderItems(var nData: string): Boolean;
     //获取岗位采购单
     function SavePostOrderItems(var nData: string): Boolean;
@@ -121,6 +124,40 @@ begin
       Result := False;
       nData := '无效的业务代码(Invalid Command).';
     end;
+  end;
+end;
+
+//Date: 2016/8/23
+//Parm:
+//Desc: 获取系统ID
+function TWorkerBusinessOrders.GetCompanyID: string;
+var nStr: string;
+begin
+  Result := '';
+  nStr := 'Select D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_SystemCompanyID]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    Result := Fields[0].AsString;
+  end;
+end;
+
+//Date: 2016/8/23
+//Parm:
+//Desc: 获取系统ID
+function TWorkerBusinessOrders.GetMasterCompanyID: string;
+var nStr: string;
+begin
+  Result := '';
+  nStr := 'Select D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_MasterCompanyID]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    Result := Fields[0].AsString;
   end;
 end;
 
@@ -365,6 +402,11 @@ begin
             SF('O_StockNo', FListA.Values['StockNO']),
             SF('O_StockName', FListA.Values['StockName']),
 
+            {$IFDEF MasterSys}
+            SF('O_SrcCompany', FListA.Values['SrcCompany']),
+            SF('O_SrcID', FListA.Values['SrcID']),
+            {$ENDIF}
+
             SF('O_Truck', FListA.Values['Truck']),
             SF('O_Man', FIn.FBase.FFrom.FUser),
             SF('O_Date', sField_SQLServer_Now, sfVal)
@@ -378,6 +420,14 @@ begin
       nStr := Format(nStr, [sTable_OrderBase, nVal,FListA.Values['SQID']]);
       gDBConnManager.WorkerExec(FDBConn, nStr);
     end;
+
+    {$IFNDEF MasterSys}
+    FListA.Values['SrcID'] := nOut.FData;
+    FListA.Values['SrcCompany'] := GetCompanyID;
+    if not CallRemoteWorker(sCLI_BusinessPurchaseOrder, PackerEncodeStr(FListA.Text), '',
+      GetMasterCompanyID, @nOut, cBC_SaveOrder) then
+      raise Exception.Create(nOut.FData);
+    {$ENDIF}
 
     nIdx := Length(FOut.FData);
     if Copy(FOut.FData, nIdx, 1) = ',' then
@@ -395,21 +445,48 @@ end;
 //Date: 2015-8-5
 //Desc: 保存采购单
 function TWorkerBusinessOrders.DeleteOrder(var nData: string): Boolean;
-var nStr,nP: string;
+var nStr,nP,nInData,nSrcCompany: string;
+    nOut: TWorkerBusinessCommand;
     nIdx: Integer;
 begin
   Result := False;
+  nInData := FIn.FData;
+  nSrcCompany := FIn.FBase.FKey;
   //init
 
+  {$IFDEF MasterSys}
+  nStr := 'Select O_ID From %s ' +
+          'Where O_SrcID=''%s'' And O_SrcCompany=''%s''';
+  nStr := Format(nStr, [sTable_Order, nInData, nSrcCompany]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := Format('采购单[ %s ]已丢失.', [nInData]);
+      Exit;
+    end;
+
+    nInData := Fields[0].AsString;
+  end;
+  {$ELSE}
+  if not CallRemoteWorker(sCLI_BusinessPurchaseOrder, FIn.FData, FIn.FExtParam,
+    GetMasterCompanyID, @nOut, cBC_DeleteOrder, GetCompanyID) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;  
+  {$ENDIF}
+
   nStr := 'Select Count(*) From %s Where D_OID=''%s''';
-  nStr := Format(nStr, [sTable_OrderDtl, FIn.FData]);
+  nStr := Format(nStr, [sTable_OrderDtl, nInData]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   begin
     if Fields[0].AsInteger > 0 then
     begin
       nData := '采购单[ %s ]已使用.';
-      nData := Format(nData, [FIn.FData]);
+      nData := Format(nData, [nInData]);
       Exit;
     end;
   end;
@@ -417,6 +494,7 @@ begin
   FDBConn.FConn.BeginTrans;
   try
     //--------------------------------------------------------------------------
+    {$IFNDEF MasterSys}
     nStr := Format('Select * From %s Where 1<>1', [sTable_Order]);
     //only for fields
     nP := '';
@@ -437,11 +515,12 @@ begin
     nStr := MacroValue(nStr, [MI('$OB', sTable_OrderBak),
             MI('$FL', nP), MI('$User', FIn.FBase.FFrom.FUser),
             MI('$Now', sField_SQLServer_Now),
-            MI('$OO', sTable_Order), MI('$ID', FIn.FData)]);
+            MI('$OO', sTable_Order), MI('$ID', nInData)]);
     gDBConnManager.WorkerExec(FDBConn, nStr);
+    {$ENDIF}
 
     nStr := 'Delete From %s Where O_ID=''%s''';
-    nStr := Format(nStr, [sTable_Order, FIn.FData]);
+    nStr := Format(nStr, [sTable_Order, nInData]);
     gDBConnManager.WorkerExec(FDBConn, nStr);
 
     FDBConn.FConn.CommitTrans;
@@ -456,14 +535,59 @@ end;
 //Parm: 采购订单[FIn.FData];磁卡号[FIn.FExtParam]
 //Desc: 为采购单绑定磁卡
 function TWorkerBusinessOrders.SaveOrderCard(var nData: string): Boolean;
-var nStr,nSQL,nTruck: string;
+var nStr,nSQL,nTruck,nInData,nSrcCompany: string;
+    nOut: TWorkerBusinessCommand;
+    nIdx: Integer;
 begin
   Result := False;
   nTruck := '';
+  //init
+
+  nInData := FIn.FData;
+  nSrcCompany := FIn.FBase.FKey;
+  //工厂编号
+  
+  {$IFDEF MasterSys}
+  nStr := AdjustListStrFormat(nInData, '''', True, ',', False);
+  //采购单列表
+  nSQL := 'Select O_ID From %s ' +
+          'Where O_SrcID In (%s) And O_SrcCompany=''%s''';
+  nSQL := Format(nSQL, [sTable_Order, nStr, nSrcCompany]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := Format('采购单[ %s ]已丢失.', [nInData]);
+      Exit;
+    end;
+
+    nInData := '';
+    First;
+
+    while not Eof do
+    begin
+      nInData := nInData + Fields[0].AsString + ',';
+      Next;
+    end;
+
+    nIdx := Length(nInData);
+    if Copy(nInData, nIdx, 1) = ',' then
+      System.Delete(nInData, nIdx, 1);
+    //xxxxx
+  end;
+  {$ELSE}
+  if not CallRemoteWorker(sCLI_BusinessPurchaseOrder, FIn.FData, FIn.FExtParam,
+    GetMasterCompanyID, @nOut, cBC_SaveOrderCard, GetCompanyID) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;  
+  {$ENDIF}
 
   FListB.Text := FIn.FExtParam;
   //磁卡列表
-  nStr := AdjustListStrFormat(FIn.FData, '''', True, ',', False);
+  nStr := AdjustListStrFormat(nInData, '''', True, ',', False);
   //采购单列表
 
   nSQL := 'Select O_ID,O_Card,O_Truck From %s Where O_ID In (%s)';
@@ -473,7 +597,7 @@ begin
   begin
     if RecordCount < 1 then
     begin
-      nData := Format('采购订单[ %s ]已丢失.', [FIn.FData]);
+      nData := Format('采购订单[ %s ]已丢失.', [nInData]);
       Exit;
     end;
 
@@ -505,25 +629,24 @@ begin
   end;
 
   //----------------------------------------------------------------------------
-  nStr := AdjustListStrFormat2(FListB, '''', True, ',', False);
-  //磁卡列表
-
-  nSQL := 'Select O_ID,O_Truck From %s Where O_Card In (%s)';
-  nSQL := Format(nSQL, [sTable_Order, nStr]);
-
-  with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
-  if RecordCount > 0 then
-  begin
-    nData := '车辆[ %s ]正在使用该卡,无法并单.';
-    nData := Format(nData, [FieldByName('O_Truck').AsString]);
-    Exit;
-  end;
 
   FDBConn.FConn.BeginTrans;
   try
-    if FIn.FData <> '' then
+    if nInData <> '' then
     begin
-      nStr := AdjustListStrFormat(FIn.FData, '''', True, ',', False);
+      nSQL := 'Update %s Set O_Card=Null Where O_Card=''%s''';
+      nSQL := Format(nSQL, [sTable_Order, FIn.FExtParam]);
+      gDBConnManager.WorkerExec(FDBConn, nSQL);
+
+      nSQL := 'Update %s Set D_Card=Null Where D_Card=''%s''';
+      nSQL := Format(nSQL, [sTable_OrderDtl, FIn.FExtParam]);
+      gDBConnManager.WorkerExec(FDBConn, nSQL);
+
+      nSQL := 'Update %s Set C_Status=''%s'', C_Used=Null Where C_Card=''%s''';
+      nSQL := Format(nSQL, [sTable_Card, sFlag_CardInvalid, FIn.FExtParam]);
+      gDBConnManager.WorkerExec(FDBConn, nSQL);
+
+      nStr := AdjustListStrFormat(nInData, '''', True, ',', False);
       //重新计算列表
 
       nSQL := 'Update %s Set O_Card=''%s'' Where O_ID In(%s)';
@@ -573,7 +696,20 @@ end;
 //Desc: 保存采购单
 function TWorkerBusinessOrders.LogoffOrderCard(var nData: string): Boolean;
 var nStr: string;
+    nOut: TWorkerBusinessCommand;
 begin
+  Result := False;
+  //init
+
+  {$IFNDEF MasterSys}
+  if not CallRemoteWorker(sCLI_BusinessPurchaseOrder, FIn.FData, FIn.FExtParam,
+    GetMasterCompanyID, @nOut, cBC_LogOffOrderCard, GetCompanyID) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;
+  {$ENDIF}
+
   FDBConn.FConn.BeginTrans;
   try
     nStr := 'Update %s Set O_Card=Null Where O_Card=''%s''';
@@ -1007,13 +1143,64 @@ end;
 function TWorkerBusinessOrders.SavePostOrderItems(var nData: string): Boolean;
 var nVal, nNet: Double;
     nIdx: Integer;
-    nStr,nSQL: string;
+    nStr,nSQL,nTmp: string;
     nPound: TLadingBillItems;
     nOut: TWorkerBusinessCommand;
 begin
   Result := False;
   AnalyseBillItems(FIn.FData, nPound);
   //解析数据
+
+  {$IFDEF MasterSys}
+  nTmp := '';
+  for nIdx := Low(nPound) to High(nPound) do
+  begin
+    if FIn.FExtParam = sFlag_TruckIn then
+    begin
+      nSQL := 'Select O_SrcID, O_SrcCompany From %s Where O_ID=''%s''';
+      nSQL := Format(nSQL, [sTable_Order, nPound[nIdx].FZhiKa]);
+    end else
+
+    begin
+      nSQL := 'Select D_SrcID, D_SrcCompany From %s Where D_ID=''%s''';
+      nSQL := Format(nSQL, [sTable_OrderDtl, nPound[nIdx].FID]);
+    end;    
+
+
+    with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+    begin
+      if RecordCount < 1 then
+      begin
+        nData := '岗位[ %s ]提交的单据编号[ %s ]不存在.';
+        nData := Format(nData, [PostTypeToStr(FIn.FExtParam), nPound[nIdx].FID]);
+        Exit;
+      end;
+
+      if (nTmp <> '') and (nTmp <> Fields[1].AsString) then
+      begin
+        nData := '不同工厂不能合单.';
+        Exit;
+      end;
+
+      nTmp := Fields[1].AsString;
+
+      if FIn.FExtParam = sFlag_TruckIn then
+           nPound[nIdx].FZhiKa := Fields[0].AsString
+      else nPound[nIdx].FID := Fields[0].AsString;
+    end;
+  end;
+
+  nStr := CombineBillItmes(nPound);
+  if not CallRemoteWorker(sCLI_BusinessPurchaseOrder, nStr, FIn.FExtParam, nTmp,
+    @nOut, cBC_SavePostOrders) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;
+
+  nStr := nOut.FData;
+  AnalyseBillItems(FIn.FData, nPound);
+  {$ENDIF}
 
   FListA.Clear;
   //用于存储SQL列表
@@ -1030,6 +1217,8 @@ begin
       raise Exception.Create(nOut.FData);
     //xxxxx
 
+    FOut.FData := nOut.FData;
+
     with nPound[0] do
     begin
       nSQL := MakeSQLByStr([
@@ -1045,6 +1234,11 @@ begin
             SF('D_Type', FType),
             SF('D_StockNo', FStockNo),
             SF('D_StockName', FStockName),
+
+            {$IFDEF MasterSys}
+            SF('D_SrcID', nStr),
+            SF('D_SrcCompany', nTmp),
+            {$ENDIF}
 
             SF('D_Truck', FTruck),
             SF('D_Status', sFlag_TruckIn),
@@ -1164,12 +1358,23 @@ begin
   begin
     with nPound[0] do
     begin
+      {$IFDEF MasterSys}
+      if not CallRemoteWorker(sCLI_BusinessCommand, FTruck, '', nTmp, @nOut,
+        cBC_GetTruckCGHZValue) then
+      begin
+        nData := nOut.FData;
+        Exit;
+      end;
+
+      nVal := StrToFloat(nOut.FData);
+      {$ELSE}
       nStr := 'Select T_CGHZValue From %s Where T_Truck=''%s''';
       nStr := Format(nStr, [sTable_Truck, FTruck]);
       with gDBConnManager.WorkerQuery(FDBConn, nStr) do
       if RecordCount>0 then
            nVal := FieldByName('T_CGHZValue').AsFloat
       else nVal := 0;
+      {$ENDIF}
 
       if nVal > 0 then
       begin
@@ -1356,6 +1561,12 @@ begin
       end;
     end;
     //如果是临时卡片，则注销卡片
+
+    {$IFDEF MasterSys}
+    nSQL := 'Delete From %s Where D_ID=''%s''';
+    nSQL := Format(nSQL, [sTable_OrderDtl, nPound[0].FID]);
+    FListA.Add(nSQL);
+    {$ENDIF}
   end;
 
   //----------------------------------------------------------------------------

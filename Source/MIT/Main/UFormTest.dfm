@@ -13,8 +13,8 @@ inherited BaseForm1: TBaseForm1
   object Memo1: TMemo
     Left = 0
     Top = 33
-    Width = 636
-    Height = 393
+    Width = 628
+    Height = 382
     Align = alClient
     Lines.Strings = (
       'Memo1')
@@ -24,7 +24,7 @@ inherited BaseForm1: TBaseForm1
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 636
+    Width = 628
     Height = 33
     Align = alTop
     BevelOuter = bvNone

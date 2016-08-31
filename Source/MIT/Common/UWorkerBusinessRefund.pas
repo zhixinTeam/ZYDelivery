@@ -10,7 +10,7 @@ interface
 uses
   Windows, Classes, Controls, DB, SysUtils, UBusinessWorker, UBusinessPacker,
   UBusinessConst, UMgrDBConn, UMgrParam, ZnMD5, ULibFun, UFormCtrl, USysLoger,
-  USysDB, UMITConst, UWorkerBusinessCommander, DateUtils;
+  USysDB, UMITConst, UWorkerBusinessCommander, DateUtils, UWorkerSelfRemote;
 
 type
   TWorkerBusinessRefund = class(TMITDBWorker)
@@ -36,6 +36,9 @@ type
     function SavePostItems(var nData: string): Boolean;
     //保存岗位单据
     function VerifyBeforSave(var nData: string): Boolean;
+    function GetCompanyID: string;
+    function GetMasterCompanyID: string;
+    //MIT互访
   public
     constructor Create; override;
     destructor destroy; override;
@@ -150,6 +153,40 @@ begin
   end;
 end;
 
+//Date: 2016/8/23
+//Parm:
+//Desc: 获取系统ID
+function TWorkerBusinessRefund.GetCompanyID: string;
+var nStr: string;
+begin
+  Result := '';
+  nStr := 'Select D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_SystemCompanyID]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    Result := Fields[0].AsString;
+  end;
+end;
+
+//Date: 2016/8/23
+//Parm:
+//Desc: 获取系统ID
+function TWorkerBusinessRefund.GetMasterCompanyID: string;
+var nStr: string;
+begin
+  Result := '';
+  nStr := 'Select D_Value From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_MasterCompanyID]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    Result := Fields[0].AsString;
+  end;
+end;
+
 function TWorkerBusinessRefund.VerifyBeforSave(var nData: string): Boolean;
 var nInt: Integer;
     nStr: string;
@@ -254,7 +291,9 @@ var nStr: string;
 begin
   Result := False;
   FListA.Text := PackerDecodeStr(FIn.FData);
+  {$IFNDEF MasterSys}
   if not VerifyBeforSave(nData) then Exit;
+  {$ENDIF}
 
   with FListC do
   begin
@@ -299,6 +338,11 @@ begin
             SF('F_Value', StrToFloat(Values['Value']), sfVal),
             SF('F_Price', StrToFloat(Values['Price']), sfVal),
             SF('F_LimValue', StrToFloat(Values['LimValue']), sfVal),
+
+            {$IFDEF MasterSys}
+            SF('F_SrcCompany', Values['SrcCompany']),
+            SF('F_SrcID', Values['SrcID']),
+            {$ENDIF}
 
             SF('F_Status', sFlag_BillNew),
             SF('F_Man', FIn.FBase.FFrom.FUser),
@@ -378,8 +422,18 @@ begin
             gDBConnManager.WorkerExec(FDBConn, nStr);
           end;
        end;
-    end;
+    end else
     //袋装不过磅
+
+    begin
+      {$IFNDEF MasterSys}
+      FListA.Values['SrcID'] := nOut.FData;
+      FListA.Values['SrcCompany'] := GetCompanyID;
+      if not CallRemoteWorker(sCLI_BusinessRefund, PackerEncodeStr(FListA.Text), '',
+        GetMasterCompanyID, @nOut, cBC_SaveRefund) then
+        raise Exception.Create(nOut.FData);
+      {$ENDIF}
+    end;  
 
     FDBConn.FConn.CommitTrans;
     Result := True;
@@ -393,19 +447,48 @@ end;
 //Parm: 单据[FIn.FData];磁卡[FIn.FExtParam]
 //Desc: 保存销售退货单磁卡
 function TWorkerBusinessRefund.SaveRefundCard(var nData: string): Boolean;
-var nStr,nTruck: string;
+var nStr,nTruck,nInData, nSrcCompany: string;
+    nOut: TWorkerBusinessCommand;
     nIdx: Integer;
 begin
   Result := False;
+
+  nInData := FIn.FData;
+  nSrcCompany := FIn.FBase.FKey;
+  //工厂编号
+  
+  {$IFDEF MasterSys}
+  nStr := 'Select F_ID From %s Where F_SrcID=''%s'' And F_SrcCompany=''%s''';
+  nStr := Format(nStr, [sTable_Refund, nInData, nSrcCompany]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := Format('退购单[ %s ]已丢失.', [nInData]);
+      Exit;
+    end;
+
+    nInData := Fields[0].AsString;
+  end;
+  {$ELSE}
+  if not CallRemoteWorker(sCLI_BusinessRefund, FIn.FData, FIn.FExtParam,
+    GetMasterCompanyID, @nOut, cBC_SaveRefund, GetCompanyID) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;  
+  {$ENDIF}
+
   nStr := 'Select F_Card,F_Truck From %s Where F_ID=''%s''';
-  nStr := Format(nStr, [sTable_Refund, FIn.FData]);
+  nStr := Format(nStr, [sTable_Refund, nInData]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   begin
     if RecordCount < 1 then
     begin
       nData := '销售退货单据[ %s ]已丢失.';
-      nData := Format(nData, [FIn.FData]);
+      nData := Format(nData, [nInData]);
       Exit;
     end;
 
@@ -421,7 +504,7 @@ begin
   end;
 
   nStr := 'Update %s Set F_Card=''%s'' Where F_ID=''%s''';
-  nStr := Format(nStr, [sTable_Refund, FIn.FExtParam, FIn.FData]);
+  nStr := Format(nStr, [sTable_Refund, FIn.FExtParam, nInData]);
   FListA.Add(nStr);
 
   nStr := 'Select Count(*) From %s Where C_Card=''%s''';
@@ -530,19 +613,49 @@ end;
 //Parm: 销售退货单[FIn.FData]
 //Desc: 删除销售退货单
 function TWorkerBusinessRefund.DeleteRefund(var nData: string): Boolean;
-var nStr,nP: string;
+var nStr,nP,nInData,nSrcCompany: string;
+    nOut: TWorkerBusinessCommand;
     nIdx: Integer;
 begin
   Result := False;
+
+  nInData := FIn.FData;
+  nSrcCompany := FIn.FBase.FKey;
+  //init
+
+  {$IFDEF MasterSys}
+  nStr := 'Select F_ID From %s ' +
+          'Where F_SrcID=''%s'' And F_SrcCompany=''%s''';
+  nStr := Format(nStr, [sTable_Refund, nInData, nSrcCompany]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := Format('退购单[ %s ]已丢失.', [nInData]);
+      Exit;
+    end;
+
+    nInData := Fields[0].AsString;
+  end;
+  {$ELSE}
+  if not CallRemoteWorker(sCLI_BusinessRefund, FIn.FData, FIn.FExtParam,
+    GetMasterCompanyID, @nOut, cBC_DeleteRefund, GetCompanyID) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;  
+  {$ENDIF}
+
   nStr := 'Select F_Card From %s Where F_ID=''%s''';
-  nStr := Format(nStr, [sTable_Refund, FIn.FData]);
+  nStr := Format(nStr, [sTable_Refund, nInData]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
   begin
     if RecordCount < 1 then
     begin
       nData := '销售退货单据[ %s ]已丢失.';
-      nData := Format(nData, [FIn.FData]);
+      nData := Format(nData, [nInData]);
       Exit;
     end;
 
@@ -556,6 +669,7 @@ begin
   end;
 
   //--------------------------------------------------------------------------
+  {$IFNDEF MasterSys}
   nStr := Format('Select * From %s Where 1<>1', [sTable_Refund]);
   //only for fields
   nP := '';
@@ -576,11 +690,12 @@ begin
   nStr := MacroValue(nStr, [MI('$RB', sTable_RefundBak),
           MI('$FL', nP), MI('$User', FIn.FBase.FFrom.FUser),
           MI('$Now', sField_SQLServer_Now),
-          MI('$RF', sTable_Refund), MI('$ID', FIn.FData)]);
+          MI('$RF', sTable_Refund), MI('$ID', nInData)]);
   FListA.Add(nStr);
+  {$ENDIF}
 
   nStr := 'Delete From %s Where F_ID=''%s''';
-  nStr := Format(nStr, [sTable_Refund, FIn.FData]);
+  nStr := Format(nStr, [sTable_Refund, nInData]);
   FListA.Add(nStr);
 
   FDBConn.FConn.BeginTrans;
@@ -711,7 +826,7 @@ end;
 //Desc: 保存指定岗位提交的交货单列表
 function TWorkerBusinessRefund.SavePostItems(var nData: string): Boolean;
 var nInt,nIdx: Integer;
-    nSQL: string;
+    nSQL,nTmp: string;
     nVal: Double;
     nBills: TLadingBillItems;
     nOut: TWorkerBusinessCommand;
@@ -734,6 +849,44 @@ begin
     nData := Format(nData, [PostTypeToStr(FIn.FExtParam)]);
     Exit;
   end;
+
+  {$IFDEF MasterSys}
+  nTmp := '';
+  for nIdx := Low(nBills) to High(nBills) do
+  begin
+    nSQL := 'Select D_SrcID, D_SrcCompany From %s Where D_ID=''%s''';
+    nSQL := Format(nSQL, [sTable_OrderDtl, nBills[nIdx].FID]);
+
+    with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+    begin
+      if RecordCount < 1 then
+      begin
+        nData := '岗位[ %s ]提交的单据编号[ %s ]不存在.';
+        nData := Format(nData, [PostTypeToStr(FIn.FExtParam), nBills[nIdx].FID]);
+        Exit;
+      end;
+
+      if (nTmp <> '') and (nTmp <> Fields[1].AsString) then
+      begin
+        nData := '不同工厂不能合单.';
+        Exit;
+      end;
+
+      nTmp := Fields[1].AsString;
+      nBills[nIdx].FID := Fields[0].AsString;
+    end;  
+  end;
+
+  nSQL := CombineBillItmes(nBills);
+  if not CallRemoteWorker(sCLI_BusinessRefund, nSQL, FIn.FExtParam, nTmp,
+    @nOut, cBC_SavePostBills) then
+  begin
+    nData := nOut.FData;
+    Exit;
+  end;
+
+  AnalyseBillItems(FIn.FData, nBills);
+  {$ENDIF}
 
   FListA.Clear;
   //用于存储SQL列表
@@ -944,6 +1097,12 @@ begin
       nSQL := Format(nSQL, [sTable_CompensateAccount, FloatToStr(nVal), FCusID]);
       FListA.Add(nSQL); //更新客户资金(可能不同客户)
     end;
+
+    {$IFDEF MasterSys}
+    nSQL := 'Delete From %s Where F_ID=''%s''';
+    nSQL := Format(nSQL, [sTable_Refund, nBills[0].FID]);
+    FListA.Add(nSQL);
+    {$ENDIF}
   end;
 
   //----------------------------------------------------------------------------

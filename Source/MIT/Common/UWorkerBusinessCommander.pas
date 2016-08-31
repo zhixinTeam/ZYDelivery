@@ -97,6 +97,8 @@ type
     function GetTruckPoundData(var nData: string): Boolean;
     function SaveTruckPoundData(var nData: string): Boolean;
     //存取车辆称重数据
+    function GetTruckCGHZValue(var nData: string): Boolean;
+    //获取车辆最大荷载量
 
     function GetStockBatValue(var nData: string): Boolean;
     function GetStockBatcode(var nData: string): Boolean;
@@ -440,6 +442,7 @@ begin
    cBC_GetStockBatValue    : Result := GetStockBatValue(nData);
    cBC_GetStockBatcode     : Result := GetStockBatcode(nData);
    cBC_SaveStockBatcode    : Result := SaveStockBatcode(nData);
+   cBC_GetTruckCGHZValue   : Result := GetTruckCGHZValue(nData);
 
    {$IFDEF SHXZY}
    cBC_StatisticsTrucks    : Result := SaveStatisticsTrucks(nData);
@@ -1463,6 +1466,22 @@ begin
   Result := True;
 end;
 {$ENDIF}
+
+function TWorkerBusinessCommander.GetTruckCGHZValue(var nData: string): Boolean;
+var nSQL: string;
+    nVal: Double;
+begin
+  Result := True;
+  nSQL := 'Select T_CGHZValue From %s Where T_Truck=''%s''';
+  nSQL := Format(nSQL, [sTable_Truck, FIn.FData]);
+
+  nVal := 0;
+  with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+  if RecordCount > 0 then nVal := Fields[0].AsFloat;
+
+  nVal := Float2Float(nVal, cPrecision, False);
+  FOut.FData := FloatToStr(nVal);
+end;
 
 //Date: 2014-10-02
 //Parm: 车牌号[FIn.FData];

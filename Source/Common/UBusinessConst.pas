@@ -58,6 +58,7 @@ const
   cBC_SaveFLZhiKa             = $0033;   //保存纸卡(订单)
   cBC_DeleteFLZhiKa           = $0034;   //删除纸卡(订单)
   cBC_ModifyBillValue         = $0035;   //修改提货量
+  cBC_ModifyBillLine          = $0036;   //同步提货单通道
 
   cBC_SaveOrder               = $0040;
   cBC_DeleteOrder             = $0041;
@@ -108,6 +109,7 @@ const
   cBC_DeleteRefund            = $0112;   //删除退货单
   cBC_SaveRefundCard          = $0113;   //退货磁卡
   cBC_ModifyRefundTruck       = $0114;   //修改退货车牌号
+  cBC_GetTruckCGHZValue       = $0115;   //获取车辆最大荷载量
 
 type
   PWorkerQueryFieldData = ^TWorkerQueryFieldData;
@@ -188,6 +190,8 @@ resourcestring
                                                         //业务模块
   sPlug_ModuleHD              = '{B584DCD6-40E5-413C-B9F3-6DD75AEF1C62}';
                                                         //硬件守护
+  sPlug_ModuleRemote          = '{B584DCD7-40E5-413C-B9F3-6DD75AEF1C63}';
+                                                        //MIT互相访问
                                                                                                    
   {*common function*}  
   sSys_BasePacker             = 'Sys_BasePacker';       //基本封包器

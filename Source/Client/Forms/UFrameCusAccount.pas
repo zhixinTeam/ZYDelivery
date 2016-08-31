@@ -180,40 +180,88 @@ end;
 
 //Desc: 校正客户资金
 procedure TfFrameCusAccount.N6Click(Sender: TObject);
-var nStr,nCID: string;
+var nStr,nCID,nTmp: string;
+    nList: TStrings;
     nVal: Double;
 begin
   if cxView1.DataController.GetSelectedCount < 1 then Exit;
-  {nCID := SQLQuery.FieldByName('A_CID').AsString;
+  nCID := SQLQuery.FieldByName('A_CID').AsString;
 
-  nStr := 'Select Sum(L_Money) from (' +
-          '  select L_Value * L_Price as L_Money from %s' +
-          '  where L_OutFact Is not Null And L_CusID = ''%s'') t';
-  nStr := Format(nStr, [sTable_Bill, nCID]);
-
-  with FDM.QuerySQL(nStr) do
-  begin
-    nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
-    nStr := 'Update %s Set A_OutMoney=%.2f Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_CusAccount, nVal, nCID]);
-    FDM.ExecuteSQL(nStr);
-  end;
-
-  nStr := 'Select Sum(L_Money) from (' +
-          '  select L_Value * L_Price as L_Money from %s' +
-          '  where L_OutFact Is Null And L_CusID = ''%s'') t';
-  nStr := Format(nStr, [sTable_Bill, nCID]);
+  {nStr := 'Select Sum(L_Money),L_Paytype from (' +
+          '  select L_Value * L_Price as L_Money,L_PayType from %s' +
+          '  where L_OutFact Is not Null And L_CusID = ''%s''' +
+          '  and (L_ZKType=''%s'' or L_ZKType=''%s'')) t' +
+          '  Group By L_PayType';
+  nStr := Format(nStr, [sTable_Bill, nCID, sFlag_BillSZ, sFlag_BillMY]);
 
   with FDM.QuerySQL(nStr) do
   begin
-    nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
-    nStr := 'Update %s Set A_FreezeMoney=%.2f Where A_CID=''%s''';
-    nStr := Format(nStr, [sTable_CusAccount, nVal, nCID]);
-    FDM.ExecuteSQL(nStr);
+    First;
+
+    while not Eof do
+    try 
+      nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
+      nStr := 'Update %s Set A_OutMoney=%.2f Where A_CID=''%s'' And A_Type=''%s''';
+      nStr := Format(nStr, [sTable_CusAccDetail, nVal, nCID, Fields[1].AsString]);
+      FDM.ExecuteSQL(nStr);
+    finally
+      Next;
+    end;
+  end;    }
+
+  nStr := 'Select Sum(L_Money),L_Paytype from (' +
+          '  select L_Value * L_Price as L_Money,L_PayType from %s' +
+          '  where L_OutFact Is Null And L_CusID = ''%s''' +
+          '  and (L_ZKType=''%s'' or L_ZKType=''%s'')) t' +
+          '  Group By L_PayType';
+  nStr := Format(nStr, [sTable_Bill, nCID, sFlag_BillSZ, sFlag_BillMY]);
+
+  nList := TStringList.Create;
+
+  try
+    with FDM.QuerySQL(nStr) do
+    begin
+      First;
+
+      while not Eof do
+      try
+        nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
+        nStr := 'Update %s Set A_FreezeMoney=%.2f Where A_CID=''%s'' ' +
+                'And A_Type=''%s''';
+        nStr := Format(nStr, [sTable_CusAccDetail, nVal, nCID,
+                Fields[1].AsString]);
+        //xxxxx
+
+        nList.Add(Fields[1].AsString);
+        FDM.ExecuteSQL(nStr);
+      finally
+        Next;
+      end;
+    end;
+
+    if nList.Count > 0 then
+    begin
+      nTmp := AdjustListStrFormat2(nList, '''', True, ',', False);
+      //支付类型列表
+
+      nStr := 'Update %s Set A_FreezeMoney=0 Where A_CID=''%s'' ' +
+              'And A_Type not In (%s)';
+      nStr := Format(nStr, [sTable_CusAccDetail, nCID, nTmp]);
+      FDM.ExecuteSQL(nStr);
+    end else
+
+    begin
+      nStr := 'Update %s Set A_FreezeMoney=0 Where A_CID=''%s''';
+      nStr := Format(nStr, [sTable_CusAccDetail, nCID]);
+      FDM.ExecuteSQL(nStr);
+    end;    
+    //更新标准和贸易纸卡
+  finally
+    nList.Free;
   end;
 
   InitFormData(FWhere);
-  ShowMsg('校正完毕', sHint); }
+  ShowMsg('校正完毕', sHint);
 end;
 
 initialization

@@ -106,7 +106,7 @@ function TfFrameZhiKa.InitFormDataSQL(const nWhere: string): string;
 begin
   EditDate.Text := Format('%s ÷¡ %s', [Date2Str(FStart), Date2Str(FEnd)]);
   
-  Result := 'Select zk.*,sm.S_Name,sm.S_PY,cus.C_Name,cus.C_PY From $ZK zk ' +
+  Result := 'Select zk.*,sm.S_Name,sm.S_PY,cus.C_Type, cus.C_Name,cus.C_PY From $ZK zk ' +
             ' Left Join $SM sm On sm.S_ID=zk.Z_SaleMan ' +
             ' Left Join $Cus cus On cus.C_ID=zk.Z_Customer';
   //∂©µ•

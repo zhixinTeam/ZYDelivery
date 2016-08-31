@@ -195,6 +195,8 @@ ResourceString
   sFlag_PayCredit     = 'Pay_Credit';                //回款冲信用
   sFlag_HYValue       = 'HYMaxValue';                //化验批次量
   sFlag_SaleManDept   = 'SaleManDepartment';         //业务员部门编号
+  sFlag_SystemCompanyID = 'SystemCompanyID';         //公司编码
+  sFlag_MasterCompanyID = 'MasterCompanyID';         //主服务编码
   
   sFlag_PDaiWuChaZ    = 'PoundDaiWuChaZ';            //袋装正误差
   sFlag_PDaiWuChaF    = 'PoundDaiWuChaF';            //袋装负误差
@@ -233,6 +235,7 @@ ResourceString
 
   sFlag_HardSrvURL    = 'HardMonURL';
   sFlag_MITSrvURL     = 'MITServiceURL';             //服务地址
+  sFlag_RmtMITSrvURL  = 'RmtMITSvrcURL';             //远程服务地址
 
   sFlag_AutoIn        = 'Truck_AutoIn';              //自动进厂
   sFlag_AutoOut       = 'Truck_AutoOut';             //自动出厂
@@ -350,6 +353,7 @@ ResourceString
   sTable_WeixinMatch  = 'Sys_WeixinMatch';           //账号匹配
   sTable_WeixinTemp   = 'Sys_WeixinTemplate';        //信息模板
 
+const   
   {*新建表*}
   sSQL_NewSysDict = 'Create Table $Table(D_ID $Inc, D_Name varChar(15),' +
        'D_Desc varChar(30), D_Value varChar(50), D_Memo varChar(20),' +
@@ -919,6 +923,7 @@ ResourceString
        'L_Lading Char(1),L_IsVIP varChar(1),L_Seal varChar(100),' +
        'L_HYDan varChar(15),L_Man varChar(32),L_Date DateTime, ' +
        'L_Paytype Char(1),L_Payment varChar(20),' +
+       'L_SrcCompany varChar(32), L_SrcID varChar(20), ' +
        'L_DelMan varChar(32),L_DelDate DateTime)';
   {-----------------------------------------------------------------------------
    交货单表: Bill
@@ -954,6 +959,7 @@ ResourceString
    *.L_Date:创建时间
    *.L_Paytype:付款方式
    *.L_Payment:付款方式 (延用主卡)
+   *.L_SrcCompany: 公司代码
    *.L_DelMan: 交货单删除人员
    *.L_DelDate: 交货单删除时间
    *.L_Memo: 动作备注
@@ -975,6 +981,7 @@ ResourceString
        'F_OutFact DateTime,F_OutMan varChar(32),' +
        'F_Man varChar(32),F_Date DateTime,' +
        'F_Paytype Char(1),F_Payment varChar(20),' +
+       'F_SrcCompany varChar(1), F_SrcID varChar(20), ' +
        'F_DelMan varChar(32),F_DelDate DateTime)';
   {-----------------------------------------------------------------------------
    退货单表: Refund
@@ -1477,6 +1484,7 @@ ResourceString
        'O_Type Char(1), O_StockNo varChar(32), O_StockName varChar(80),' +
        'O_Truck varChar(15), O_OStatus Char(1),' +
        'O_Man varChar(32), O_Date DateTime, O_XuNi Char(1),' +
+       'O_SrcCompany varChar(32), O_SrcID varChar(20), ' +
        'O_DelMan varChar(32), O_DelDate DateTime, O_Memo varChar(500))';
   {-----------------------------------------------------------------------------
    采购订单表: Order
@@ -1516,6 +1524,7 @@ ResourceString
        'D_Value $Float,D_KZValue $Float, D_AKValue $Float,' +
        'D_YLine varChar(15), D_YLineName varChar(32), ' +
        'D_DelMan varChar(32), D_DelDate DateTime, D_YSResult Char(1), ' +
+       'D_SrcCompany varChar(32), D_SrcID varChar(20), ' +
        'D_OutFact DateTime, D_OutMan varChar(32), D_Memo varChar(500))';
   {-----------------------------------------------------------------------------
    采购订单明细表: OrderDetail

@@ -30,7 +30,7 @@ implementation
 {$R *.dfm}
 uses
   UBusinessWorker, UBusinessPacker, UBusinessConst, UMgrControl, UMgrDBConn,
-  USysDB, ULibFun;
+  USysDB, ULibFun, UWorkerSelfRemote;
 
 var
   gForm: TBaseForm1 = nil;
@@ -100,9 +100,9 @@ end;
 procedure TBaseForm1.Button1Click(Sender: TObject);
 var nOut: TWorkerBusinessCommand;
 begin
-  if CallBusinessCommand(cBC_CheckStockValid, edit1.Text, '', @nOut) then
+  if CallRemoteWorker(sCLI_BusinessCommand, edit1.Text, '', '123456_A', @nOut, cBC_ServerNow) then
   begin
-    Memo1.lines.Add('done')
+    Memo1.lines.Add(nOut.FData)
   end;
 end;
 

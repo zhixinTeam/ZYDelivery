@@ -46,6 +46,7 @@ type
     N9: TMenuItem;
     N10: TMenuItem;
     N11: TMenuItem;
+    N12: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -55,6 +56,7 @@ type
     procedure N1Click(Sender: TObject);
     procedure N8Click(Sender: TObject);
     procedure N11Click(Sender: TObject);
+    procedure N12Click(Sender: TObject);
   protected
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
@@ -377,6 +379,45 @@ begin
     ShowMsg('未知原因导致降低限额失败', sHint);
     raise;
   end;
+end;
+
+procedure TfFrameFXZhiKa.N12Click(Sender: TObject);
+var nStr,nZID: string;
+    nVal: Double;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then Exit;
+  nZID := SQLQuery.FieldByName('I_ID').AsString;
+
+  nStr := 'Select Sum(L_Money) from (' +
+          '  select L_Value * L_Price as L_Money from %s' +
+          '  where L_OutFact Is not Null And L_ZhiKA = ''%s'') t';
+  nStr := Format(nStr, [sTable_Bill, nZID]);
+
+  with FDM.QuerySQL(nStr) do
+  begin
+    nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
+    nStr := 'Update %s Set I_OutMoney=%.2f Where I_ID=''%s''';
+    nStr := Format(nStr, [sTable_FXZhiKa, nVal, nZID]);
+    FDM.ExecuteSQL(nStr);
+  end;    
+
+  nStr := 'Select Sum(L_Money) from (' +
+          '  select L_Value * L_Price as L_Money from %s' +
+          '  where L_OutFact Is Null And L_ZhiKA = ''%s'') t';
+  nStr := Format(nStr, [sTable_Bill, nZID]);
+
+  with FDM.QuerySQL(nStr) do
+  begin
+    nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
+    nStr := 'Update %s Set I_FreezeMoney=%.2f Where I_ID=''%s''';
+    nStr := Format(nStr, [sTable_FXZhiKa, nVal, nZID]);
+    //xxxxx
+
+    FDM.ExecuteSQL(nStr);
+  end;
+
+  InitFormData(FWhere);
+  ShowMsg('校正完毕', sHint);
 end;
 
 initialization

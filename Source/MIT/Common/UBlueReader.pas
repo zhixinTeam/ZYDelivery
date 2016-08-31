@@ -145,6 +145,7 @@ type
     //打开道闸
     property ServerPort: Integer read FSrvPort write FSrvPort;
     property KeepTime: Integer read FKeepTime write FKeepTime;
+    property IFOpenDoor: Boolean read FEnable;
     property OnCardArrived: TOnCard read FCardArrived write FCardArrived;
     //属性相关
   end;
@@ -293,6 +294,8 @@ end;
 procedure TBlueReader.StartReader(const nPort: Integer);
 var nIdx: Integer;
 begin
+  if not FEnable then Exit;
+  
   if nPort > 0 then
     FSrvPort := nPort;
   //new port
@@ -854,6 +857,7 @@ var nSend, nRecv: string;
     nContext: TIdContext;
 begin
   Result := False;
+  if not FEnable then Exit;
   //init
 
   WriteLog('读卡器 [' + nReaderID + '] 执行抬杆');
