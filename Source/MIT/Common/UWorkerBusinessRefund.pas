@@ -473,11 +473,11 @@ begin
   end;
   {$ELSE}
   if not CallRemoteWorker(sCLI_BusinessRefund, FIn.FData, FIn.FExtParam,
-    GetMasterCompanyID, @nOut, cBC_SaveRefund, GetCompanyID) then
+    GetMasterCompanyID, @nOut, cBC_SaveRefundCard, GetCompanyID) then
   begin
     nData := nOut.FData;
     Exit;
-  end;  
+  end;
   {$ENDIF}
 
   nStr := 'Select F_Card,F_Truck From %s Where F_ID=''%s''';
@@ -613,8 +613,9 @@ end;
 //Parm: 销售退货单[FIn.FData]
 //Desc: 删除销售退货单
 function TWorkerBusinessRefund.DeleteRefund(var nData: string): Boolean;
-var nStr,nP,nInData,nSrcCompany: string;
+var nStr,nP,nInData,nSrcCompany,nZKType: string;
     nOut: TWorkerBusinessCommand;
+    nVal: Double;
     nIdx: Integer;
 begin
   Result := False;
@@ -629,14 +630,12 @@ begin
   nStr := Format(nStr, [sTable_Refund, nInData, nSrcCompany]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+    nInData := Fields[0].AsString
+  else
   begin
-    if RecordCount < 1 then
-    begin
-      nData := Format('退购单[ %s ]已丢失.', [nInData]);
-      Exit;
-    end;
-
-    nInData := Fields[0].AsString;
+    Result := True;
+    Exit; //订单已经不存在
   end;
   {$ELSE}
   if not CallRemoteWorker(sCLI_BusinessRefund, FIn.FData, FIn.FExtParam,
@@ -647,7 +646,7 @@ begin
   end;  
   {$ENDIF}
 
-  nStr := 'Select F_Card From %s Where F_ID=''%s''';
+  nStr := 'Select * From %s Where F_ID=''%s''';
   nStr := Format(nStr, [sTable_Refund, nInData]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
@@ -660,12 +659,48 @@ begin
     end;
 
     FListA.Clear;
-    if Fields[0].AsString <> '' then
+    if FieldByName('F_Card').AsString <> '' then
     begin
       nStr := 'Update %s set C_TruckNo=Null,C_Status=''%s'' Where C_Card=''%s''';
       nStr := Format(nStr, [sTable_Card, sFlag_CardIdle, Fields[0].AsString]);
       FListA.Add(nStr); //磁卡状态
-    end; 
+    end;
+
+    if FieldByName('F_OutFact').AsString <> '' then //已出厂，恢复金额
+    begin
+      nZKType := FieldByName('F_ZKType').AsString;
+      nVal := Float2Float(FieldByName('F_Price').AsFloat *
+              FieldByName('F_Value').AsFloat, cPrecision, False);
+      //退货金额
+
+      if (nZKType=sFlag_BillSZ) or (nZKType=sFlag_BillMY) then
+      begin
+        nStr := 'Update %s Set A_RefundMoney=A_RefundMoney-(%s) ' +
+                'Where A_CID=''%s'' And A_Type=''%s''';
+        nStr := Format(nStr, [sTable_CusAccDetail, FloatToStr(nVal),
+                FieldByName('F_CusID').AsString,
+                FieldByName('F_Paytype').AsString]);
+        FListA.Add(nStr); //更新客户资金(可能不同客户)
+      end else
+
+      if nZKType=sFlag_BillFX then
+      begin
+        nStr := 'Update %s Set I_RefundMoney=I_RefundMoney-(%s) ' +
+                'Where I_ID=''%s'' ';
+        nStr := Format(nStr, [sTable_FXZhiKa, FloatToStr(nVal),
+                FieldByName('F_ZhiKa').AsString]);
+        FListA.Add(nStr); //更新客户资金(可能不同客户)
+      end else
+
+      if nZKType=sFlag_BillFL then
+      begin
+        nStr := 'Update %s Set A_RefundMoney=A_RefundMoney-(%s) ' +
+                'Where A_CID=''%s''';
+        nStr := Format(nStr, [sTable_CompensateAccount, FloatToStr(nVal),
+                FieldByName('F_CusID').AsString]);
+        FListA.Add(nStr); //更新客户资金(可能不同客户)
+      end;
+    end;  
   end;
 
   //--------------------------------------------------------------------------
@@ -854,8 +889,8 @@ begin
   nTmp := '';
   for nIdx := Low(nBills) to High(nBills) do
   begin
-    nSQL := 'Select D_SrcID, D_SrcCompany From %s Where D_ID=''%s''';
-    nSQL := Format(nSQL, [sTable_OrderDtl, nBills[nIdx].FID]);
+    nSQL := 'Select F_SrcID, F_SrcCompany From %s Where F_ID=''%s''';
+    nSQL := Format(nSQL, [sTable_Refund, nBills[nIdx].FID]);
 
     with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
     begin
@@ -1099,6 +1134,10 @@ begin
     end;
 
     {$IFDEF MasterSys}
+    nSQL := 'Delete From %s Where P_Bill=''%s''';
+    nSQL := Format(nSQL, [sTable_PoundLog, nBills[0].FID]);
+    FListA.Add(nSQL);
+
     nSQL := 'Delete From %s Where F_ID=''%s''';
     nSQL := Format(nSQL, [sTable_Refund, nBills[0].FID]);
     FListA.Add(nSQL);

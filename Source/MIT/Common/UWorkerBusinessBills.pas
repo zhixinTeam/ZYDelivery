@@ -2293,14 +2293,35 @@ begin
   nStr := Format(nStr, [sTable_Bill, nInData, nSrcCompany]);
 
   with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+    nInData := Fields[0].AsString
+  else
   begin
-    if RecordCount < 1 then
+    Result := True;
+    Exit; //订单已经不存在
+  end;
+
+  nStr := 'Select R_ID,T_HKBills,T_Bill From %s ' +
+          'Where T_HKBills Like ''%%%s%%''';
+  nStr := Format(nStr, [sTable_ZTTrucks, nInData]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  if RecordCount > 0 then
+  begin
+    if RecordCount <> 1 then
     begin
-      nData := Format('交货单[ %s ]已丢失.', [nInData]);
+      nData := '交货单[ %s ]出现在多条记录上,异常终止!';
+      nData := Format(nData, [nInData]);
       Exit;
     end;
 
-    nInData := Fields[0].AsString;
+    nRID := Fields[0].AsString;
+    nBill := Fields[2].AsString;
+    SplitStr(Fields[1].AsString, FListA, 0, '.')
+  end else
+  begin
+    nRID := '';
+    FListA.Clear;
   end;
   {$ELSE}
   if not CallRemoteWorker(sCLI_BusinessSaleBill, FIn.FData, FIn.FExtParam,
@@ -2308,7 +2329,7 @@ begin
   begin
     nData := nOut.FData;
     Exit;
-  end;  
+  end;
   {$ENDIF}
 
   nD   := False;
@@ -2353,31 +2374,6 @@ begin
     nZKType := FieldByName('L_ZKType').AsString;
     nPaytype:= FieldByName('L_Paytype').AsString;
   end;
-
-  {$IFDEF MasterSys}
-  nStr := 'Select R_ID,T_HKBills,T_Bill From %s ' +
-          'Where T_HKBills Like ''%%%s%%''';
-  nStr := Format(nStr, [sTable_ZTTrucks, nInData]);
-
-  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
-  if RecordCount > 0 then
-  begin
-    if RecordCount <> 1 then
-    begin
-      nData := '交货单[ %s ]出现在多条记录上,异常终止!';
-      nData := Format(nData, [nInData]);
-      Exit;
-    end;
-
-    nRID := Fields[0].AsString;
-    nBill := Fields[2].AsString;
-    SplitStr(Fields[1].AsString, FListA, 0, '.')
-  end else
-  begin
-    nRID := '';
-    FListA.Clear;
-  end;
-  {$ENDIF}
 
   if nZKType = sFlag_BillMY then
   begin
@@ -3394,6 +3390,13 @@ begin
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do
     begin
+      nSQL := 'Select L_OutFact From %s Where L_ID=''%s''';
+      nSQL := Format(nSQL, [sTable_Bill, FID]);
+      with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+      if (RecordCount > 0) and (Fields[0].AsString <> '') then
+        Continue;
+      //已出厂的交货单不重复出厂  
+
       FListB.Add(FID);
       //交货单列表
       
@@ -3453,7 +3456,9 @@ begin
       nData := nOut.FData;
       Exit;
     end;
+    {$ENDIF}
 
+    {$IFNDEF MasterSys}
     nStr := CombinStr(FListB, ',', True);
     if not TWorkerBusinessCommander.CallMe(cBC_StatisticsTrucks, nStr,
       sFlag_Sale, @nOut) then
@@ -3630,6 +3635,10 @@ begin
     if FListA.Count > 0 then
       CallRemoteWorker(sCLI_BusinessSaleBill, PackerEncodeStr(FListA.Text), '',
         nTmp, @nOut, cBC_ModifyBillLine);
+
+    nSQL := 'Delete From %s Where P_Bill In (%s)';
+    nSQL := Format(nSQL, [sTable_PoundLog, nStr]);
+    gDBConnManager.WorkerExec(FDBConn, nSQL);
 
     nSQL := 'Delete From %s Where L_ID In (%s)';
     nSQL := Format(nSQL, [sTable_Bill, nStr]);

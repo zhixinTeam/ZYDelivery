@@ -210,6 +210,7 @@ begin
         SubItems.Add(FProvName);
         SubItems.Add(FRestValue);
         SubItems.Add(FProvType);
+        SubItems.Add(FStockNO);
         ImageIndex := cItemIconIndex;
       end;
 

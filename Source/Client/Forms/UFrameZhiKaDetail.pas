@@ -555,13 +555,13 @@ procedure TfFrameZhiKaDetail.cxCheckBox1Click(Sender: TObject);
 var nValIdx, nIdx: Integer;
 begin
   inherited;
-  if cxView1.DataController.RecordCount = 0 then Exit;
+  if cxView1.DataController.GetRowCount = 0 then Exit;
 
   nValIdx := cxView1.GetColumnByFieldName(FCheckField).Index;
   if nValIdx < 0 then Exit;
   //选中按钮位置
 
-  for nIdx := 0 to cxView1.DataController.RecordCount-1 do
+  for nIdx := 0 to cxView1.DataController.GetRowCount - 1 do
   begin
     if cxCheckBox1.Checked then
          cxView1.ViewData.Records[nIdx].Values[nValIdx] := 'Y'

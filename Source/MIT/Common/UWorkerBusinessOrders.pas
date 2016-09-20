@@ -1534,7 +1534,7 @@ begin
       FListA.Add(nSQL); //更新采购单
     end;
 
-    {$IFDEF SHXZY}
+    {$IFNDEF MasterSys}
     FListB.Clear;
     FListB.Add(nPound[0].FID);
     nStr := CombinStr(FListB, ',', True);
@@ -1563,6 +1563,10 @@ begin
     //如果是临时卡片，则注销卡片
 
     {$IFDEF MasterSys}
+    nSQL := 'Delete From %s Where P_Order=''%s''';
+    nSQL := Format(nSQL, [sTable_PoundLog, nPound[0].FID]);
+    FListA.Add(nSQL);
+
     nSQL := 'Delete From %s Where D_ID=''%s''';
     nSQL := Format(nSQL, [sTable_OrderDtl, nPound[0].FID]);
     FListA.Add(nSQL);
