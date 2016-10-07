@@ -171,28 +171,28 @@ begin
       ShowMsg(nStr, sHint);
       Exit;
     end;
-  end;
 
-  nStr := 'Select T_Truck From %s Where T_ZGSerial=''%s'' And T_Truck <> ''%s''';
-  nStr := Format(nStr, [sTable_Truck, Trim(EditZGSerial.Text), nTruck]);
-  with FDM.QuerySQL(nStr) do
-  if RecordCount > 0 then
-  begin
-    nStr := '车牌号 [ %s ] 正在使用从业资格证编号[ %s ]';
-    nStr := Format(nStr, [Fields[0].AsString, Trim(EditZGSerial.Text)]);
-    ShowMsg(nStr, sHint);
-    Exit;
-  end;
+    nStr := 'Select T_Truck From %s Where T_ZGSerial=''%s'' And T_Truck <> ''%s''';
+    nStr := Format(nStr, [sTable_Truck, Trim(EditZGSerial.Text), nTruck]);
+    with FDM.QuerySQL(nStr) do
+    if RecordCount > 0 then
+    begin
+      nStr := '车牌号 [ %s ] 正在使用从业资格证编号[ %s ]';
+      nStr := Format(nStr, [Fields[0].AsString, Trim(EditZGSerial.Text)]);
+      ShowMsg(nStr, sHint);
+      Exit;
+    end;
 
-  nStr := 'Select T_Truck From %s Where T_YSSerial=''%s'' And T_Truck <> ''%s''';
-  nStr := Format(nStr, [sTable_Truck, Trim(EditYSSerial.Text), nTruck]);
-  with FDM.QuerySQL(nStr) do
-  if RecordCount > 0 then
-  begin
-    nStr := '车牌号 [ %s ] 正在使用运输资格证编号[ %s ]';
-    nStr := Format(nStr, [Fields[0].AsString, Trim(EditYSSerial.Text)]);
-    ShowMsg(nStr, sHint);
-    Exit;
+    nStr := 'Select T_Truck From %s Where T_YSSerial=''%s'' And T_Truck <> ''%s''';
+    nStr := Format(nStr, [sTable_Truck, Trim(EditYSSerial.Text), nTruck]);
+    with FDM.QuerySQL(nStr) do
+    if RecordCount > 0 then
+    begin
+      nStr := '车牌号 [ %s ] 正在使用运输资格证编号[ %s ]';
+      nStr := Format(nStr, [Fields[0].AsString, Trim(EditYSSerial.Text)]);
+      ShowMsg(nStr, sHint);
+      Exit;
+    end;
   end;
 
   nList := TStringList.Create;
