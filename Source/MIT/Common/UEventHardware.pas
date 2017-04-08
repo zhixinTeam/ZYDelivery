@@ -36,7 +36,7 @@ uses
   SysUtils, USysLoger, UHardBusiness, UMgrTruckProbe, UMgrParam,
   UMgrQueue, UMgrLEDCard, UMgrHardHelper, UMgrRemotePrint, U02NReader,
   UMgrERelay, UMultiJS, UMgrRemoteVoice, UMgrCodePrinter, UMgrLEDDisp,
-  UMgrRFID102, UMgrVoiceNet, UMgrTTCEM100, UBlueReader;
+  UMgrRFID102, UMgrVoiceNet, UMgrTTCEM100, UBlueReader, UMemDataPool;
 
 class function THardwareWorker.ModuleInfo: TPlugModuleInfo;
 begin
@@ -145,8 +145,14 @@ end;
 
 procedure THardwareWorker.InitSystemObject;
 begin
+  gMemDataManager := TMemDataManager.Create;
+  //内存管理
+
   gHardwareHelper := THardwareHelper.Create;
   //远距读头
+
+  g02NReader := T02NReader.Create;
+  //近距读头
 
   gHardShareData := WhenBusinessMITSharedDataIn;
   //hard monitor share

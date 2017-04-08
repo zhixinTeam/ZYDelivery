@@ -61,7 +61,7 @@ uses
   ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness, USysPopedom;
 
 const
-  gA_YuE = 'A_InMoney+A_RefundMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
+  gA_YuE = 'A_BeginBalance+A_InMoney+A_RefundMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
   gI_YuE = 'I_Money+I_RefundMoney-I_OutMoney-I_FreezeMoney-I_BackMoney';
   gYuE   = 'IsNull(I_YuE, 0) + A_YuE';
 
@@ -165,7 +165,7 @@ var nStr: string;
 begin
   if cxView1.DataController.GetSelectedCount > 0 then
   begin
-    {nStr := SQLQuery.FieldByName('A_CID').AsString + sFlag_Delimater +
+    nStr := SQLQuery.FieldByName('A_CID').AsString + sFlag_Delimater +
             SQLQuery.FieldByName('A_Type').AsString;
     nVal := GetCustomerValidMoney(nStr, False, @nCredit);
 
@@ -174,7 +174,7 @@ begin
             '*.资金余额: %.2f 元' + #13#10 +
             '*.信用金额: %.2f 元' + #13#10;
     nStr := Format(nStr, [SQLQuery.FieldByName('C_Name').AsString, nVal, nCredit]);
-    ShowDlg(nStr, sHint);}
+    ShowDlg(nStr, sHint);
   end;
 end;
 
@@ -187,7 +187,7 @@ begin
   if cxView1.DataController.GetSelectedCount < 1 then Exit;
   nCID := SQLQuery.FieldByName('A_CID').AsString;
 
-  {nStr := 'Select Sum(L_Money),L_Paytype from (' +
+  nStr := 'Select Sum(L_Money),L_Paytype from (' +
           '  select L_Value * L_Price as L_Money,L_PayType from %s' +
           '  where L_OutFact Is not Null And L_CusID = ''%s''' +
           '  and (L_ZKType=''%s'' or L_ZKType=''%s'')) t' +
@@ -199,7 +199,7 @@ begin
     First;
 
     while not Eof do
-    try 
+    try
       nVal := Float2Float(Fields[0].AsFloat, cPrecision, True);
       nStr := 'Update %s Set A_OutMoney=%.2f Where A_CID=''%s'' And A_Type=''%s''';
       nStr := Format(nStr, [sTable_CusAccDetail, nVal, nCID, Fields[1].AsString]);
@@ -207,7 +207,7 @@ begin
     finally
       Next;
     end;
-  end;    }
+  end;
 
   nStr := 'Select Sum(L_Money),L_Paytype from (' +
           '  select L_Value * L_Price as L_Money,L_PayType from %s' +
@@ -254,7 +254,7 @@ begin
       nStr := 'Update %s Set A_FreezeMoney=0 Where A_CID=''%s''';
       nStr := Format(nStr, [sTable_CusAccDetail, nCID]);
       FDM.ExecuteSQL(nStr);
-    end;    
+    end;
     //更新标准和贸易纸卡
   finally
     nList.Free;

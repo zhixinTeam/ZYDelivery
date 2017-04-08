@@ -65,6 +65,10 @@ type
     dxLayout1Item11: TdxLayoutItem;
     EditDrvPhone: TcxTextEdit;
     dxLayout1Item12: TdxLayoutItem;
+    EditType: TcxComboBox;
+    dxLayout1Item23: TdxLayoutItem;
+    EditAddr: TcxTextEdit;
+    dxLayout1Item24: TdxLayoutItem;
     procedure BtnOKClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   protected
@@ -82,7 +86,7 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl, UDataModule, UFormCtrl, USysDB, USysConst;
+  ULibFun, UMgrControl, UDataModule, UFormCtrl, USysDB, USysConst, UAdjustForm;
 
 class function TfFormTruck.CreateForm(const nPopedom: string;
   const nParam: Pointer): TWinControl;
@@ -110,7 +114,8 @@ begin
     LoadFormData(FTruckID); 
     nP.FCommand := cCmd_ModalResult;
     nP.FParamA := ShowModal;
-  finally
+  finally   
+    AdjustStringsItem(EditType.Properties.Items, True);
     Free;
   end;
 end;
@@ -123,7 +128,16 @@ end;
 procedure TfFormTruck.LoadFormData(const nID: string);
 var nStr: string;
     nDS : TDataSet;
+    nEx: TDynamicStrArray;
 begin
+  SetLength(nEx, 1);
+  nStr := 'D_Value=Select D_Value, D_Memo From %s Where D_Name=''%s''';
+  nStr := Format(nStr, [sTable_SysDict, sFlag_TruckType]);
+
+  nEx[0] := 'D_Value';
+  FDM.FillStringsData(EditType.Properties.Items, nStr, 0, '', nEx);
+  AdjustCXComboBoxItem(EditType, False);
+
   if nID <> '' then
   begin
     nStr := 'Select * From %s Where R_ID=%s';

@@ -153,6 +153,8 @@ type
     dxLayoutControl1Group7: TdxLayoutGroup;
     EditLicense: TcxTextEdit;
     dxLayoutControl1Item7: TdxLayoutItem;
+    cxTextEdit59: TcxTextEdit;
+    Label45: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;

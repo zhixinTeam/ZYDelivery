@@ -1657,9 +1657,17 @@ end;
 {$IFDEF SHXZY}
 function TWorkerBusinessCommander.SaveStatisticsTrucks(var nData: string): Boolean;
 var nStr, nSQL: string;
-    nPValue, nMValue, nValue: Double;
+    nPValue, nMValue, nValue, nVal: Double;
 begin
   Result := True;
+
+  nSQL := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';
+  nSQL := Format(nSQL, [sTable_SysDict, sFlag_SysParam, sFlag_HZStandard]);
+  with gDBConnManager.WorkerQuery(FDBConn, nSQL) do
+  if RecordCount > 0 then
+       nVal := Fields[0].AsFloat
+  else nVal := 11.00;
+
   nStr := AdjustListStrFormat(FIn.FData , '''' , True , ',' , True);
 
   if FIn.FExtParam = sFlag_Sale then
@@ -1669,9 +1677,10 @@ begin
             'tk.T_PValue As PrePValue ' +
             'From $BL bl ' +
             'Left Join $TK tk on tk.T_Truck=bl.L_Truck ' +
-            'where L_ID In ($IN) And L_Value>=7.0';//' And L_CusType=''$ZY''';
+            'where L_ID In ($IN) And L_Value>$Val';//' And L_CusType=''$ZY''';
     nSQL := MacroValue(nSQL, [MI('$BL', sTable_Bill) , MI('$IN', nStr),
-            MI('$TK', sTable_Truck) ,MI('$ZY', sFlag_CusZY)]);
+            MI('$TK', sTable_Truck) ,MI('$ZY', sFlag_CusZY),
+            MI('$Val', FloatToStr(nVal))]);
   end  else
 
   if FIn.FExtParam = sFlag_Provide then
@@ -1703,6 +1712,8 @@ begin
     else nPValue := FieldByName('PrePValue').AsFloat;
 
     nValue := FieldByName('NetValue').AsFloat;
+    if FloatRelation(nValue, nVal, rtLE) then Exit;
+    //净重小于11都不显示
 
     if FieldByName('MValue').AsFLoat<=1 then
          nMValue := nPValue + nValue

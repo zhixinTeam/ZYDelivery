@@ -1951,6 +1951,29 @@ var nStr: string;
     nP: TFormCommandParam;
 begin
   Result := True;
+
+  nStr := 'Select O_Card From %s Where O_Truck=''%s''';
+  nStr := Format(nStr, [sTable_Order, nTruck]);
+
+  with FDM.QueryTemp(nStr) do
+  if RecordCount > 0 then
+  begin
+    First;
+
+    while not Eof do
+    try
+      if Length(Fields[0].AsString) < 1 then Continue;
+
+      nStr := '此车有原材料固定ID卡,确认是否继续?';
+      if not QueryDlg(nStr, sAsk) then Exit;
+
+      Break;
+    finally
+      Next;
+    end;
+  end;
+  //查询是否有供应卡
+
   if nVerify then
   begin
     nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Memo=''%s''';

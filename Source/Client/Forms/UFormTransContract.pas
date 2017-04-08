@@ -15,6 +15,7 @@ uses
 
 type
   TCommonInfo = record
+    FCIDOD: string;
     FCusID: string;
     FCusPY: string;
 
@@ -280,6 +281,7 @@ begin
 
   with nDS, FInfo do
   begin
+    FCIDOD := FieldByName('T_CusID').AsString;
     FCusID := FieldByName('T_CusID').AsString;
     FCusPY := FieldByName('T_CusPY').AsString;
     FSaleID:= FieldByName('T_SaleID').AsString;
@@ -507,11 +509,11 @@ begin
     FDM.ExecuteSQL(nSQL);
     //xxxxx
 
-    if FInfo.FCalcMoney and (FInfo.FCusID <> '') then
+    if FInfo.FCalcMoney and (FInfo.FCIDOD <> '') then
     begin
       nSQL := 'Update %s Set A_FreezeMoney=A_FreezeMoney-(%s) Where A_CID=''%s''';
       nSQL := Format(nSQL, [sTable_TransAccount, FloatToStr(FInfo.FCusMoney),
-              FInfo.FCusID]);
+              FInfo.FCIDOD]);
       FDM.ExecuteSQL(nSQL);
     end;
     //Edit：修改前结算客户运费,则先还原运费
@@ -693,8 +695,8 @@ var nCusName, nSQL: string;
     nP: TFormCommandParam;
 begin
   inherited;
-  if FOper <> cCmd_AddData then Exit;
-  //非新增协议不允许修改客户名称
+  //if FOper <> cCmd_AddData then Exit;
+  //非新增协议不允许修改客户名称 ， 应工厂要求，取消限制 2016-12-09
   
   nP.FParamA := FInfo.FCusID;
   CreateBaseFormItem(cFI_FormGetCustom, '', @nP);

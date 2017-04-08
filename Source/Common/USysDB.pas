@@ -197,6 +197,8 @@ ResourceString
   sFlag_SaleManDept   = 'SaleManDepartment';         //业务员部门编号
   sFlag_SystemCompanyID = 'SystemCompanyID';         //公司编码
   sFlag_MasterCompanyID = 'MasterCompanyID';         //主服务编码
+  sFlag_HZStandard    = 'HZStandard';                //治超标准
+  sFlag_NoPoundStock  = 'NoPoundStock';              //超载禁止过磅
   
   sFlag_PDaiWuChaZ    = 'PoundDaiWuChaZ';            //袋装正误差
   sFlag_PDaiWuChaF    = 'PoundDaiWuChaF';            //袋装负误差
@@ -229,6 +231,7 @@ ResourceString
   sFlag_PaymentItem2  = 'PaymentItem2';              //销售回款信息项
   sFlag_PaymentItem3  = 'PaymentItem3';              //运费付款信息项
   sFlag_LadingItem    = 'LadingItem';                //提货方式信息项
+  sFlag_TruckType     = 'TruckType';                 //车辆类型
 
   sFlag_ProviderItem  = 'ProviderItem';              //供应商信息项
   sFlag_MaterailsItem = 'MaterailsItem';             //原材料信息项
@@ -1047,7 +1050,8 @@ const
        'T_Valid Char(1), T_VIPTruck Char(1), T_HasGPS Char(1),' +
        'T_Driver varChar(32), T_DrPhone varChar(15), ' +
        'T_Bearings $Float, T_YSSerial varChar(16), T_ZGSerial varChar(32),' +
-       'T_HZValue $Float, T_CGHZValue $Float, T_Memo varChar(100))';
+       'T_HZValue $Float, T_CGHZValue $Float, T_Memo varChar(100),' +
+       'T_TruckAddr varChar(128))';
   {-----------------------------------------------------------------------------
    车辆信息:Truck
    *.R_ID: 记录号
@@ -1257,7 +1261,7 @@ const
        'P_YLiGai varChar(20), P_Water varChar(20), P_KuangWu varChar(20),' +
        'P_GaiGui varChar(20), P_3DZhe varChar(20), P_28Zhe varChar(20),' +
        'P_3DYa varChar(20), P_28Ya varChar(20), P_Methods varChar(64),' +
-       'P_Criterion varChar(32), P_License varChar(64))';
+       'P_Criterion varChar(32), P_License varChar(64), P_VI varChar(20))';
   {-----------------------------------------------------------------------------
    品种参数:StockParam
    *.P_ID:记录编号
@@ -1286,6 +1290,7 @@ const
    *.P_28DZhe:28抗折强度
    *.P_3DYa:3天抗压强度
    *.P_28DYa:28抗压强度
+   *.P_VI:水溶性铬
    *.P_Methods: 检验方法
    *.P_Criterion: 执行标准
    *.P_License:生产许可证编号
@@ -1307,7 +1312,7 @@ const
        'R_3DYa4 varChar(20), R_3DYa5 varChar(20), R_3DYa6 varChar(20),' +
        'R_28Ya1 varChar(20), R_28Ya2 varChar(20), R_28Ya3 varChar(20),' +
        'R_28Ya4 varChar(20), R_28Ya5 varChar(20), R_28Ya6 varChar(20),' +
-       'R_Date DateTime, R_Man varChar(32))';
+       'R_VI varChar(20), R_Date DateTime, R_Man varChar(32))';
   {-----------------------------------------------------------------------------
    检验记录:StockRecord
    *.R_ID:记录编号
@@ -1352,6 +1357,7 @@ const
    *.R_28Ya4:28抗压强度4
    *.R_28Ya5:28抗压强度5
    *.R_28Ya6:28抗压强度6
+   *.R_VI:水溶性铬
    *.R_Date:取样日期
    *.R_Man:录入人
   -----------------------------------------------------------------------------}

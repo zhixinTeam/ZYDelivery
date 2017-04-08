@@ -215,7 +215,7 @@ begin
         PoundTunnel := nT;
 
         Additional.Clear;
-        SplitStr(nT.FAdditional, Additional, 0, ';', False);
+        if Assigned(nT.FOptions) then Additional.AddStrings(nT.FOptions);
       end;
     end;
   end;

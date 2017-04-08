@@ -118,7 +118,7 @@ object fFormHYStock: TfFormHYStock
       Top = 208
       Width = 428
       Height = 288
-      ActivePage = Sheet2
+      ActivePage = Sheet1
       ParentColor = False
       ShowFrame = True
       Style = 9
@@ -294,6 +294,14 @@ object fFormHYStock: TfFormHYStock
           Width = 54
           Height = 12
           Caption = #23433' '#23450' '#24615':'
+          Transparent = True
+        end
+        object Label45: TLabel
+          Left = 301
+          Top = 13
+          Width = 54
+          Height = 12
+          Caption = #27700#28342#24615#38124':'
           Transparent = True
         end
         object cxTextEdit2: TcxTextEdit
@@ -510,6 +518,14 @@ object fFormHYStock: TfFormHYStock
           Text = #21512#26684
           OnKeyPress = cxTextEdit2KeyPress
           Width = 75
+        end
+        object cxTextEdit59: TcxTextEdit
+          Left = 360
+          Top = 8
+          Hint = 'T.P_VI'
+          TabOrder = 20
+          Text = #8804
+          Width = 89
         end
       end
       object Sheet2: TcxTabSheet
@@ -1123,6 +1139,7 @@ object fFormHYStock: TfFormHYStock
       Left = 93
       Top = 111
       Hint = 'T.P_Methods'
+      ParentFont = False
       TabOrder = 4
       Text = 'GB/T17671-1999'
       Width = 121
@@ -1131,6 +1148,7 @@ object fFormHYStock: TfFormHYStock
       Left = 341
       Top = 111
       Hint = 'T.P_Criterion'
+      ParentFont = False
       TabOrder = 6
       Text = 'GB175-2007'
       Width = 121
@@ -1139,6 +1157,7 @@ object fFormHYStock: TfFormHYStock
       Left = 93
       Top = 136
       Hint = 'T.P_License'
+      ParentFont = False
       TabOrder = 7
       Text = 'XK08-001-03833'
       Width = 121

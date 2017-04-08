@@ -94,6 +94,8 @@ type
     dxLayoutControl1Item8: TdxLayoutItem;
     EditExtID: TcxTextEdit;
     dxLayoutControl1Item9: TdxLayoutItem;
+    cxTextEdit1: TcxTextEdit;
+    Label1: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;

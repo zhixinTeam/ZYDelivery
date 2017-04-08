@@ -219,6 +219,13 @@ object fFormHYRecord: TfFormHYRecord
         Caption = #31881' '#29028' '#28784':'
         Transparent = True
       end
+      object Label1: TLabel
+        Left = 4
+        Top = 131
+        Width = 54
+        Height = 12
+        Caption = #27700#28342#24615#38124':'
+      end
       object cxTextEdit29: TcxTextEdit
         Left = 76
         Top = 217
@@ -533,6 +540,13 @@ object fFormHYRecord: TfFormHYRecord
         ParentFont = False
         Properties.MaxLength = 20
         TabOrder = 29
+        Width = 75
+      end
+      object cxTextEdit1: TcxTextEdit
+        Left = 61
+        Top = 128
+        Hint = 'E.R_VI'
+        TabOrder = 30
         Width = 75
       end
     end

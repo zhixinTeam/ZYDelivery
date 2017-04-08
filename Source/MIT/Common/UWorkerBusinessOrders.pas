@@ -1378,6 +1378,27 @@ begin
 
       if nVal > 0 then
       begin
+        {$IFNDEF MasterSys}
+        nStr := 'Select D_Value From %s Where D_Name=''%s'' And D_Value=''%s''';
+        nStr := Format(nStr, [sTable_SysDict, sFlag_NoPoundStock, FStockNo]);
+        //ÅÐ¶Ï³¬·¢Ð¶»õ
+        with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+        if RecordCount>0 then
+        begin
+          if (FMData.FValue > FPData.FValue) and (FMData.FValue > nVal) then
+            nNet := FMData.FValue - nVal else
+          if (FPData.FValue > FMData.FValue) and (FPData.FValue > nVal) then
+            nNet := FPData.FValue - nVal else nNet := 0;
+
+          if FloatRelation(nNet, 0, rtGreater, cPrecision) then
+          begin
+            nData := '³µÁ¾[ %s ]ÒÑ³¬³öºËÔØÁ¿[ %s ]¶Ö,ÇëÐ¶ÁÏ!';
+            nData := Format(nData, [FTruck, FloatToStr(nNet)]);
+            Exit;
+          end;
+        end;
+        {$ENDIF}
+
         if (FMData.FValue > FPData.FValue) and (FMData.FValue > nVal) then
           FMData.FValue := nVal
         else if (FPData.FValue > FMData.FValue) and (FPData.FValue > nVal) then

@@ -18,9 +18,9 @@ procedure WhenReaderCardArrived(const nReader: THHReaderItem);
 procedure WhenHYReaderCardArrived(const nReader: PHYReaderItem);
 procedure WhenBlueReaderCardArrived(nHost: TBlueReaderHost; nCard: TBlueReaderCard);
 //有新卡号到达读头
-procedure WhenReaderCardIn(nHost: TReaderHost; nCard: TReaderCard);
+procedure WhenReaderCardIn(const nCard: string;const nHost: PReaderHost);
 //现场读头有新卡号
-procedure WhenReaderCardOut(nHost: TReaderHost; nCard: TReaderCard);
+procedure WhenReaderCardOut(const nCard: string;const nHost: PReaderHost);
 //现场读头卡号超时
 procedure WhenBusinessMITSharedDataIn(const nData: string);
 //业务中间件共享数据
@@ -1072,6 +1072,11 @@ begin
       //to mon
       
       gMultiJSManager.AddJS(nTunnel, nTruck, nBill, nPTruck.FDai, True);
+
+      nHint := 'Tunnel:[ %s ];Truck:[ %s ];Dai[ %d ]';
+      nHint := Format(nHint, [nTunnel, nTruck, nPTruck.FDai]);
+      WriteNearReaderLog(nHint);
+      WriteNearReaderLog('');
       gTaskMonitor.DelTask(nTask);
     end;
   finally
@@ -1370,41 +1375,34 @@ end;
 //Date: 2012-4-24
 //Parm: 主机;卡号
 //Desc: 对nHost.nCard新到卡号作出动作
-procedure WhenReaderCardIn(nHost: TReaderHost; nCard: TReaderCard);
+procedure WhenReaderCardIn(const nCard: string;const nHost: PReaderHost);
 begin 
   if nHost.FType = rtOnce then
   begin
     if nHost.FFun = rfOut then
-         MakeTruckOut(nCard.FCard, '', nHost.FPrinter)
-    else MakeTruckLadingDai(nCard.FCard, nHost.FTunnel);
+         MakeTruckOut(nCard, '', nHost.FPrinter)
+    else MakeTruckLadingDai(nCard, nHost.FTunnel);
   end else
 
   if nHost.FType = rtKeep then
   begin
-    MakeTruckLadingSan(nCard.FCard, nHost.FTunnel);
+    MakeTruckLadingSan(nCard, nHost.FTunnel);
   end;
 end;
 
 //Date: 2012-4-24
 //Parm: 主机;卡号
 //Desc: 对nHost.nCard超时卡作出动作
-procedure WhenReaderCardOut(nHost: TReaderHost; nCard: TReaderCard);
+procedure WhenReaderCardOut(const nCard: string;const nHost: PReaderHost);
 begin
   {$IFDEF DEBUG}
   WriteHardHelperLog('WhenReaderCardOut退出.');
   {$ENDIF}
 
-   if nHost.FPrepare then
-  begin
-    WriteHardHelperLog(nHost.FLEDText, nHost.FID);
-    Sleep(100);
-    Exit;
-  end;
-
   gERelayManager.LineClose(nHost.FTunnel);
   Sleep(100);
 
-  if nHost.FETimeOut and (not nCard.FOldOne) then
+  if nHost.FETimeOut then
        gERelayManager.ShowTxt(nHost.FTunnel, '电子标签超出范围')
   else gERelayManager.ShowTxt(nHost.FTunnel, nHost.FLEDText);
   Sleep(100);
