@@ -54,9 +54,9 @@
 
 //山西卓越
 {$IFDEF SHXZY}
-  {.$DEFINE HardMon}
+  {$DEFINE HardMon}
   //编译硬件守护
-  {.$DEFINE MasterSys}
+  {$DEFINE MasterSys}
   //编译主服务系统
   {$DEFINE HYRFID201}
   //华益读头

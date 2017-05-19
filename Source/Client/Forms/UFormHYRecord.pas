@@ -96,6 +96,10 @@ type
     dxLayoutControl1Item9: TdxLayoutItem;
     cxTextEdit1: TcxTextEdit;
     Label1: TLabel;
+    cxTextEdit2: TcxTextEdit;
+    Label2: TLabel;
+    Label3: TLabel;
+    cxTextEdit3: TcxTextEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;
@@ -199,7 +203,7 @@ var nIni: TIniFile;
 begin
   ResetHintAllForm(Self, 'E', sTable_StockRecord);
   //÷ÿ÷√±Ì√˚≥∆
-  
+
   nIni := TIniFile.Create(gPath + sFormConfig);
   try
     LoadFormConfig(Self, nIni);

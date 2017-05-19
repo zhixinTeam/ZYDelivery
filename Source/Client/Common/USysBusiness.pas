@@ -2982,6 +2982,7 @@ begin
             ' Left Join $Ext e on e.E_ID=s.R_ExtID ' +
             'Where L_Seal like ''%' + nSeal + '%''' +
             ' And (L_CusType=''$CZY'') ' +
+            ' And Year(L_OutFact)>=Year(''$ST'') and Year(L_OutFact) <Year(''$End'')+1 ' +
             ' And Year(R_Date)>=Year(''$ST'') and Year(R_Date) <Year(''$End'')+1 ';
   //Ìá»õµ¥
 
@@ -3063,7 +3064,8 @@ begin
   nStr := 'Select hy.*,sr.*,C_Name From $HY hy ' +
           ' Left Join $Cus cus on cus.C_ID=hy.H_Custom' +
           ' Left Join ($SR) sr on sr.R_SerialNo=H_SerialNo ' +
-          'Where H_ID in ($ID)';
+          'Where H_ID in ($ID) And ' +
+          'Year(R_Date)>=Year(H_ReportDate) and Year(R_Date) <Year(H_ReportDate)+1' ;
   //xxxxx
 
   nStr := MacroValue(nStr, [MI('$HY', sTable_StockHuaYan),

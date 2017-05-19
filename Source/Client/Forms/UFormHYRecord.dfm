@@ -1,6 +1,6 @@
 object fFormHYRecord: TfFormHYRecord
-  Left = 793
-  Top = 94
+  Left = 327
+  Top = 119
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   ClientHeight = 559
@@ -225,6 +225,22 @@ object fFormHYRecord: TfFormHYRecord
         Width = 54
         Height = 12
         Caption = #27700#28342#24615#38124':'
+      end
+      object Label2: TLabel
+        Left = 144
+        Top = 131
+        Width = 54
+        Height = 12
+        Caption = #31264'    '#24230':'
+        Transparent = True
+      end
+      object Label3: TLabel
+        Left = 290
+        Top = 131
+        Width = 54
+        Height = 12
+        Caption = #29087'    '#26009':'
+        Transparent = True
       end
       object cxTextEdit29: TcxTextEdit
         Left = 76
@@ -546,8 +562,27 @@ object fFormHYRecord: TfFormHYRecord
         Left = 61
         Top = 128
         Hint = 'E.R_VI'
+        ParentFont = False
         TabOrder = 30
         Width = 75
+      end
+      object cxTextEdit2: TcxTextEdit
+        Left = 205
+        Top = 128
+        Hint = 'E.R_ChouDu'
+        ParentFont = False
+        TabOrder = 31
+        Width = 73
+      end
+      object cxTextEdit3: TcxTextEdit
+        Left = 347
+        Top = 126
+        Hint = 'E.R_GaiGui'
+        ParentFont = False
+        Properties.MaxLength = 20
+        TabOrder = 32
+        OnKeyPress = cxTextEdit17KeyPress
+        Width = 74
       end
     end
     object EditDate: TcxDateEdit
