@@ -1251,7 +1251,6 @@ const
    *.D_Valid: 是否启用(N、封存;Y、启用；D、删除)
   -----------------------------------------------------------------------------}
 
-  
   sSQL_NewStockParam = 'Create Table $Table(P_ID varChar(15), P_Stock varChar(30),' +
        'P_Type Char(1), P_Name varChar(50), P_QLevel varChar(20), P_Memo varChar(50),' +
        'P_MgO varChar(20), P_SO3 varChar(20), P_ShaoShi varChar(20),' +
@@ -1261,7 +1260,9 @@ const
        'P_YLiGai varChar(20), P_Water varChar(20), P_KuangWu varChar(20),' +
        'P_GaiGui varChar(20), P_3DZhe varChar(20), P_28Zhe varChar(20),' +
        'P_3DYa varChar(20), P_28Ya varChar(20), P_Methods varChar(64),' +
-       'P_Criterion varChar(32), P_License varChar(64), P_VI varChar(20))';
+       'P_Criterion varChar(32), P_License varChar(64), P_VI varChar(20), ' +
+       'P_SGType varChar(20), P_SGValue varChar(20),' +
+       'P_C3A varChar(20), P_HHCValue varChar(20))';
   {-----------------------------------------------------------------------------
    品种参数:StockParam
    *.P_ID:记录编号
@@ -1291,6 +1292,10 @@ const
    *.P_3DYa:3天抗压强度
    *.P_28DYa:28抗压强度
    *.P_VI:水溶性铬
+   *.P_SGType: 石膏种类
+   *.P_SGValue: 石膏掺入量
+   *.P_HHCValue: 混合材掺入量
+   *.P_C3A: 熟料(C3A)
    *.P_Methods: 检验方法
    *.P_Criterion: 执行标准
    *.P_License:生产许可证编号

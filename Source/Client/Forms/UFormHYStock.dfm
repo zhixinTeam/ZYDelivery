@@ -304,6 +304,37 @@ object fFormHYStock: TfFormHYStock
           Caption = #27700#28342#24615#38124':'
           Transparent = True
         end
+        object Label46: TLabel
+          Left = 301
+          Top = 37
+          Width = 54
+          Height = 12
+          Caption = #30707#33167#31181#31867':'
+          Transparent = True
+        end
+        object Label47: TLabel
+          Left = 301
+          Top = 63
+          Width = 54
+          Height = 12
+          Caption = #30707' '#33167' '#37327':'
+        end
+        object Label49: TLabel
+          Left = 301
+          Top = 91
+          Width = 60
+          Height = 12
+          Caption = #29087#26009'(C3A):'
+          Transparent = True
+        end
+        object Label48: TLabel
+          Left = 301
+          Top = 115
+          Width = 54
+          Height = 12
+          Caption = #28151#21512#26448#37327':'
+          Transparent = True
+        end
         object cxTextEdit2: TcxTextEdit
           Left = 67
           Top = 8
@@ -523,9 +554,50 @@ object fFormHYStock: TfFormHYStock
           Left = 360
           Top = 8
           Hint = 'T.P_VI'
+          ParentFont = False
           TabOrder = 20
           Text = #8804
-          Width = 89
+          Width = 73
+        end
+        object cxTextEdit60: TcxTextEdit
+          Left = 359
+          Top = 32
+          Hint = 'T.P_SGType'
+          ParentFont = False
+          Properties.MaxLength = 20
+          TabOrder = 21
+          OnKeyPress = cxTextEdit2KeyPress
+          Width = 73
+        end
+        object cxTextEdit61: TcxTextEdit
+          Left = 359
+          Top = 58
+          Hint = 'T.P_SGValue'
+          ParentFont = False
+          Properties.MaxLength = 20
+          TabOrder = 22
+          OnKeyPress = cxTextEdit2KeyPress
+          Width = 73
+        end
+        object cxTextEdit63: TcxTextEdit
+          Left = 359
+          Top = 110
+          Hint = 'T.P_HHCValue'
+          ParentFont = False
+          Properties.MaxLength = 20
+          TabOrder = 23
+          OnKeyPress = cxTextEdit2KeyPress
+          Width = 73
+        end
+        object cxTextEdit62: TcxTextEdit
+          Left = 359
+          Top = 86
+          Hint = 'T.P_C3A'
+          ParentFont = False
+          Properties.MaxLength = 20
+          TabOrder = 24
+          OnKeyPress = cxTextEdit2KeyPress
+          Width = 73
         end
       end
       object Sheet2: TcxTabSheet

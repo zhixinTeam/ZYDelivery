@@ -155,6 +155,14 @@ type
     dxLayoutControl1Item7: TdxLayoutItem;
     cxTextEdit59: TcxTextEdit;
     Label45: TLabel;
+    cxTextEdit60: TcxTextEdit;
+    Label46: TLabel;
+    Label47: TLabel;
+    cxTextEdit61: TcxTextEdit;
+    Label49: TLabel;
+    cxTextEdit63: TcxTextEdit;
+    Label48: TLabel;
+    cxTextEdit62: TcxTextEdit;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditIDPropertiesButtonClick(Sender: TObject;

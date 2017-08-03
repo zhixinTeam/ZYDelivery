@@ -3026,8 +3026,16 @@ end;
 
 //Desc: 获取nStock品种的报表文件
 function GetReportFileByStock(const nStock: string): string;
+var nDefFile: string;
 begin
   Result := GetPinYinOfStr(nStock);
+
+  nDefFile := gPath + sReportDir + Result + '.fr3';
+  if FileExists(nDefFile) then
+  begin
+    Result := nDefFile;
+    Exit;
+  end;
 
   if Pos('dj', Result) > 0 then
     Result := gPath + sReportDir + 'HuaYan42_DJ.fr3'
