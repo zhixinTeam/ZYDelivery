@@ -64,6 +64,7 @@ uses
 
 //Desc: 初始化系统对象
 procedure InitSystemObject;
+var nStr: string;
 begin
   if not Assigned(gSysLoger) then
     gSysLoger := TSysLoger.Create(gPath + sLogDir);
@@ -71,11 +72,15 @@ begin
 
   if not Assigned(gMemDataManager) then
     gMemDataManager := TMemDataManager.Create;
+  //xxxxx
 
-  gDisplayManager.TempDir := gPath + 'Temp\';
-  gDisplayManager.LoadConfig(gPath + 'LEDDisp.xml');
-  gDisplayManager.StartDisplay;
-  //小屏显示
+  nStr := gPath + 'LEDDisp.xml';
+  if FileExists(nStr) then
+  begin
+    gDisplayManager.TempDir := gPath + 'Temp\';
+    gDisplayManager.LoadConfig(nStr);
+    gDisplayManager.StartDisplay;
+  end; //小屏显示
 
   gChannelManager := TChannelManager.Create;
   gChannelManager.ChannelMax := 20;
