@@ -26,8 +26,6 @@ inherited fFormWXAccount: TfFormWXAccount
       ParentFont = False
       Properties.MaxLength = 64
       Properties.ReadOnly = False
-      Style.BorderColor = clWindowFrame
-      Style.BorderStyle = ebsOffice11
       TabOrder = 0
       OnKeyPress = OnCtrlKeyPress
       Width = 121
@@ -38,8 +36,6 @@ inherited fFormWXAccount: TfFormWXAccount
       ParentFont = False
       Properties.MaxLength = 100
       Properties.ReadOnly = False
-      Style.BorderColor = clWindowFrame
-      Style.BorderStyle = ebsOffice11
       TabOrder = 1
       OnKeyPress = OnCtrlKeyPress
       Width = 121

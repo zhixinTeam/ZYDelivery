@@ -22,7 +22,6 @@ inherited fFrameTransAccount: TfFrameTransAccount
     Height = 205
     inherited cxView1: TcxGridDBTableView
       PopupMenu = PMenu1
-      OptionsSelection.CellMultiSelect = True
     end
   end
   inherited dxLayout1: TdxLayoutControl
@@ -91,6 +90,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
     object EditTime: TcxDateEdit [6]
       Left = 472
       Top = 36
+      ParentFont = False
       Properties.Kind = ckDateTime
       TabOrder = 2
       Width = 153
@@ -165,7 +165,7 @@ inherited fFrameTransAccount: TfFrameTransAccount
     AutoHotkeys = maManual
     OnPopup = PMenu1Popup
     Left = 8
-    Top = 276
+    Top = 278
     object N1: TMenuItem
       Tag = 10
       Caption = #38750#27491#24335#23458#25143
@@ -189,6 +189,10 @@ inherited fFrameTransAccount: TfFrameTransAccount
     object N6: TMenuItem
       Caption = #26657#27491#23458#25143#36164#37329
       OnClick = N6Click
+    end
+    object N7: TMenuItem
+      Caption = #36164#37329#25163#21160#21208#35823
+      OnClick = N7Click
     end
   end
 end

@@ -38,12 +38,14 @@ type
     N4: TMenuItem;
     N5: TMenuItem;
     N6: TMenuItem;
+    N7: TMenuItem;
     procedure N3Click(Sender: TObject);
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure PMenu1Popup(Sender: TObject);
     procedure N4Click(Sender: TObject);
     procedure N6Click(Sender: TObject);
+    procedure N7Click(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -58,7 +60,8 @@ implementation
 
 {$R *.dfm}
 uses
-  ULibFun, UMgrControl, USysConst, USysDB, UDataModule, USysBusiness, USysPopedom;
+  ULibFun, UMgrControl, UFormBase, USysConst, USysDB, UDataModule,
+  USysBusiness, USysPopedom;
 
 const
   gA_YuE = 'A_BeginBalance+A_InMoney+A_RefundMoney-A_OutMoney-A_FreezeMoney-A_CardUseMoney';
@@ -146,6 +149,7 @@ begin
   N4.Visible := False;
   {$ENDIF}
   N6.Enabled := gSysParam.FIsAdmin;
+  N7.Enabled := gSysParam.FIsAdmin;
 end;
 
 //Desc: 快捷菜单
@@ -262,6 +266,25 @@ begin
 
   InitFormData(FWhere);
   ShowMsg('校正完毕', sHint);
+end;
+
+//Desc: 资金手动勘误
+procedure TfFrameCusAccount.N7Click(Sender: TObject);
+var nP: TFormCommandParam;
+begin
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nP.FCommand := cCmd_EditData;
+    nP.FParamA := SQLQuery.FieldByName('R_ID').AsString;
+    nP.FParamB := FrameID;
+
+    CreateBaseFormItem(cFI_FormMoneyAdjust, '', @nP);
+    if (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK) then
+    begin
+      InitFormData(FWhere);
+      ShowMsg('操作成功', sHint); 
+    end;
+  end;
 end;
 
 initialization

@@ -55,8 +55,6 @@ inherited fFormZTLine: TfFormZTLine
       Hint = 'T.Z_Valid'
       Caption = #36890#36947#26377#25928
       ParentFont = False
-      Style.BorderColor = clWindowFrame
-      Style.BorderStyle = ebsSingle
       TabOrder = 10
       Transparent = True
       Width = 80

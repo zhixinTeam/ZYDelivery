@@ -11,13 +11,14 @@ interface
 {$I Link.Inc}
 uses
   UClientWorker, UMITPacker, UMemDataPool,
-  UFrameLog, UFrameSysLog, UFormIncInfo, UFormBackupSQL, UFormRestoreSQL
+  UFrameLog, UFrameSysLog, UFormIncInfo, UFormBackupSQL, UFormRestoreSQL,
+  UFormClearData
   {$IFDEF SHXZY},
   UFormPassword, UFormBaseInfo, UFrameAuthorize, UFormAuthorize,
   UFrameCustomer, UFormCustomer, UFormGetCustom, UFrameCustAddr, UFormCusAddr,
   UFrameSalesMan, UFormSalesMan,
   UFrameShouJu, UFormShouJu, UFramePayment, UFormPayment, UFormCustomerCredit,
-  UFrameCustomerCredit, UFrameCusAccount, UFrameCusInOutMoney,
+  UFrameCustomerCredit, UFrameCusAccount, UFrameCusInOutMoney, UFormMoneyAdjust,
   UFrameCompensateAccount, UFrameCompensateInOutMoney,
   UFormFLPayment, UFrameFLPayment, UFormFLZhiKa, UFrameFLZhiKa,
   UFrameTransContract, UFormTransContract, UFrameTransPayment,UFrameTransCredit,

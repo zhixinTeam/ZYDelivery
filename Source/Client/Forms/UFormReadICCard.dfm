@@ -27,8 +27,6 @@ inherited fFormReadICCard: TfFormReadICCard
       Top = 36
       ParentFont = False
       Properties.MaxLength = 32
-      Style.BorderColor = clWindowFrame
-      Style.BorderStyle = ebsOffice11
       TabOrder = 0
       OnKeyPress = EditCardKeyPress
       Width = 204

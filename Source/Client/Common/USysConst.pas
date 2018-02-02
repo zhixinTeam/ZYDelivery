@@ -171,6 +171,8 @@ const
   cFI_FormDeduct        = $1110;                     //暗扣规则
   cFI_FormOrderAdditional=$1111;                     //补采购订单
 
+  cFI_FormDataClear     = $1120;                     //数据清理
+  cFI_FormMoneyAdjust   = $1121;                     //校正资金                             
 
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
@@ -312,6 +314,7 @@ begin
   AddMenuModuleItem('MAIN_A04', cFI_FormRestore, mtForm);
   AddMenuModuleItem('MAIN_A05', cFI_FormChangePwd, mtForm);
   AddMenuModuleItem('MAIN_A07', cFI_FrameAuthorize);
+  AddMenuModuleItem('MAIN_A10', cFI_FormDataClear, mtForm);
 
   AddMenuModuleItem('MAIN_B01', cFI_FormAreaInfo, mtForm);
   AddMenuModuleItem('MAIN_B02', cFI_FrameCustomer);
