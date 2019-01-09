@@ -125,19 +125,23 @@ inherited fFrameNormal: TfFrameNormal
     BevelEdges = [beLeft, beRight, beBottom]
     TabOrder = 2
     TabStop = False
-    AutoContentSizes = [acsWidth]
-    AutoControlAlignment = False
-    LookAndFeel = FDM.dxLayoutWeb1
+    LayoutLookAndFeel = FDM.dxLayoutWeb1
+    OptionsItem.AutoControlAreaAlignment = False
     object dxGroup1: TdxLayoutGroup
-      ShowCaption = False
+      AlignHorz = ahParentManaged
+      AlignVert = avTop
+      CaptionOptions.Visible = False
+      ButtonOptions.Buttons = <>
       Hidden = True
       ShowBorder = False
       object GroupSearch1: TdxLayoutGroup
-        Caption = #24555#36895#26597#35810
+        CaptionOptions.Text = #24555#36895#26597#35810
+        ButtonOptions.Buttons = <>
         LayoutDirection = ldHorizontal
       end
       object GroupDetail1: TdxLayoutGroup
-        Caption = #31616#26126#20449#24687
+        CaptionOptions.Text = #31616#26126#20449#24687
+        ButtonOptions.Buttons = <>
         LayoutDirection = ldHorizontal
       end
     end

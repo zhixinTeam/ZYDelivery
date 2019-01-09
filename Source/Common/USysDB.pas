@@ -851,7 +851,7 @@ const
        'I_TJStatus Char(1),I_PPrice $Float, I_TPrice Char(1) Default ''Y'',' +
        'I_Man varChar(32), I_Date DateTime,' +
        'I_RefundMoney $Float Default 0,' +
-       'I_VerifyMan varChar(32), I_VerifyDate DateTime)';
+       'I_VerifyMan varChar(32), I_VerifyDate DateTime,I_Memo varChar(200))';
   {-----------------------------------------------------------------------------
    分销订单明细:FXZhiKa
    *.R_ID:记录编号
@@ -1317,7 +1317,8 @@ const
        'R_3DYa4 varChar(20), R_3DYa5 varChar(20), R_3DYa6 varChar(20),' +
        'R_28Ya1 varChar(20), R_28Ya2 varChar(20), R_28Ya3 varChar(20),' +
        'R_28Ya4 varChar(20), R_28Ya5 varChar(20), R_28Ya6 varChar(20),' +
-       'R_VI varChar(20), R_Date DateTime, R_Man varChar(32))';
+       'R_VI varChar(20), R_Date DateTime, R_Man varChar(32),' +
+       'R_Cao varChar(20), R_ZhuMoJi varChar(20), R_ShiGao varChar(20))';
   {-----------------------------------------------------------------------------
    检验记录:StockRecord
    *.R_ID:记录编号
@@ -1365,6 +1366,9 @@ const
    *.R_VI:水溶性铬
    *.R_Date:取样日期
    *.R_Man:录入人
+   *.R_Cao :氧化钙
+   *.R_ZhuMoJi : 助磨剂
+   *.R_ShiGao  : 石膏
   -----------------------------------------------------------------------------}
 
   sSQL_NewStockRecordExt = 'Create Table $Table(R_ID $Inc,E_ID VarChar(30),' +

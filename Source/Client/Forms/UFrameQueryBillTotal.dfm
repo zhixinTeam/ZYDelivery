@@ -117,9 +117,8 @@ inherited fFrameQueryBillTotal: TfFrameQueryBillTotal
     BevelEdges = [beLeft, beRight, beBottom]
     TabOrder = 2
     TabStop = False
-    AutoContentSizes = [acsWidth]
-    AutoControlAlignment = False
-    LookAndFeel = FDM.dxLayoutWeb1
+    LayoutLookAndFeel = FDM.dxLayoutWeb1
+    OptionsItem.AutoControlAreaAlignment = False
     object EditDate: TcxButtonEdit
       Left = 259
       Top = 36
@@ -131,6 +130,9 @@ inherited fFrameQueryBillTotal: TfFrameQueryBillTotal
         end>
       Properties.ReadOnly = True
       Properties.OnButtonClick = EditDatePropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 1
       Width = 206
     end
@@ -144,24 +146,31 @@ inherited fFrameQueryBillTotal: TfFrameQueryBillTotal
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditCustomerPropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 0
       OnKeyPress = OnCtrlKeyPress
       Width = 115
     end
     object dxGroup1: TdxLayoutGroup
-      ShowCaption = False
+      AlignHorz = ahParentManaged
+      AlignVert = avTop
+      CaptionOptions.Visible = False
+      ButtonOptions.Buttons = <>
       Hidden = True
       ShowBorder = False
       object GroupSearch1: TdxLayoutGroup
-        Caption = #24555#36895#26597#35810
+        CaptionOptions.Text = #24555#36895#26597#35810
+        ButtonOptions.Buttons = <>
         LayoutDirection = ldHorizontal
         object dxLayout1Item8: TdxLayoutItem
-          Caption = #23458#25143#21517#31216':'
+          CaptionOptions.Text = #23458#25143#21517#31216':'
           Control = EditCustomer
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item6: TdxLayoutItem
-          Caption = #26085#26399#31579#36873':'
+          CaptionOptions.Text = #26085#26399#31579#36873':'
           Control = EditDate
           ControlOptions.ShowBorder = False
         end

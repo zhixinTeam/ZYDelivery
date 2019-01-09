@@ -14,7 +14,8 @@ uses
   cxContainer, dxLayoutControl, cxMaskEdit, cxButtonEdit, cxTextEdit,
   ADODB, cxLabel, UBitmapPanel, cxSplitter, cxGridLevel, cxClasses,
   cxGridCustomView, cxGridCustomTableView, cxGridTableView,
-  cxGridDBTableView, cxGrid, ComCtrls, ToolWin, Menus, cxDropDownEdit;
+  cxGridDBTableView, cxGrid, ComCtrls, ToolWin, Menus, cxDropDownEdit,
+  dxSkinscxPCPainter, dxLayoutcxEditAdapters;
 
 type
   TfFrameTruckLogs = class(TfFrameNormal)
@@ -48,6 +49,7 @@ type
     //时间区间
     FUseDate: Boolean;
     //使用区间
+    FSql: string;
   protected
     procedure OnCreateFrame; override;
     procedure OnDestroyFrame; override;
@@ -71,19 +73,62 @@ begin
 end;
 
 function TfFrameTruckLogs.InitFormDataSQL(const nWhere: string): string;
-var nStr: string;
+var nStr, nType, nFlag: string;
 begin
+  if Pos('S', GetCtrlData(EditType))>0 then
+        nType := sFlag_Sale
+  else
+  if Pos('P', GetCtrlData(EditType))>0 then
+        nType := sFlag_Provide
+  else  nType :='';
+
+  if Pos('Y', GetCtrlData(Editflag))>0 then
+        nFlag := sFlag_CusZY
+  else  nFlag := sFlag_CusZYF;
+
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
 
-  Result := 'Select ROW_NUMBER() over (Order By tl.L_OutFact) As RowID, '+
-            'tl.*,tc.* From $TLOG tl ' +
-            'Left Join $TRUCK tc on tl.L_Truck= tc.T_Truck ';
-
-  if (nWhere = '') or FUseDate then
+  if nType = sFlag_Provide then
   begin
-    Result := Result + 'Where (L_OutFact>=''$ST'' and L_OutFact <''$End'')';
-    nStr := ' And ';
-  end else nStr := ' Where ';
+    Result := 'Select ROW_NUMBER() over (Order By tl.L_OutFact) As RowID, '+
+              'tl.*,tc.* From $TLOG tl ' +
+              'Left Join $TRUCK tc on tl.L_Truck= tc.T_Truck '+
+              'left join P_OrderDtl od on od.D_ID=tl.L_BID ';
+
+    if (nWhere = '') or FUseDate then
+    begin
+      Result := Result + 'Where (tl.L_OutFact>=''$ST'' and tl.L_OutFact <''$End'') And od.d_ProType=''$ZY''';
+      nStr := ' And ';
+    end else nStr := ' Where ';
+
+  end
+  else
+  if nType = sFlag_Sale then
+  begin
+    Result := 'Select ROW_NUMBER() over (Order By tl.L_OutFact) As RowID, '+
+              'tl.*,tc.* From $TLOG tl ' +
+              'Left Join $TRUCK tc on tl.L_Truck= tc.T_Truck '+
+              'left join S_Bill sb on L_ID=tl.L_BID ';
+
+    if (nWhere = '') or FUseDate then
+    begin
+      Result := Result + 'Where (tl.L_OutFact>=''$ST'' and tl.L_OutFact <''$End'') And l_custype=''$ZY''';
+      nStr := ' And ';
+    end else nStr := ' Where ';
+
+  end
+  else
+  begin
+    Result := 'Select ROW_NUMBER() over (Order By tl.L_OutFact) As RowID, '+
+              'tl.*,tc.* From $TLOG tl ' +
+              'Left Join $TRUCK tc on tl.L_Truck= tc.T_Truck ';
+
+    if (nWhere = '') or FUseDate then
+    begin
+      Result := Result + 'Where (tl.L_OutFact>=''$ST'' and tl.L_OutFact <''$End'')';
+      nStr := ' And ';
+    end else nStr := ' Where ';
+  end;
 
   if nWhere <> '' then
     Result := Result + nStr + '(' + nWhere + ')';
@@ -91,9 +136,11 @@ begin
 
   Result := MacroValue(Result, [MI('$TLOG', sTable_TruckLog),
             MI('$TRUCK', sTable_Truck),
-            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1))]);
+            MI('$ST', Date2Str(FStart)), MI('$End', Date2Str(FEnd + 1)),
+            MI('$ZY', nFlag)]);
 
   Result := Result + ' Order By RowID';
+  FSql := Result;
 end;
 
 procedure TfFrameTruckLogs.OnCreateFrame;
@@ -179,41 +226,7 @@ end;
 procedure TfFrameTruckLogs.ToolButton1Click(Sender: TObject);
 var nWhere, nType, nFlag: string;
 begin
-  inherited;
-  nWhere := '';
-  if Pos('S', GetCtrlData(EditType))>0 then
-        nType := sFlag_Sale
-  else  nType := sFlag_Provide;
-
-  if Pos('Y', GetCtrlData(Editflag))>0 then
-        nFlag := sFlag_CusZY
-  else  nFlag := sFlag_CusZYF;
-  
-  if nType = sFlag_Provide then
-  begin
-    nWhere := '''$ZY'' = ' +
-              '(Select pp.P_Type ' +
-              'From $PD od ' +
-              'Left join $PO oo on od.D_OID = oo.O_ID ' +
-              'Left Join $PB ob on ob.B_ID= oo.O_BID ' +
-              'Left join $PP pp on pp.P_ID= ob.B_ProID ' +
-              'Where od.D_ID=tl.L_BID)';
-    nWhere := MacroValue(nWhere, [MI('$ZY', nFlag),
-              MI('$PD', sTable_OrderDtl),
-              MI('$PO', sTable_Order),
-              MI('$PB', sTable_OrderBase),
-              MI('$PP', sTable_Provider)]);
-  end else
-
-  if nType = sFlag_Sale then
-  begin
-    nWhere := '''$ZY'' = (Select L_CusType From $Table Where L_ID=tl.L_BID)';
-    nWhere := MacroValue(nWhere, [MI('$ZY', nFlag),
-              MI('$Table', sTable_Bill)]);
-  end;
-
-  PrintTruckLog(FStart, FEnd, nWhere);
-  InitFormData(nWhere);
+  PrintTruckLog(FStart,FSql);
 end;
 
 procedure TfFrameTruckLogs.EditDatePropertiesButtonClick(Sender: TObject;
@@ -227,37 +240,6 @@ procedure TfFrameTruckLogs.EditflagPropertiesChange(Sender: TObject);
 var nType, nFlag: string;
 begin
   inherited;
-  if Pos('S', GetCtrlData(EditType))>0 then
-        nType := sFlag_Sale
-  else  nType := sFlag_Provide;
-
-  if Pos('Y', GetCtrlData(Editflag))>0 then
-        nFlag := sFlag_CusZY
-  else  nFlag := sFlag_CusZYF;
-  
-  if nType = sFlag_Provide then
-  begin
-    FWhere := '''$ZY'' = ' +
-              '(Select pp.P_Type ' +
-              'From $PD od ' +
-              'Left join $PO oo on od.D_OID = oo.O_ID ' +
-              'Left Join $PB ob on ob.B_ID= oo.O_BID ' +
-              'Left join $PP pp on pp.P_ID= ob.B_ProID ' +
-              'Where od.D_ID=tl.L_BID)';
-    FWhere := MacroValue(FWhere, [MI('$ZY', nFlag),
-              MI('$PD', sTable_OrderDtl),
-              MI('$PO', sTable_Order),
-              MI('$PB', sTable_OrderBase),
-              MI('$PP', sTable_Provider)]);
-  end else
-
-  if nType = sFlag_Sale then
-  begin
-    FWhere := '''$ZY'' = (Select L_CusType From $Table Where L_ID=tl.L_BID)';
-    FWhere := MacroValue(FWhere, [MI('$ZY', nFlag),
-              MI('$Table', sTable_Bill)]);
-  end;
-  
   InitFormData(FWhere);
 end;
 

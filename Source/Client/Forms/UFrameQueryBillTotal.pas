@@ -7,7 +7,8 @@ uses
   Dialogs, UFrameBase, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, ComCtrls, cxContainer, cxListView, Grids, ExtCtrls,
   cxEdit, cxLabel, UBitmapPanel, cxSplitter, dxLayoutControl, cxMaskEdit,
-  cxButtonEdit, cxTextEdit, ToolWin, Menus;
+  cxButtonEdit, cxTextEdit, ToolWin, Menus, dxSkinsCore,
+  dxSkinsDefaultPainters, dxLayoutcxEditAdapters;
 
 type
   TRecordInfo = record
@@ -25,6 +26,8 @@ type
     FValue    : Double;     //发货数量
     FPrice    : Double;     //发货价格
     FMoney    : Double;     //发货金额
+    FMemo     : string;     //备注
+    FMemo2    : string;     //分销订单备注
   end;
   TRecords = array of TRecordInfo;
 
@@ -157,7 +160,7 @@ var nStr: string;
     nSumValue, nSumKValue, nSumMomey: Double;
 begin
   ReportGrid.RowCount := 1;
-  ReportGrid.ColCount := 11;   //总共8列
+  ReportGrid.ColCount := 13;   //总共8列
   with ReportGrid do
   begin
     DefaultColWidth := 60;
@@ -177,6 +180,8 @@ begin
     Cells[8, RowCount-1] := '金额';
     Cells[9, RowCount-1] := '发货车数';
     Cells[10, RowCount-1] := '发退货标记';
+    Cells[11, RowCount-1] := '备注';
+    Cells[12, RowCount-1] := '分销备注';
   end;
 
   SetLength(FGroups, 0);
@@ -203,6 +208,8 @@ begin
         FValue     := FieldByName('T_Value').AsFloat;
         FPrice     := FieldByName('L_Price').AsFloat;
         FMoney     := FieldByName('T_Money').AsFloat;
+        FMemo      := FieldByName('Z_Memo').AsString;
+        FMemo2     := FieldByName('I_Memo').AsString;
       end;
 
       nInt := -1;
@@ -261,6 +268,8 @@ begin
       Cells[8, RowCount-1] := Format('%.2f', [FMoney]);
       Cells[9, RowCount-1] := IntToStr(FCount);
       Cells[10, RowCount-1] := FFlagT;
+      Cells[11, RowCount-1] := FMemo;
+      Cells[12, RowCount-1] := FMemo2;
     end;
     {
     RowCount := RowCount + 1;
@@ -317,11 +326,12 @@ begin
   EditDate.Text := Format('%s 至 %s', [Date2Str(FStart), Date2Str(FEnd)]);
   nSQL := 'Select L_ICC, L_CusName, L_SaleMan, P_Qlevel, L_Price, L_Type,L_PayMent,' +
 	        'P_Name, Sum(L_Money) As T_Money, Sum(L_Value) As T_Value, ' +
-          'Count(L_ID) As T_Count ' +
+          'Count(L_ID) As T_Count,Z_Memo,I_Memo ' +
           'From (' +
           'Select L_ICC,L_CusName,L_SaleMan,L_Value,L_Price,L_Type,L_CusPY, ' +
           'L_OutFact,L_CusType,L_PayMent,(L_Value*L_Price) as L_Money,P_Name,P_Qlevel, ' +
-          'L_ID From $Bill b Left Join $TP sp on b.L_StockNo=sp.P_ID' +
+          'L_ID,Z_Memo,I_Memo From $Bill b Left Join $TP sp on b.L_StockNo=sp.P_ID '+
+          'left join s_zhika c on b.l_zhika= c.z_id left join s_fxzhika d on b.l_zhika=d.i_id ' +
           ') bb ';
   //xxxxxx
 
@@ -342,7 +352,7 @@ begin
   else nSQL := nSQL + ' And L_CusType=''$ZY''';
 
   nSQL := nSQL + ' Group By L_ICC,L_CusName,L_SaleMan,P_Qlevel,' +
-          'L_PayMent,P_Name,L_Type,L_Price ';
+          'L_PayMent,P_Name,L_Type,L_Price,Z_Memo,I_Memo ';
 
   nSQL := MacroValue(nSQL, [MI('$Bill', sTable_Bill),MI('$TP', sTable_StockParam),
             MI('$ZY', sFlag_CusZYF), MI('$S', Date2Str(FStart)),

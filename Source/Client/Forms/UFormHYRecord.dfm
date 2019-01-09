@@ -242,6 +242,29 @@ object fFormHYRecord: TfFormHYRecord
         Caption = #29087'    '#26009':'
         Transparent = True
       end
+      object Label4: TLabel
+        Left = 4
+        Top = 163
+        Width = 54
+        Height = 12
+        Caption = 'CaO '#21547#37327':'
+      end
+      object Label5: TLabel
+        Left = 144
+        Top = 163
+        Width = 54
+        Height = 12
+        Caption = #21161' '#30952' '#21058':'
+        Transparent = True
+      end
+      object Label6: TLabel
+        Left = 290
+        Top = 163
+        Width = 54
+        Height = 12
+        Caption = #30707'    '#33167':'
+        Transparent = True
+      end
       object cxTextEdit29: TcxTextEdit
         Left = 76
         Top = 217
@@ -581,6 +604,32 @@ object fFormHYRecord: TfFormHYRecord
         ParentFont = False
         Properties.MaxLength = 20
         TabOrder = 32
+        OnKeyPress = cxTextEdit17KeyPress
+        Width = 74
+      end
+      object cxTextEdit4: TcxTextEdit
+        Left = 61
+        Top = 160
+        Hint = 'E.R_Cao'
+        ParentFont = False
+        TabOrder = 33
+        Width = 75
+      end
+      object cxTextEdit5: TcxTextEdit
+        Left = 205
+        Top = 160
+        Hint = 'E.R_ZhuMoJi'
+        ParentFont = False
+        TabOrder = 34
+        Width = 73
+      end
+      object cxTextEdit6: TcxTextEdit
+        Left = 347
+        Top = 158
+        Hint = 'E.R_ShiGao'
+        ParentFont = False
+        Properties.MaxLength = 20
+        TabOrder = 35
         OnKeyPress = cxTextEdit17KeyPress
         Width = 74
       end

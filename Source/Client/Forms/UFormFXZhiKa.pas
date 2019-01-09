@@ -13,7 +13,8 @@ uses
   UFormNormal, UFormInputbox, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, cxContainer, cxEdit, ComCtrls, cxMaskEdit,
   cxDropDownEdit, cxListView, cxTextEdit, cxMCListBox, dxLayoutControl,
-  StdCtrls, cxButtonEdit, dxLayoutcxEditAdapters, cxCheckBox;
+  StdCtrls, cxButtonEdit, dxLayoutcxEditAdapters, cxCheckBox, dxSkinsCore,
+  dxSkinsDefaultPainters, cxMemo;
 
 type
   TfFormFXZhiKa = class(TfFormNormal)
@@ -33,6 +34,8 @@ type
     dxLayout1Group5: TdxLayoutGroup;
     dxLayout1Group8: TdxLayoutGroup;
     dxLayout1Group7: TdxLayoutGroup;
+    cxMemo1: TcxMemo;
+    dxLayout1Item5: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditStockPropertiesChange(Sender: TObject);
@@ -492,7 +495,8 @@ begin
                 SF('I_Money', FloatToStr(nMoney), sfVal),
                 SF('I_Date', FDM.SQLServerNow, sfVal),
 
-                SF('I_ParentCard', gInfo.FCard)
+                SF('I_ParentCard', gInfo.FCard),
+                SF('I_Memo', cxMemo1.Text)
                 ], sTable_FXZhiKa, '', True);
         //xxxxx
         FDM.ExecuteSQL(nStr);

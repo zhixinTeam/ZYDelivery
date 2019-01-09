@@ -11,7 +11,8 @@ uses
   UFormNormal, cxGraphics, cxControls, cxLookAndFeels,
   cxLookAndFeelPainters, ComCtrls, cxContainer, cxEdit, Menus,
   cxDropDownEdit, cxCalendar, cxCheckBox, cxLabel, cxMaskEdit,
-  cxButtonEdit, cxTextEdit, cxListView, dxLayoutControl, StdCtrls;
+  cxButtonEdit, cxTextEdit, cxListView, dxLayoutControl, StdCtrls,
+  dxSkinsCore, dxSkinsDefaultPainters, dxLayoutcxEditAdapters, cxMemo;
 
 {$I Link.Inc}
 type
@@ -73,6 +74,8 @@ type
     EditName: TcxTextEdit;
     dxLayout1Item13: TdxLayoutItem;
     dxLayout1Group5: TdxLayoutGroup;
+    cxMemo: TcxMemo;
+    dxLayout1Item14: TdxLayoutItem;
     procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure EditSManPropertiesEditValueChanged(Sender: TObject);
@@ -278,6 +281,7 @@ begin
       end;
 
       EditName.Text := FieldByName('Z_Name').AsString;
+      cxMemo.Text := FieldByName('Z_Memo').AsString;
       SetLength(nDStr, 3);
       
       nDStr[0] := FieldByName('Z_Project').AsString;
@@ -769,6 +773,7 @@ begin
     Values['Z_Verified']  := nStr;
     Values['Z_Man']       := gSysParam.FUserName;
     Values['Z_ID']        := FRecordID;
+    Values['Z_Memo']        := cxMemo.Text;
 
     FListC.Clear;
     for nIdx:=Low(FStockList) to High(FStockList) do

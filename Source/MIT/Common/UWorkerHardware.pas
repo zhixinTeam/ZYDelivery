@@ -452,13 +452,13 @@ begin
       end;
 
       {$IFDEF SHXZY}
-      nStr := FieldByName('L_ID').AsString;
+      nStr := FieldByName('L_SrcID').AsString;
 
       nIDLen := Length(nStr);
-      nCode:= Copy(nStr, nPrefixLen + 1, 6);
+      nCode:= Copy(nStr, nPrefixLen + 2, 6);
       nCode:= nCode + '$CODE' + SealToStr(FieldByName('L_Seal').AsString,
               FieldByName('L_StockName').AsString);
-      nCode := nCode + Copy(nStr, nPrefixLen + 7, nIDLen-nPreFixLen-6);
+      nCode := nCode + Copy(nStr, nPrefixLen + 8, nIDLen-nPreFixLen-7);
       {$ENDIF}
 
       nStr := FieldByName('L_CusID').AsString;

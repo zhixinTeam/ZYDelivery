@@ -1,7 +1,7 @@
 inherited fFormFXZhiKa: TfFormFXZhiKa
-  Left = 629
-  Top = 200
-  ClientHeight = 450
+  Left = 573
+  Top = 122
+  ClientHeight = 499
   ClientWidth = 430
   OnClose = FormClose
   OnCreate = FormCreate
@@ -9,18 +9,18 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
     Width = 430
-    Height = 450
+    Height = 499
     AutoControlAlignment = False
     inherited BtnOK: TButton
       Left = 284
-      Top = 417
+      Top = 466
       Caption = #21150#21345
-      TabOrder = 6
+      TabOrder = 7
     end
     inherited BtnExit: TButton
       Left = 354
-      Top = 417
-      TabOrder = 7
+      Top = 466
+      TabOrder = 8
     end
     object ListInfo: TcxMCListBox [2]
       Left = 23
@@ -43,7 +43,7 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
     end
     object ListFXZhiKa: TcxListView [3]
       Left = 23
-      Top = 273
+      Top = 334
       Width = 372
       Height = 113
       Columns = <
@@ -60,12 +60,12 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
       RowSelect = True
       SmallImages = FDM.ImageBar
       Style.Edges = [bLeft, bTop, bRight, bBottom]
-      TabOrder = 5
+      TabOrder = 6
       ViewStyle = vsReport
     end
     object EditValue: TcxTextEdit [4]
       Left = 81
-      Top = 248
+      Top = 236
       ParentFont = False
       TabOrder = 3
       OnKeyPress = EditLadingKeyPress
@@ -73,7 +73,7 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
     end
     object EditStock: TcxComboBox [5]
       Left = 81
-      Top = 223
+      Top = 211
       ParentFont = False
       Properties.DropDownListStyle = lsEditFixedList
       Properties.DropDownRows = 15
@@ -85,7 +85,7 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
     end
     object BtnAdd: TButton [6]
       Left = 368
-      Top = 223
+      Top = 211
       Width = 39
       Height = 17
       Caption = #28155#21152
@@ -94,12 +94,21 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
     end
     object BtnDel: TButton [7]
       Left = 368
-      Top = 248
+      Top = 236
       Width = 39
       Height = 18
       Caption = #21024#38500
       TabOrder = 4
       OnClick = BtnDelClick
+    end
+    object cxMemo1: TcxMemo [8]
+      Left = 81
+      Top = 261
+      ParentFont = False
+      Style.Edges = [bLeft, bTop, bRight, bBottom]
+      TabOrder = 5
+      Height = 68
+      Width = 326
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
@@ -157,6 +166,11 @@ inherited fFormFXZhiKa: TfFormFXZhiKa
               ControlOptions.ShowBorder = False
             end
           end
+        end
+        object dxLayout1Item5: TdxLayoutItem
+          Caption = #22791'    '#27880':'
+          Control = cxMemo1
+          ControlOptions.ShowBorder = False
         end
         object dxLayout1Item4: TdxLayoutItem
           AutoAligns = [aaHorizontal]

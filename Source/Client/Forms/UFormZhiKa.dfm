@@ -1,7 +1,7 @@
 inherited fFormZhiKa: TfFormZhiKa
-  Left = 629
-  Top = 200
-  ClientHeight = 450
+  Left = 620
+  Top = 124
+  ClientHeight = 508
   ClientWidth = 447
   OnClose = FormClose
   OnCreate = FormCreate
@@ -9,21 +9,21 @@ inherited fFormZhiKa: TfFormZhiKa
   TextHeight = 12
   inherited dxLayout1: TdxLayoutControl
     Width = 447
-    Height = 450
-    AutoControlAlignment = False
+    Height = 508
+    OptionsItem.AutoControlAreaAlignment = False
     inherited BtnOK: TButton
       Left = 301
-      Top = 417
-      TabOrder = 13
+      Top = 475
+      TabOrder = 14
     end
     inherited BtnExit: TButton
       Left = 371
-      Top = 417
-      TabOrder = 14
+      Top = 475
+      TabOrder = 15
     end
     object ListDetail: TcxListView [2]
       Left = 23
-      Top = 224
+      Top = 298
       Width = 400
       Height = 149
       Checkboxes = True
@@ -46,32 +46,38 @@ inherited fFormZhiKa: TfFormZhiKa
       ReadOnly = True
       RowSelect = True
       Style.Edges = [bLeft, bTop, bRight, bBottom]
-      TabOrder = 9
+      TabOrder = 10
       ViewStyle = vsReport
       OnClick = ListDetailClick
     end
     object EditStock: TcxTextEdit [3]
       Left = 57
-      Top = 385
+      Top = 443
       ParentFont = False
       Properties.ReadOnly = True
-      TabOrder = 10
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      TabOrder = 11
       Width = 123
     end
     object EditPrice: TcxTextEdit [4]
       Left = 217
-      Top = 385
+      Top = 443
       ParentFont = False
       Properties.OnEditValueChanged = EditPricePropertiesEditValueChanged
-      TabOrder = 11
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      TabOrder = 12
       Width = 79
     end
     object EditValue: TcxTextEdit [5]
       Left = 347
-      Top = 385
+      Top = 443
       ParentFont = False
       Properties.OnEditValueChanged = EditPricePropertiesEditValueChanged
-      TabOrder = 12
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      TabOrder = 13
       Width = 77
     end
     object EditCID: TcxButtonEdit [6]
@@ -84,6 +90,9 @@ inherited fFormZhiKa: TfFormZhiKa
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditCIDPropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 1
       OnExit = EditCIDExit
       OnKeyPress = EditCIDKeyPress
@@ -94,6 +103,8 @@ inherited fFormZhiKa: TfFormZhiKa
       Top = 61
       ParentFont = False
       Properties.MaxLength = 100
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 2
       Width = 121
     end
@@ -104,6 +115,10 @@ inherited fFormZhiKa: TfFormZhiKa
       Properties.DropDownRows = 20
       Properties.ItemHeight = 18
       Properties.OnEditValueChanged = EditSManPropertiesEditValueChanged
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
+      Style.PopupBorderStyle = epbsSingle
       TabOrder = 3
       Width = 121
     end
@@ -116,6 +131,10 @@ inherited fFormZhiKa: TfFormZhiKa
       Properties.IncrementalSearch = False
       Properties.ItemHeight = 18
       Properties.OnChange = EditCustomPropertiesChange
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
+      Style.PopupBorderStyle = epbsSingle
       TabOrder = 4
       OnKeyPress = EditCustomKeyPress
       Width = 121
@@ -133,6 +152,10 @@ inherited fFormZhiKa: TfFormZhiKa
         'S=S'#12289#36865#36135
         'X=X'#12289#36816#21368)
       Properties.MaxLength = 20
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
+      Style.PopupBorderStyle = epbsSingle
       TabOrder = 5
       Width = 125
     end
@@ -144,6 +167,10 @@ inherited fFormZhiKa: TfFormZhiKa
       Properties.IncrementalSearch = False
       Properties.ItemHeight = 18
       Properties.MaxLength = 20
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
+      Style.PopupBorderStyle = epbsSingle
       TabOrder = 6
       Width = 125
     end
@@ -151,6 +178,8 @@ inherited fFormZhiKa: TfFormZhiKa
       Left = 269
       Top = 161
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 7
       Text = '0'
       Width = 121
@@ -172,109 +201,125 @@ inherited fFormZhiKa: TfFormZhiKa
       Top = 36
       ParentFont = False
       Properties.MaxLength = 100
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 0
       Width = 125
+    end
+    object cxMemo: TcxMemo [15]
+      Left = 81
+      Top = 186
+      ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.Edges = [bLeft, bTop, bRight, bBottom]
+      Style.HotTrack = False
+      TabOrder = 9
+      Height = 75
+      Width = 355
     end
     inherited dxLayout1Group_Root: TdxLayoutGroup
       inherited dxGroup1: TdxLayoutGroup
         object dxLayout1Group5: TdxLayoutGroup
-          ShowCaption = False
+          CaptionOptions.Visible = False
+          ButtonOptions.Buttons = <>
           Hidden = True
           LayoutDirection = ldHorizontal
           ShowBorder = False
           object dxLayout1Item13: TdxLayoutItem
-            Caption = #35746#21333#21517#31216':'
+            CaptionOptions.Text = #35746#21333#21517#31216':'
             Control = EditName
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item7: TdxLayoutItem
-            AutoAligns = [aaVertical]
             AlignHorz = ahClient
-            Caption = #21512#21516#32534#21495':'
+            CaptionOptions.Text = #21512#21516#32534#21495':'
             Control = EditCID
             ControlOptions.ShowBorder = False
           end
         end
         object dxLayout1Item8: TdxLayoutItem
-          Caption = #39033#30446#21517#31216':'
+          CaptionOptions.Text = #39033#30446#21517#31216':'
           Control = EditPName
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item9: TdxLayoutItem
-          Caption = #19994#21153#20154#21592':'
+          CaptionOptions.Text = #19994#21153#20154#21592':'
           Control = EditSMan
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item10: TdxLayoutItem
-          Caption = #23458#25143#21517#31216':'
+          CaptionOptions.Text = #23458#25143#21517#31216':'
           Control = EditCustom
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item11: TdxLayoutItem
-          Caption = #25552#36135#26041#24335':'
+          CaptionOptions.Text = #25552#36135#26041#24335':'
           Control = EditLading
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Group4: TdxLayoutGroup
-          ShowCaption = False
+          CaptionOptions.Visible = False
+          ButtonOptions.Buttons = <>
           Hidden = True
           LayoutDirection = ldHorizontal
           ShowBorder = False
           object dxLayout1Item12: TdxLayoutItem
-            AutoAligns = [aaVertical]
-            Caption = #20184#27454#26041#24335':'
+            AlignHorz = ahLeft
+            CaptionOptions.Text = #20184#27454#26041#24335':'
             Control = EditPayment
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item15: TdxLayoutItem
-            AutoAligns = [aaVertical]
             AlignHorz = ahClient
-            Caption = #39044#20184#37329#39069':'
+            CaptionOptions.Text = #39044#20184#37329#39069':'
             Control = EditMoney
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item16: TdxLayoutItem
-            ShowCaption = False
+            CaptionOptions.Visible = False
             Control = cxLabel2
             ControlOptions.ShowBorder = False
           end
         end
+        object dxLayout1Item14: TdxLayoutItem
+          CaptionOptions.Text = #22791'    '#27880':'
+          Control = cxMemo
+          ControlOptions.ShowBorder = False
+        end
       end
       object dxGroup2: TdxLayoutGroup [1]
-        AutoAligns = [aaHorizontal]
         AlignVert = avClient
-        Caption = #21150#29702#26126#32454
+        CaptionOptions.Text = #21150#29702#26126#32454
+        ButtonOptions.Buttons = <>
         object dxLayout1Item3: TdxLayoutItem
-          AutoAligns = [aaHorizontal]
           AlignVert = avClient
-          Caption = 'cxListView1'
-          ShowCaption = False
+          CaptionOptions.Text = 'cxListView1'
+          CaptionOptions.Visible = False
           Control = ListDetail
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Group3: TdxLayoutGroup
-          ShowCaption = False
+          CaptionOptions.Visible = False
+          ButtonOptions.Buttons = <>
           Hidden = True
           LayoutDirection = ldHorizontal
           ShowBorder = False
           object dxLayout1Item4: TdxLayoutItem
-            AutoAligns = [aaVertical]
             AlignHorz = ahClient
-            Caption = #31867#22411':'
+            CaptionOptions.Text = #31867#22411':'
             Control = EditStock
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item5: TdxLayoutItem
-            AutoAligns = [aaVertical]
             AlignHorz = ahRight
-            Caption = #21333#20215':'
+            CaptionOptions.Text = #21333#20215':'
             Control = EditPrice
             ControlOptions.ShowBorder = False
           end
           object dxLayout1Item6: TdxLayoutItem
-            AutoAligns = [aaVertical]
             AlignHorz = ahRight
-            Caption = #21150#29702#37327':'
+            CaptionOptions.Text = #21150#29702#37327':'
             Control = EditValue
             ControlOptions.ShowBorder = False
           end

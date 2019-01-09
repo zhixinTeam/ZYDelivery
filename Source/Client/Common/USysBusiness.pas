@@ -262,7 +262,7 @@ function PrintRefundReport(nRefund: string; const nAsk: Boolean): Boolean;
 function PrintHuaYanReport(const nHID: string; const nAsk: Boolean): Boolean;
 function PrintHeGeReport(const nHID: string; const nAsk: Boolean): Boolean;
 //化验单,合格证
-procedure PrintTruckLog(const nStart:TDate; const nEnd: TDate; nWhere: string='');
+procedure PrintTruckLog(const nStart:TDate; nWhere: string='');
 //打印车辆登记表
 procedure PrintTruckJieSuan(nWhere: string='');
 //打印司机运费结算单
@@ -3145,28 +3145,14 @@ begin
   Result := FDR.PrintSuccess;
 end;
 
-procedure PrintTruckLog(const nStart:TDate; const nEnd: TDate; nWhere: string='');
+procedure PrintTruckLog(const nStart:TDate; nWhere: string='');
 var nStr: string;
     nParam: TReportParamItem;
 begin
   nStr := 'Select 1 ';
   FDM.QueryTemp(nStr);
-  //'Select ROW_NUMBER() over (Order By R_ID desc), '
-  nStr := 'Select ROW_NUMBER() over (Order By tl.L_OutFact) As RowID,tl.*,tc.* ' +
-          'From $TLOG tl ' +
-          'Left Join $TRUCK tc on tl.L_Truck= tc.T_Truck ' +
-          'Where (L_OutFact>=''$ST'' and L_OutFact <''$End'') ';
-  //只打印毛重大于7吨的车辆        
 
-  if nWhere <> '' then nStr := nStr + ' And ' + '(' + nWhere + ')';
-
-  nStr := MacroValue(nStr, [MI('$TLOG', sTable_TruckLog),
-            MI('$TRUCK', sTable_Truck),
-            MI('$ST', Date2Str(nStart)), MI('$End', Date2Str(nEnd + 1))]);
-
-  nStr := nStr + ' Order By RowID';
-
-  if FDM.QuerySQL(nStr).RecordCount < 1 then
+  if FDM.QuerySQL(nWhere).RecordCount < 1 then
   begin
     nStr := '无满足条件的信息!!';
     ShowMsg(nStr, sHint); Exit;

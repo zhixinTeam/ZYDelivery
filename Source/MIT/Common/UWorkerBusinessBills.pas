@@ -584,6 +584,7 @@ begin
           SF('Z_Verified', FListB.Values['Z_Verified']),
           SF('Z_Date', sField_SQLServer_Now, sfVal),
           SF('Z_Man', FListB.Values['Z_Man']),
+          SF('Z_Memo', FListB.Values['Z_Memo']),
 
           SF('Z_YFMoney', FListB.Values['Z_YFMoney'], sfVal)
           ], sTable_ZhiKa, nWhere, nWhere='');
