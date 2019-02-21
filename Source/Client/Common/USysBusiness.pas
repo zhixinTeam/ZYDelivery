@@ -2826,6 +2826,7 @@ begin
   //Ìí¼ÓÒýºÅ
   
   nStr := 'Select * From %s b Left join %s c on b.L_StockNo=c.P_ID ' +
+          'left join s_truck a on b.l_truck=a.t_truck '+
           'Where L_ID In(%s)';
   nStr := Format(nStr, [sTable_Bill, sTable_StockParam, nBill]);
   //xxxxx
@@ -2879,6 +2880,7 @@ begin
   end;
 
   nStr := 'Select * From %s oo Inner Join %s od on oo.O_ID=od.D_OID ' +
+          'left join s_truck a on od.D_truck=a.t_truck '+
           'Where D_ID=''%s''';
   nStr := Format(nStr, [sTable_Order, sTable_OrderDtl, nOrder]);
 

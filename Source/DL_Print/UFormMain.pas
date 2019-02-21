@@ -253,7 +253,8 @@ var nStr: string;
     nDS: TDataSet;
 begin
   Result := False;
-  nStr := 'Select *,%s As L_ValidMoney From %s b Where L_ID=''%s''';
+  nstr := 'Select a.*,b.*,%s As L_ValidMoney From s_bill a left join s_truck b'+
+          ' on a.l_truck=b.t_truck where L_ID=''%s''';
   nStr := Format(nStr, [nMoney, sTable_Bill, nBill]);
 
   nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);
