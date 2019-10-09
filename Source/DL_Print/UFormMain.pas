@@ -253,8 +253,8 @@ var nStr: string;
     nDS: TDataSet;
 begin
   Result := False;
-  nstr := 'Select a.*,b.*,%s As L_ValidMoney From s_bill a left join s_truck b'+
-          ' on a.l_truck=b.t_truck where L_ID=''%s''';
+  nstr := 'Select a.*,b.*,%s As L_ValidMoney,c.T_delivery  From s_bill a left join s_truck b'+
+          ' on a.l_truck=b.t_truck left join S_TransContract c on l_id=T_LID where L_ID=''%s''';
   nStr := Format(nStr, [nMoney, sTable_Bill, nBill]);
 
   nDS := FDM.SQLQuery(nStr, FDM.SQLQuery1);

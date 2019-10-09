@@ -2825,9 +2825,10 @@ begin
   nBill := AdjustListStrFormat(nBill, '''', True, ',', False);
   //Ìí¼ÓÒýºÅ
   
-  nStr := 'Select * From %s b Left join %s c on b.L_StockNo=c.P_ID ' +
-          'left join s_truck a on b.l_truck=a.t_truck '+
-          'Where L_ID In(%s)';
+  nStr := 'Select a.*,b.*,c.*,d.T_delivery From %s b Left join %s c on b.L_StockNo=c.P_ID ' +
+          ' left join s_truck a on b.l_truck=a.t_truck '+
+          ' left join S_TransContract d on l_id=T_LID '+
+          ' Where L_ID In(%s)';
   nStr := Format(nStr, [sTable_Bill, sTable_StockParam, nBill]);
   //xxxxx
 
